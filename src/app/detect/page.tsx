@@ -1,106 +1,91 @@
+// src/app/detect/page.tsx
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { FileUp, Search } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useDetection } from "@/hooks/useDetection";
+import { Button } from "@/components/ui/Button"; // Assuming you have shadcn/ui or similar
 
 export default function DetectPage() {
   const [text, setText] = useState("");
-  const [analyzing, setAnalyzing] = useState(false);
-  const [result, setResult] = useState<null | number>(null);
+  const { mutate, data, isPending, error } = useDetection();
 
-  const handleAnalyze = () => {
-    setAnalyzing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setAnalyzing(false);
-      setResult(84);
-    }, 2000);
+  // ARCHITECTURE DECISION: Regex Splitter for Highlighting.
+  // We split by standard sentence terminators, keeping the delimiters,
+  // then check if each segment exists in the flagged array.
+  const renderHighlightedText = (content: string, flagged: string[]) => {
+    // Splits by punctuation but keeps the punctuation in the array
+    const segments = content.split(/([.!?]+[\s\n]+)/);
+
+    return segments.map((segment, i) => {
+      const isFlagged = flagged.some(
+        (f) => f.includes(segment.trim()) && segment.trim().length > 10,
+      );
+
+      return (
+        <span
+          key={i}
+          className={
+            isFlagged
+              ? "bg-red-200 text-red-900 rounded-sm px-1 py-0.5 transition-colors"
+              : ""
+          }
+        >
+          {segment}
+        </span>
+      );
+    });
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold">AI Content Detector</h1>
-        <p className="text-slate-500">
-          Paste your text below to check for AI-generated patterns.
-        </p>
-      </header>
+    <div className="max-w-5xl mx-auto p-6 grid md:grid-cols-2 gap-8">
+      {/* Input Section */}
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">AI Content Detector</h1>
+        <textarea
+          className="w-full h-96 p-4 border rounded-xl resize-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Paste text here to analyze..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+        <Button
+          onClick={() => mutate(text)}
+          disabled={isPending || text.length < 50}
+          className="w-full"
+        >
+          {isPending ? "Analyzing..." : "Analyze Content"}
+        </Button>
+        {error && <p className="text-red-500 text-sm">{error.message}</p>}
+      </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-4">
-          <div className="relative group">
-            <textarea
-              className="w-full h-[400px] p-6 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all resize-none outline-none"
-              placeholder="Paste your content here (minimum 50 words)..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-            />
-            <div className="absolute bottom-4 right-4 flex items-center gap-3">
-              <span className="text-xs text-slate-400 font-medium">
-                {text.length} characters
-              </span>
-              <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                <FileUp className="w-5 h-5" />
-              </button>
+      {/* Results Section */}
+      <div className="bg-slate-50 border rounded-xl p-6 h-[500px] overflow-y-auto">
+        {!data ? (
+          <div className="h-full flex items-center justify-center text-slate-400">
+            Results will appear here
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center border-b pb-4">
+              <h2 className="text-lg font-semibold">Analysis complete</h2>
+              <div
+                className={`px-4 py-1 rounded-full font-bold ${
+                  data.aiProbability > 50
+                    ? "bg-red-100 text-red-700"
+                    : "bg-green-100 text-green-700"
+                }`}
+              >
+                {data.aiProbability}% AI Probability
+              </div>
+            </div>
+
+            <p className="text-sm text-slate-600 italic">
+              {data.analysis} {data.cached && "(Served from Cache ⚡)"}
+            </p>
+
+            <div className="bg-white p-4 rounded-lg border leading-relaxed text-slate-800">
+              {renderHighlightedText(text, data.flaggedSentences)}
             </div>
           </div>
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={handleAnalyze}
-            disabled={analyzing || text.length < 50}
-          >
-            {analyzing ? "Analyzing Patterns..." : "Run AI Detection Analysis"}
-          </Button>
-        </div>
-
-        <aside>
-          <AnimatePresence mode="wait">
-            {!result ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="h-full flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-200 rounded-2xl text-center space-y-4"
-              >
-                <Search className="w-12 h-12 text-slate-300" />
-                <p className="text-sm text-slate-500">
-                  Analysis results will appear here after scanning.
-                </p>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="p-8 bg-white border border-slate-200 rounded-2xl shadow-lg space-y-6"
-              >
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-32 h-32 rounded-full border-8 border-rose-50 mb-4">
-                    <span className="text-4xl font-bold text-rose-600">
-                      {result}%
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold">Likely AI Generated</h3>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Burstiness</span>
-                    <span className="font-semibold">Low</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Perplexity</span>
-                    <span className="font-semibold">12.4</span>
-                  </div>
-                </div>
-
-                <Button variant="outline" className="w-full">
-                  Download Report
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </aside>
+        )}
       </div>
     </div>
   );
