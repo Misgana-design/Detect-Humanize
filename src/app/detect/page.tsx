@@ -57,7 +57,7 @@ export default function DetectPage() {
       </div>
 
       {/* Results Section */}
-      <div className="bg-slate-50 border rounded-xl p-6 h-[500px] overflow-y-auto">
+      <div className="bg-slate-50 border rounded-xl p-6 h-125 overflow-y-auto">
         {!data ? (
           <div className="h-full flex items-center justify-center text-slate-400">
             Results will appear here
