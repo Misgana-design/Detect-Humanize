@@ -1,138 +1,73 @@
 import Link from "next/link";
 import CopyrightYear from "./CopyRight";
-import { Sparkles, Github, Twitter, Linkedin } from "lucide-react";
 import { Suspense } from "react";
+
+const footerLinks = {
+  Product: [
+    { href: "/detect", label: "AI Detection" },
+    { href: "/humanize", label: "Humanizer" },
+    { href: "/pricing", label: "Pricing" },
+  ],
+  Company: [
+    { href: "#", label: "About" },
+    { href: "#", label: "Blog" },
+    { href: "#", label: "Contact" },
+  ],
+  Legal: [
+    { href: "#", label: "Privacy" },
+    { href: "#", label: "Terms" },
+  ],
+};
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-slate-100 pt-16 pb-8">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-16">
-          {/* Brand Column */}
-          <div className="col-span-2 space-y-4">
-            <Link href="/" className="flex items-center gap-2">
-              <Sparkles className="text-indigo-600 w-6 h-6" />
-              <span className="text-xl font-bold">AIGuard</span>
+    <footer className="border-t border-slate-200/80 bg-white">
+      <div className="mx-auto max-w-7xl px-6 py-16">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+          <div className="lg:col-span-1">
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white text-sm font-semibold">
+                AI
+              </span>
+              <span className="text-base font-semibold text-slate-900">
+                AI Detect
+              </span>
             </Link>
-            <p className="text-slate-500 text-sm max-w-xs leading-relaxed">
-              The world's most advanced AI detection and humanization platform.
-              Helping creators stay authentic in the age of AI.
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">
+              Trust your content. Detect AI, humanize text, and stay authentic.
             </p>
-            <div className="flex gap-4">
-              <Twitter className="w-5 h-5 text-slate-400 hover:text-indigo-500 cursor-pointer transition-colors" />
-              <Github className="w-5 h-5 text-slate-400 hover:text-indigo-500 cursor-pointer transition-colors" />
-              <Linkedin className="w-5 h-5 text-slate-400 hover:text-indigo-500 cursor-pointer transition-colors" />
+          </div>
+          {Object.entries(footerLinks).map(([category, links]) => (
+            <div key={category}>
+              <h3 className="text-sm font-semibold text-slate-900">
+                {category}
+              </h3>
+              <ul className="mt-4 space-y-3">
+                {links.map((link, index) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-slate-500 transition-colors hover:text-slate-700"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-
-          {/* Links Columns */}
-          <div>
-            <h4 className="font-bold text-sm mb-4">Product</h4>
-            <ul className="space-y-3 text-sm text-slate-500">
-              <li>
-                <Link
-                  href="/detect"
-                  className="hover:text-indigo-600 transition-colors"
-                >
-                  AI Detector
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/humanize"
-                  className="hover:text-indigo-600 transition-colors"
-                >
-                  Humanizer
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/pricing"
-                  className="hover:text-indigo-600 transition-colors"
-                >
-                  Pricing
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-sm mb-4">Company</h4>
-            <ul className="space-y-3 text-sm text-slate-500">
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-indigo-600 transition-colors"
-                >
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-indigo-600 transition-colors"
-                >
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-indigo-600 transition-colors"
-                >
-                  Careers
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-sm mb-4">Legal</h4>
-            <ul className="space-y-3 text-sm text-slate-500">
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-indigo-600 transition-colors"
-                >
-                  Privacy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-indigo-600 transition-colors"
-                >
-                  Terms
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-indigo-600 transition-colors"
-                >
-                  Security
-                </Link>
-              </li>
-            </ul>
-          </div>
+          ))}
         </div>
-
-        <div className="pt-8 border-t border-slate-50 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-slate-400">
-            ©
+        <div className="mt-12 flex items-center justify-between border-t border-slate-200/80 pt-8">
+          <p className="text-sm text-slate-500">
             <Suspense fallback={<span>© 2026</span>}>
-              <CopyrightYear />
+              ©<CopyrightYear /> All rights reserved.
             </Suspense>
-            AIGuard Inc. All rights reserved.
           </p>
-          <div className="flex items-center gap-6">
-            <span className="flex items-center gap-1.5 text-xs text-slate-400">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              Systems Operational
-            </span>
-          </div>
         </div>
       </div>
     </footer>
   );
 }
+
+// The world's most advanced AI detection and humanization platform.
+//               Helping creators stay authentic in the age of AI.
