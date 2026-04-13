@@ -1,20 +1,48 @@
-// src/services/ai/detectionService.ts
-import { ai, detectionSchema, MODEL_NAME } from "./geminiClient";
+import { VertexAI, SchemaType } from "@google-cloud/vertexai";
+
+// 1. Initialize Vertex AI
+const vertex_ai = new VertexAI({
+  project: process.env.GCP_PROJECT_ID!,
+  location: "us-central1",
+});
 
 export interface DetectionResult {
   aiProbability: number;
   confidence: "low" | "medium" | "high";
   flaggedSentences: string[];
   analysis: string;
+  cached?: boolean;
+  documentId?: string;
+  modelUsed?: string;
 }
 
 export class DetectionService {
   private static readonly CHUNK_SIZE = 400;
 
-  /**
-   * Splits text into chunks, processes each concurrently, and aggregates results.
-   */
-  static async analyzeText(text: string): Promise<DetectionResult> {
+  // UPDATED: Using the 2026 model IDs found in your Model Garden screenshot
+  private static readonly MODELS = {
+    FREE: "gemini-3-flash-preview",
+    PRO: "gemini-3.1-pro-preview",
+  };
+
+  private static readonly detectionSchema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      aiProbability: { type: SchemaType.NUMBER },
+      confidence: { type: SchemaType.STRING, enum: ["low", "medium", "high"] },
+      flaggedSentences: {
+        type: SchemaType.ARRAY,
+        items: { type: SchemaType.STRING },
+      },
+      analysis: { type: SchemaType.STRING },
+    },
+    required: ["aiProbability", "confidence", "flaggedSentences", "analysis"],
+  };
+
+  static async analyzeText(
+    text: string,
+    userTier: string = "free",
+  ): Promise<DetectionResult> {
     const words = text.split(/\s+/);
     const chunks: string[] = [];
 
@@ -22,53 +50,81 @@ export class DetectionService {
       chunks.push(words.slice(i, i + this.CHUNK_SIZE).join(" "));
     }
 
-    // Process all chunks concurrently for speed
-    const chunkPromises = chunks.map((chunk) => this.analyzeChunk(chunk));
+    const chunkPromises = chunks.map((chunk) =>
+      this.analyzeChunk(chunk, userTier),
+    );
     const chunkResults = await Promise.all(chunkPromises);
 
-    return this.aggregateResults(chunkResults);
+    const aggregated = this.aggregateResults(chunkResults);
+
+    return {
+      ...aggregated,
+      // Logic update: Ensure the returned metadata reflects the 2026 models
+      modelUsed: userTier === "pro" ? this.MODELS.PRO : this.MODELS.FREE,
+    };
   }
 
-  private static async analyzeChunk(chunk: string): Promise<DetectionResult> {
-    const prompt = `Analyze the following text for AI generation patterns. Focus on perplexity, burstiness, and common LLM transitions. Text to analyze: "${chunk}"`;
+  private static async analyzeChunk(
+    chunk: string,
+    userTier: string,
+    attempt = 1,
+  ): Promise<DetectionResult> {
+    // UPDATED: Use the new Gemini 3 model names
+    const modelName = userTier === "pro" ? this.MODELS.PRO : this.MODELS.FREE;
 
-    // 2026 STANDARD: Using the new SDK's unified generateContent signature
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: prompt,
-      config: {
+    const model = vertex_ai.getGenerativeModel({
+      model: modelName,
+      generationConfig: {
         responseMimeType: "application/json",
-        responseSchema: detectionSchema,
-        temperature: 0.1, // Low temperature for deterministic, analytical outputs
+        responseSchema: this.detectionSchema,
+        temperature: 0.1,
       },
     });
 
-    if (!response.text) {
-      throw new Error("Received an empty response from Gemini");
-    }
+    try {
+      const prompt = `Analyze the following text for AI generation patterns. Focus on perplexity, burstiness, and common LLM transitions. Text: "${chunk}"`;
 
-    return JSON.parse(response.text) as DetectionResult;
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      });
+
+      const response = await result.response;
+      const rawText = response.candidates![0].content.parts[0].text;
+
+      if (!rawText) throw new Error("Empty response from Vertex AI");
+
+      return JSON.parse(rawText as string) as DetectionResult;
+    } catch (error: any) {
+      const isOverloaded = error.status === 503 || error.status === 429;
+
+      if (isOverloaded && attempt <= 2) {
+        console.warn(`Vertex ${modelName} busy, retrying chunk...`);
+        await new Promise((r) => setTimeout(r, attempt * 1000));
+        return this.analyzeChunk(chunk, userTier, attempt + 1);
+      }
+
+      // If Pro fails 3 times, we drop to Flash (Free) to ensure service stays up
+      if (userTier === "pro" && attempt === 3) {
+        return this.analyzeChunk(chunk, "free", 4);
+      }
+
+      throw error;
+    }
   }
 
-  /**
-   * Mathematically and logically merges chunk results.
-   */
   private static aggregateResults(results: DetectionResult[]): DetectionResult {
     if (results.length === 0) throw new Error("No results to aggregate");
     if (results.length === 1) return results[0];
 
-    // Calculate mean probability: $P_{total} = \frac{1}{N} \sum_{i=1}^{N} P_i$
     const totalProbability = results.reduce(
       (acc, curr) => acc + curr.aiProbability,
       0,
     );
     const avgProbability = Math.round(totalProbability / results.length);
 
-    // Flatten flagged sentences and remove duplicates
     const allFlagged = results.flatMap((r) => r.flaggedSentences);
     const uniqueFlagged = [...new Set(allFlagged)];
 
-    // Determine aggregate confidence
     const confidences = results.map((r) => r.confidence);
     const confidence = confidences.includes("low")
       ? "low"
