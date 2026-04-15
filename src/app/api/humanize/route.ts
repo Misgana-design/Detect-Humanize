@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { HumanizerService, Tone } from "@/services/ai/humanizerService";
 import crypto from "crypto";
 
+export const maxDuration = 30;
 
 const PLAN_LIMITS = {
   free: 500, // words
