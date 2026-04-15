@@ -1,4 +1,4 @@
-import { client, humanizerSchema, MODELS } from "./geminiClient";
+import { ai, humanizerSchema, MODEL_NAME } from "./geminiClient";
 
 export type Tone = "casual" | "professional" | "academic";
 
@@ -9,95 +9,34 @@ export interface HumanizerResult {
 
 export class HumanizerService {
   /**
-   * Transforms AI-generated text into natural, human-like text using a 3-stage pipeline.
+   * Transforms AI-generated text into natural, human-like text based on a specific tone.
    */
   static async rewrite(text: string, tone: Tone): Promise<HumanizerResult> {
-    // ==========================================
-    // STAGE 1: Analysis (Detection + Breakdown)
-    // Low temperature for strictly analytical insight
-    // ==========================================
-    const analysisPrompt = `Analyze the following text and identify:
-    - AI-like patterns
-    - unnatural phrasing
-    - repetitive structure
-    - tone issues
+    const prompt = `
+      You are an expert copywriter. Rewrite the following text to sound completely human-written.
+      Remove common AI tropes (e.g., "In conclusion", "It is important to note", overly complex vocabulary).
+      
+      Target Tone: ${tone.toUpperCase()}
+      
+      Text to rewrite:
+      "${text}"
+    `;
 
-    Text:
-    """${text}"""`;
-
-    const analysisResponse = await client.models.generateContent({
-      model: MODELS.PRO,
-      contents: analysisPrompt,
-      config: {
-        temperature: 0.2, // Keep it cold and logical
-      },
-    });
-
-    const analysis =
-      analysisResponse.text || "No specific weaknesses identified.";
-
-    // ==========================================
-    // STAGE 2: Rewrite (The Core)
-    // Medium temperature to balance structure and flow
-    // ==========================================
-    const rewritePrompt = `Rewrite the following text to sound natural and human-like.
-    Target Tone: ${tone.toUpperCase()}
-    
-    Address these specific weaknesses identified in the original text:
-    ${analysis}
-
-    Rules:
-    - vary sentence length
-    - add slight imperfections
-    - use conversational tone
-    - avoid robotic phrasing
-    - keep original meaning
-
-    Text:
-    """${text}"""`;
-
-    const rewriteResponse = await client.models.generateContent({
-      model: MODELS.PRO,
-      contents: rewritePrompt,
-      config: {
-        temperature: 0.7, // Standard creative variation
-      },
-    });
-
-    const rewrittenText = rewriteResponse.text || text;
-
-    // ==========================================
-    // STAGE 3: Humanization Enhancer (Secret Sauce)
-    // High temperature for human-like randomness and final JSON mapping
-    // ==========================================
-    const polishPrompt = `Improve the following rewritten text further by:
-    - adding natural flow
-    - introducing slight randomness
-    - making it sound completely like a real person wrote it in a ${tone} tone.
-    
-    Keep it strictly undetectable as AI-generated.
-    
-    Text:
-    """${rewrittenText}"""
-    
-    Format the output to include the final humanized text and a brief array of the structural changes made.`;
-
-    const finalResponse = await client.models.generateContent({
-      model: MODELS.PRO,
-      contents: polishPrompt,
+    // 2026 STANDARD: Using the unified generateContent signature
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: prompt,
       config: {
         responseMimeType: "application/json",
         responseSchema: humanizerSchema,
-        temperature: 0.9, // High variance for that final human imperfection
+        temperature: 0.7, // Higher temperature for more natural, varied phrasing
       },
     });
 
-    if (!finalResponse.text) {
-      throw new Error(
-        "Received an empty response from Gemini during final polish",
-      );
+    if (!response.text) {
+      throw new Error("Received an empty response from Gemini");
     }
 
-    return JSON.parse(finalResponse.text) as HumanizerResult;
+    return JSON.parse(response.text) as HumanizerResult;
   }
 }
