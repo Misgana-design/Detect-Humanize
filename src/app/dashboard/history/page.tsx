@@ -130,13 +130,13 @@ export default function HistoryPage() {
 
   const router = useRouter();
 
-  const handleReHumanize = (doc: any) => {
-    // We pass the content back to the main dashboard via URL params
-    // or you can use a state management library. URL params are easiest:
+  const handleNavigateToHumanizer = (doc: any) => {
     const params = new URLSearchParams();
     params.set("text", doc.original_content);
+    // Passing the documentId is CRITICAL so the humanizer knows to UPDATE this record
+    params.set("documentId", doc.id);
 
-    router.push(`/dashboard?${params.toString()}`);
+    router.push(`/humanize?${params.toString()}`);
   };
 
   const totalScans = documents?.length || 0;
@@ -252,7 +252,7 @@ export default function HistoryPage() {
               </p>
               <button
                 onClick={() => setSearchTerm("")}
-                className="mt-4 text-[10px] font-bold font-mono text-black underline underline-offset-4 hover:text-slate-600"
+                className="mt-4 text-[10px] font-bold font-mono text-black underline underline-offset-4 hover:text-slate-600 hover:cursor-pointer"
               >
                 Clear search
               </button>
@@ -307,16 +307,6 @@ export default function HistoryPage() {
                   <span className="text-xs font-bold text-slate-500 uppercase">
                     Comparison Mode
                   </span>
-                  <button
-                    onClick={() =>
-                      navigator.clipboard.writeText(
-                        selectedDoc.humanized_content,
-                      )
-                    }
-                    className="text-xs bg-black text-white px-3 py-1 rounded-md hover:bg-slate-800 transition-colors"
-                  >
-                    Copy Humanized
-                  </button>
                 </div>
 
                 <div className="grid md:grid-cols-2 divide-x">
@@ -330,42 +320,76 @@ export default function HistoryPage() {
                     </p>
                   </div>
 
-                  {/* Humanized */}
-                  <div className="p-6 bg-green-50/30">
-                    <h4 className="text-[10px] font-black text-green-600 uppercase mb-4 tracking-widest">
+                  {/* Humanized Side */}
+                  <div className="p-6 bg-slate-50/30">
+                    <h4 className="text-[10px] font-black text-indigo-600 uppercase mb-4 tracking-widest flex items-center gap-2">
+                      <Sparkles size={12} />
                       Humanized Version
                     </h4>
-                    <p className="text-sm text-slate-800 leading-relaxed font-medium">
-                      {selectedDoc.humanized_content}
-                    </p>
-                    <button
-                      onClick={() =>
-                        copyForGoogleDocs(selectedDoc.humanized_content)
-                      }
-                      className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
-                    >
-                      <FileText size={16} />
-                      Copy for Google Docs
-                    </button>
-                    <button
-                      onClick={() => handleDownload(selectedDoc)}
-                      className="text-xs bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded-md hover:bg-slate-50 transition-colors flex items-center gap-2"
-                    >
-                      <span>Download PDF</span>
-                    </button>
-                    <button
-                      onClick={() => handleReHumanize(selectedDoc)}
-                      className="flex-1 text-xs bg-slate-900 text-white py-2 rounded-lg hover:bg-black transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Sparkles size={14} />
-                      Re-Humanize
-                    </button>
+
+                    {selectedDoc.humanized_content ? (
+                      /* SCENARIO A: Content exists - Show results and Action Grid */
+                      <div className="space-y-6">
+                        <p className="text-sm text-slate-800 leading-relaxed font-medium bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                          {selectedDoc.humanized_content}
+                        </p>
+
+                        {/* Action Button Grid */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() =>
+                              copyForGoogleDocs(selectedDoc.humanized_content)
+                            }
+                            className="col-span-2 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all"
+                          >
+                            <FileText size={14} />
+                            Copy for Google Docs
+                          </button>
+
+                          <button
+                            onClick={() => handleDownload(selectedDoc)}
+                            className="py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
+                          >
+                            Download PDF
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              handleNavigateToHumanizer(selectedDoc)
+                            }
+                            className="py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-black transition-colors flex items-center justify-center gap-2"
+                          >
+                            <Sparkles size={14} />
+                            Re-Humanize
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* SCENARIO B: Content is missing - Show "Call to Action" */
+                      <div className="h-full flex flex-col items-center justify-center py-12 text-center">
+                        <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mb-4">
+                          <Sparkles size={24} />
+                        </div>
+                        <h5 className="font-bold text-slate-900 text-sm">
+                          Not Humanized Yet
+                        </h5>
+                        <p className="text-xs text-slate-500 mt-1 mb-6 max-w-50">
+                          This document was only scanned for AI detection.
+                        </p>
+                        <button
+                          onClick={() => handleNavigateToHumanizer(selectedDoc)}
+                          className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+                        >
+                          Humanize this text
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </>
           ) : (
-            <div className="h-100 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center text-slate-400">
+            <div className="h-200 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center text-slate-400">
               Select a document to view comparison
             </div>
           )}
