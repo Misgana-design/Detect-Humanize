@@ -1,11 +1,10 @@
-// src/app/api/detect/route.ts
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { DetectionService } from "@/services/ai/detectionService";
 import crypto from "crypto";
 
 const RATE_LIMITS = {
-  free: 10,
+  free: 1000,
   pro: 1000,
   enterprise: 10000,
 };
@@ -21,19 +20,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { text } = await req.json();
-    if (!text || text.split(" ").length < 50) {
+    if (!text || text.split(/\s+/).length < 50) {
       return NextResponse.json(
         { error: "Text must be at least 50 words." },
         { status: 400 },
       );
     }
 
-    // 1. RATE LIMITING CHECK
+    // 1. RATE LIMIT & TIER CHECK
     const { data: profile } = await supabase
       .from("profiles")
       .select("api_usage_count, subscription_tier")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     const tier =
       (profile?.subscription_tier as keyof typeof RATE_LIMITS) || "free";
@@ -41,53 +40,104 @@ export async function POST(req: Request) {
 
     if (profile && profile.api_usage_count >= limit) {
       return NextResponse.json(
-        { error: "Usage limit reached. Please upgrade via Polar." },
+        { error: "Usage limit reached." },
         { status: 402 },
       );
     }
 
-    // 2. CACHE CHECK (Hashing)
-    // ARCHITECTURE DECISION: Hash the text to create a deterministic ID.
-    // If a user scans the same essay twice, we fetch from Supabase instead of billing Gemini.
+    // 2. CACHE CHECK
     const textHash = crypto
       .createHash("sha256")
       .update(text.trim())
       .digest("hex");
-
     const { data: cachedDoc } = await supabase
       .from("detection_cache")
       .select("result")
       .eq("hash", textHash)
-      .single();
+      .maybeSingle();
+
+    let aiResult;
+    let isCached = false;
 
     if (cachedDoc) {
-      return NextResponse.json({ ...cachedDoc.result, cached: true });
+      aiResult = cachedDoc.result;
+      isCached = true;
+    } else {
+      // 🔥 ARCHITECTURAL UPDATE: Pass the 'tier' to the service
+      aiResult = await DetectionService.analyzeText(text, tier);
+
+      if (typeof aiResult?.aiProbability !== "number") {
+        throw new Error("AI Service returned invalid data structure");
+      }
     }
 
-    // 3. RUN AI DETECTION
-    const aiResult = await DetectionService.analyzeText(text);
+    // 3. SAVE DOCUMENT
+    const generatedTitle =
+      text
+        .split(/\s+/)
+        .slice(0, 6)
+        .join(" ")
+        .replace(/[^\w\s]/gi, "") + "...";
 
-    // 4. SAVE TO CACHE & INCREMENT USAGE (Run in parallel for speed)
-    await Promise.all([
-      supabase
-        .from("detection_cache")
-        .upsert({ hash: textHash, result: aiResult }),
-      supabase.rpc("increment_api_usage", { user_id_input: user.id }), // Requires a Supabase RPC function
-      supabase
-        .from("documents")
-        .insert({
-          user_id: user.id,
-          content: text,
-          ai_score: aiResult.aiProbability,
-        }),
-    ]);
+    const { data: doc, error: docError } = await supabase
+      .from("documents")
+      .insert({
+        user_id: user.id,
+        title: generatedTitle,
+        original_content: text,
+        humanized_content: null,
+        tone_used: "analytical",
+      })
+      .select()
+      .single();
 
-    return NextResponse.json({ ...aiResult, cached: false });
+    if (docError) throw new Error(`Database error: ${docError.message}`);
+
+    // 4. PARALLEL BACKGROUND TASKS
+    const parallelTasks = [
+      supabase.rpc("increment_api_usage", { user_id_input: user.id }),
+      supabase.from("detection_results").insert({
+        document_id: doc.id,
+        user_id: user.id,
+        ai_score: aiResult.aiProbability / 100,
+        details: {
+          // 🔥 USE THE MODEL ACTUALLY RETURNED (Pro vs Flash)
+          model: aiResult.modelUsed || "Gemini-Detector",
+          word_count: text.split(/\s+/).length,
+          flagged_sentences_count: aiResult.flaggedSentences?.length || 0,
+          tier_requested: tier,
+        },
+      }),
+    ];
+
+    if (!isCached) {
+      parallelTasks.push(
+        supabase
+          .from("detection_cache")
+          .upsert({ hash: textHash, result: aiResult }),
+      );
+    }
+
+    const taskResults = await Promise.all(parallelTasks);
+    taskResults.forEach((res, idx) => {
+      if (res.error) console.error(`Background Task ${idx} failed:`, res.error);
+    });
+
+    return NextResponse.json({
+      ...aiResult,
+      documentId: doc.id,
+      cached: isCached,
+    });
   } catch (error: any) {
-    console.error("Detection Error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 },
-    );
+    console.error("DETECTION_API_CRASH:", error.message || error);
+
+    // Catch 503 "High Demand" errors if they slip past the service's retry logic
+    const status = error.status === 503 ? 503 : 500;
+    const message =
+      status === 503
+        ? "AI is currently busy. Try again in a few seconds."
+        : error.message || "Internal Server Error";
+
+    return NextResponse.json({ error: message }, { status });
   }
 }
