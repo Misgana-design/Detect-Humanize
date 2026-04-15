@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { HumanizerService, Tone } from "@/services/ai/humanizerService";
 import crypto from "crypto";
 
+
 const PLAN_LIMITS = {
   free: 500, // words
   pro: 3000,
@@ -23,6 +24,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     const text: string = body.text;
     const tone: Tone = body.tone || "professional";
+
+    // 👉 THE FIX: Accept an optional documentId from the frontend
+    const documentId: string | undefined = body.documentId;
 
     if (!text || text.trim() === "") {
       return NextResponse.json({ error: "Text is required." }, { status: 400 });
@@ -48,7 +52,6 @@ export async function POST(req: Request) {
     }
 
     // 2. CACHE CHECK (Cost Optimization)
-    // Hash includes the tone, so "casual" and "professional" versions are cached separately
     const cacheKey = crypto
       .createHash("sha256")
       .update(`${text.trim()}_${tone}`)
@@ -58,39 +61,84 @@ export async function POST(req: Request) {
       .from("humanization_cache")
       .select("result")
       .eq("hash", cacheKey)
-      .single();
+      .maybeSingle(); // Changed to maybeSingle to prevent throwing errors on miss
+
+    let aiResult;
+    let isCached = false;
 
     if (cachedResult) {
-      return NextResponse.json({ ...cachedResult.result, cached: true });
+      aiResult = cachedResult.result;
+      isCached = true;
+    } else {
+      // 3. EXECUTE AI SERVICE (Only if it wasn't in the cache)
+      aiResult = await HumanizerService.rewrite(text, tone);
     }
 
-    const generatedTitle =
-      text
-        .split(/\s+/)
-        .slice(0, 6)
-        .join(" ")
-        .replace(/[^\w\s]/gi, "") + "...";
+    // 4. PERSISTENCE
+    // We explicitly type this as Promise<any>[]
+    const parallelTasks: Promise<any>[] = [
+      // Wrapping in an async arrow function ensures a native Promise return
+      (async () => {
+        const { error } = await supabase.rpc("increment_api_usage", {
+          user_id_input: user.id,
+        });
+        if (error) throw error;
+      })(),
+    ];
 
-    // 3. EXECUTE AI SERVICE
-    const aiResult = await HumanizerService.rewrite(text, tone);
+    // Cache the result if this was a fresh Gemini run
+    if (!isCached) {
+      parallelTasks.push(
+        (async () => {
+          const { error } = await supabase.from("humanization_cache").upsert({
+            hash: cacheKey,
+            result: aiResult,
+          });
+          if (error) throw error;
+        })(),
+      );
+    }
 
-    // 4. PERSISTENCE (Run in parallel to not block the response)
-    await Promise.all([
-      supabase.from("humanization_cache").upsert({
-        hash: cacheKey,
-        result: aiResult,
-      }),
-      supabase.from("documents").insert({
-        user_id: user.id,
-        title: generatedTitle,
-        original_content: text,
-        humanized_content: aiResult.humanizedText,
-        tone_used: tone,
-      }),
-      supabase.rpc("increment_api_usage", { user_id_input: user.id }),
-    ]);
+    // Conditionally either update the existing scan OR insert a new file
+    if (documentId) {
+      parallelTasks.push(
+        (async () => {
+          const { error } = await supabase
+            .from("documents")
+            .update({
+              humanized_content: aiResult.humanizedText,
+              tone_used: tone,
+            })
+            .eq("id", documentId)
+            .eq("user_id", user.id);
+          if (error) throw error;
+        })(),
+      );
+    } else {
+      const generatedTitle =
+        text
+          .split(/\s+/)
+          .slice(0, 6)
+          .join(" ")
+          .replace(/[^\w\s]/gi, "") + "...";
 
-    return NextResponse.json({ ...aiResult, cached: false });
+      parallelTasks.push(
+        (async () => {
+          const { error } = await supabase.from("documents").insert({
+            user_id: user.id,
+            title: generatedTitle,
+            original_content: text,
+            humanized_content: aiResult.humanizedText,
+            tone_used: tone,
+          });
+          if (error) throw error;
+        })(),
+      );
+    }
+
+    await Promise.all(parallelTasks);
+
+    return NextResponse.json({ ...aiResult, cached: isCached });
   } catch (error: any) {
     console.error("Humanizer API Error:", error);
     return NextResponse.json(
