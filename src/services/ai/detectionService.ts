@@ -1,9 +1,12 @@
-import { VertexAI, SchemaType } from "@google-cloud/vertexai";
+// 1. Fixed Import: Use GoogleGenAI instead of Client
+import { GoogleGenAI } from "@google/genai";
 
-// 1. Initialize Vertex AI
-const vertex_ai = new VertexAI({
+// Initialize the Unified Client
+// The SDK automatically uses your gcp-key.json via GOOGLE_APPLICATION_CREDENTIALS
+const client = new GoogleGenAI({
   project: process.env.GCP_PROJECT_ID!,
-  location: "us-central1",
+  location: "global",
+  vertexai: true, // Ensures usage of Vertex AI and your $300 credits
 });
 
 export interface DetectionResult {
@@ -19,24 +22,32 @@ export interface DetectionResult {
 export class DetectionService {
   private static readonly CHUNK_SIZE = 400;
 
-  // UPDATED: Using the 2026 model IDs found in your Model Garden screenshot
+  // 2026 Model IDs - Use '-preview' to avoid 404 errors in Vertex AI Garden
   private static readonly MODELS = {
     FREE: "gemini-3-flash-preview",
     PRO: "gemini-3.1-pro-preview",
   };
 
   private static readonly detectionSchema = {
-    type: SchemaType.OBJECT,
+    type: "OBJECT",
     properties: {
-      aiProbability: { type: SchemaType.NUMBER },
-      confidence: { type: SchemaType.STRING, enum: ["low", "medium", "high"] },
-      flaggedSentences: {
-        type: SchemaType.ARRAY,
-        items: { type: SchemaType.STRING },
+      analysis: {
+        type: "STRING",
+        description:
+          "Detailed linguistic forensic analysis identifying specific AI markers vs human variance.",
       },
-      analysis: { type: SchemaType.STRING },
+      flaggedSentences: {
+        type: "ARRAY",
+        items: { type: "STRING" },
+      },
+      confidence: { type: "STRING", enum: ["low", "medium", "high"] },
+      aiProbability: {
+        type: "NUMBER",
+        description:
+          "0-100 score. Be aggressive: if the text is overly polished or lacks 'burstiness', it is likely AI.",
+      },
     },
-    required: ["aiProbability", "confidence", "flaggedSentences", "analysis"],
+    required: ["analysis", "flaggedSentences", "confidence", "aiProbability"],
   };
 
   static async analyzeText(
@@ -59,7 +70,6 @@ export class DetectionService {
 
     return {
       ...aggregated,
-      // Logic update: Ensure the returned metadata reflects the 2026 models
       modelUsed: userTier === "pro" ? this.MODELS.PRO : this.MODELS.FREE,
     };
   }
@@ -69,42 +79,63 @@ export class DetectionService {
     userTier: string,
     attempt = 1,
   ): Promise<DetectionResult> {
-    // UPDATED: Use the new Gemini 3 model names
     const modelName = userTier === "pro" ? this.MODELS.PRO : this.MODELS.FREE;
 
-    const model = vertex_ai.getGenerativeModel({
-      model: modelName,
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: this.detectionSchema,
-        temperature: 0.1,
-      },
-    });
-
     try {
-      const prompt = `Analyze the following text for AI generation patterns. Focus on perplexity, burstiness, and common LLM transitions. Text: "${chunk}"`;
+      const response = await client.models.generateContent({
+        model: modelName,
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `Analyze this text for AI markers: "${chunk}"` }],
+          },
+        ],
+        config: {
+          // FIX 1: Move systemInstruction HERE
+          systemInstruction: `You are a Linguistic Forensic Expert. 
+          Your goal is to distinguish between 'Human Messiness' and 'AI Polishing'.
+          
+          SCORING RUBRIC:
+          - 0-20%: Text has typos, slang, unique idioms, or varying sentence lengths.
+          - 20-60%: Likely human but heavily edited or formal.
+          - 60-100%: Text is perfectly structured, uses "Moreover/Furthermore/In conclusion" excessively, and lacks personal perspective.
+          
+          Be aggressive. If the text reads like an LLM (smooth, repetitive rhythm), the score must be > 80%.`,
 
-      const result = await model.generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
+          responseMimeType: "application/json",
+          responseSchema: this.detectionSchema,
+          temperature: 0.1,
+
+          // FEATURE: Enable 'Thinking' for Gemini 3 to improve detection depth
+          // This allows the model to "reason" internally before giving the JSON
+          ...(modelName.includes("gemini-3") && {
+            thinkingConfig: { includeThoughts: true },
+          }),
+        },
       });
 
-      const response = await result.response;
-      const rawText = response.candidates![0].content.parts[0].text;
+      const rawText = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) throw new Error("No text returned");
 
-      if (!rawText) throw new Error("Empty response from Vertex AI");
+      const result = JSON.parse(rawText) as DetectionResult;
 
-      return JSON.parse(rawText as string) as DetectionResult;
+      console.log(
+        `[${modelName}] AI Score: ${result.aiProbability}% | Confidence: ${result.confidence}`,
+      );
+      return result;
     } catch (error: any) {
       const isOverloaded = error.status === 503 || error.status === 429;
 
       if (isOverloaded && attempt <= 2) {
-        console.warn(`Vertex ${modelName} busy, retrying chunk...`);
+        console.warn(
+          `Vertex ${modelName} busy, retrying chunk (Attempt ${attempt})...`,
+        );
         await new Promise((r) => setTimeout(r, attempt * 1000));
         return this.analyzeChunk(chunk, userTier, attempt + 1);
       }
 
-      // If Pro fails 3 times, we drop to Flash (Free) to ensure service stays up
       if (userTier === "pro" && attempt === 3) {
+        console.warn(`Pro model failed 3 times. Falling back to Flash...`);
         return this.analyzeChunk(chunk, "free", 4);
       }
 
