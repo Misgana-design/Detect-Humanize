@@ -147,27 +147,27 @@ export class DetectionService {
     if (results.length === 0) throw new Error("No results to aggregate");
     if (results.length === 1) return results[0];
 
-    const totalProbability = results.reduce(
-      (acc, curr) => acc + curr.aiProbability,
-      0,
-    );
-    const avgProbability = Math.round(totalProbability / results.length);
+    // 1. SWITCHED: Use Math.max instead of a standard average
+    // This highlights the "most suspicious" part of the text.
+    const maxProbability = Math.max(...results.map((r) => r.aiProbability));
 
     const allFlagged = results.flatMap((r) => r.flaggedSentences);
     const uniqueFlagged = [...new Set(allFlagged)];
 
+    // 2. Logic for Confidence: If the max score is high, confidence should be too.
     const confidences = results.map((r) => r.confidence);
-    const confidence = confidences.includes("low")
-      ? "low"
+    const confidence = confidences.includes("high")
+      ? "high"
       : confidences.includes("medium")
         ? "medium"
-        : "high";
+        : "low";
 
     return {
-      aiProbability: avgProbability,
+      aiProbability: maxProbability,
       confidence,
       flaggedSentences: uniqueFlagged,
-      analysis: `Aggregated analysis over ${results.length} text chunks. Average AI probability is ${avgProbability}%.`,
+      // 3. Updated analysis text to reflect the peak probability
+      analysis: `Analysis completed over ${results.length} text chunks. The highest AI signal detected was ${maxProbability}%.`,
     };
   }
 }
