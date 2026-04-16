@@ -114,10 +114,17 @@ export class DetectionService {
         },
       });
 
+      const cleanJsonResponse = (text: string) => {
+        return text
+          .replace(/```json/g, "") // Remove ```json
+          .replace(/```/g, "") // Remove ```
+          .trim(); // Remove whitespace/newlines
+      };
+
       const rawText = response.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawText) throw new Error("No text returned");
 
-      const result = JSON.parse(rawText) as DetectionResult;
+      const result = JSON.parse(cleanJsonResponse(rawText)) as DetectionResult;
 
       console.log(
         `[${modelName}] AI Score: ${result.aiProbability}% | Confidence: ${result.confidence}`,
