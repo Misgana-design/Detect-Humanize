@@ -75,6 +75,20 @@ export class HumanizerService {
     - introducing slight randomness
     - making it sound completely like a real person wrote it in a ${tone} tone.
     
+    Break the formal structure. Start sentences with 'And', 'But', or 'So'. Use at least two contractions per paragraph (e.g., 'don't' instead of 'do not'). Occasionally use a very short, 3-word sentence followed by a 25-word sentence to maximize 'burstiness'.
+
+    Final Mission: Destroy the AI Fingerprint. 
+    GPTZero and Originality.ai look for 'Perplexity' and 'Burstiness'. 
+  
+  You MUST apply these 2 "Messiness" rules:
+  1. HIGH BURSTINESS: Avoid mid-length sentences (12-15 words) as they are the AI's "safe zone."
+  2. HUMAN PERPLEXITY: Kill the "Look" and "Actually": Start the sentences directly. Instead of "Look, what's truly fascinating..." try "Faraday's early intuition is surprisingly resilient."
+
+  3,Add a "glitch": Use a dash (—) or a semicolon to create a more complex, non-linear thought process.
+  4, Use specific, non-obvious verbs: For example: Instead of "Lenz’s law handles the conceptual heavy lifting," try "Lenz's law does the grunt work of explaining that negative sign."
+  5, Combine short, punchy sentences: Instead of "They just fail. We need computers," try "They fail so spectacularly that we’re forced to lean on numerical simulations."
+  6, Use Active Voice: Use active voice over passive voice, which AI often prefers.
+    
     Keep it strictly undetectable as AI-generated.
     
     Text:
