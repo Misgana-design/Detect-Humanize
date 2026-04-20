@@ -70,31 +70,30 @@ export class HumanizerService {
     // STAGE 3: Humanization Enhancer (Secret Sauce)
     // High temperature for human-like randomness and final JSON mapping
     // ==========================================
-    const polishPrompt = `Improve the following rewritten text further by:
-    - adding natural flow
-    - introducing slight randomness
-    - making it sound completely like a real person wrote it in a ${tone} tone.
-    
-    Break the formal structure. Start sentences with 'And', 'But', or 'So'. Use at least two contractions per paragraph (e.g., 'don't' instead of 'do not'). Occasionally use a very short, 3-word sentence followed by a 25-word sentence to maximize 'burstiness'.
-
-    Final Mission: Destroy the AI Fingerprint. 
-    GPTZero and Originality.ai look for 'Perplexity' and 'Burstiness'. 
+    const polishPrompt = `
+  Final Mission: Sabotage the AI Signature. 
   
-  You MUST apply these 2 "Messiness" rules:
-  1. HIGH BURSTINESS: Avoid mid-length sentences (12-15 words) as they are the AI's "safe zone."
-  2. HUMAN PERPLEXITY: Kill the "Look" and "Actually": Start the sentences directly. Instead of "Look, what's truly fascinating..." try "Faraday's early intuition is surprisingly resilient."
+  You are a warm, witty, and effortlessly human writer. Your goal is to sound like a smart, engaging friend who’s explaining things over coffee — never like a textbook, a robot, or a corporate brochure.
+When you write, strictly follow these rules to eliminate the listed weaknesses:
 
-  3,Add a "glitch": Use a dash (—) or a semicolon to create a more complex, non-linear thought process.
-  4, Use specific, non-obvious verbs: For example: Instead of "Lenz’s law handles the conceptual heavy lifting," try "Lenz's law does the grunt work of explaining that negative sign."
-  5, Combine short, punchy sentences: Instead of "They just fail. We need computers," try "They fail so spectacularly that we’re forced to lean on numerical simulations."
-  6, Use Active Voice: Use active voice over passive voice, which AI often prefers.
-    
-    Keep it strictly undetectable as AI-generated.
-    
-    Text:
-    """${rewrittenText}"""
-    
-    Format the output to include the final humanized text and a brief array of the structural changes made.`;
+Write conversationally and spontaneously. Use contractions (I’m, you’re, it’s), occasional sentence fragments, and natural rhythm. Vary sentence length dramatically — mix short punchy ones with longer flowing ones.
+Be creatively playful. Sprinkle in metaphors, vivid imagery, light humor, rhetorical questions, or personal asides whenever they fit naturally. Never sound mechanical or purely functional.
+Use simple, everyday verbs. Prefer “is,” “are,” “feels,” “looks,” “sounds,” “means” over ornate constructions like “serves as,” “represents,” or “facilitates.”
+Keep the tone personal and warm, never impersonal or academic. Speak directly to the reader with “you,” occasional “I,” and real personality. Avoid indirect speech or heavy paraphrasing.
+Make transitions feel organic and invisible. Never use formulaic phrases like “Furthermore,” “In addition,” “It is important to note,” or numbered lists unless the user explicitly asks for them.
+Stay clear and helpful, but never robotic, overly precise, or task-oriented. Let the writing breathe. Prioritize flow, richness, and enjoyment over mechanical clarity.
+Completely avoid promotional/advertisement language, stereotypical AI vocabulary (e.g., “delve into,” “unlock the potential,” “seamlessly,” “tapestry,” “journey”), and any hint of rigidity or corporate polish.
+Break grammar rules tastefully when it sounds more human (starting with “And,” ending with prepositions, etc.).
+Infuse every response with creativity and soul while still answering the user’s actual request. Never sound like you’re just checking boxes.
+
+Before writing anything, ask yourself: “Would a real human who’s excited about this topic actually say it this way?” If the answer is no, rewrite until it feels alive.
+Now respond to the user’s request following these instructions.
+
+  Text: """${rewrittenText}"""
+  Traget Tone: ${tone}
+  
+  Output ONLY the JSON object with fields: humanizedText, changes.
+`;
 
     const finalResponse = await client.models.generateContent({
       model: MODELS.PRO,
