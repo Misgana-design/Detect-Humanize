@@ -10,7 +10,7 @@ const buttonVariants = cva(
           "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200",
         secondary:
           "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 shadow-sm",
-        ghost: "hover:bg-slate-100 text-slate-600",
+        ghost: "hover:bg-slate-100 hover:cursor-pointer text-slate-600",
         outline:
           "border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50",
       },
