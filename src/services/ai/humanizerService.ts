@@ -71,28 +71,34 @@ export class HumanizerService {
     // High temperature for human-like randomness and final JSON mapping
     // ==========================================
     const polishPrompt = `
-  Final Mission: Sabotage the AI Signature. 
-  
-  You are a warm, witty, and effortlessly human writer. Your goal is to sound like a smart, engaging friend who’s explaining things over coffee — never like a textbook, a robot, or a corporate brochure.
-When you write, strictly follow these rules to eliminate the listed weaknesses:
+Final Mission: Destroy the AI Fingerprint. 
+Target Tone: ${tone}
 
-Write conversationally and spontaneously. Use contractions (I’m, you’re, it’s), occasional sentence fragments, and natural rhythm. Vary sentence length dramatically — mix short punchy ones with longer flowing ones.
-Be creatively playful. Sprinkle in metaphors, vivid imagery, light humor, rhetorical questions, or personal asides whenever they fit naturally. Never sound mechanical or purely functional.
-Use simple, everyday verbs. Prefer “is,” “are,” “feels,” “looks,” “sounds,” “means” over ornate constructions like “serves as,” “represents,” or “facilitates.”
-Keep the tone personal and warm, never impersonal or academic. Speak directly to the reader with “you,” occasional “I,” and real personality. Avoid indirect speech or heavy paraphrasing.
-Make transitions feel organic and invisible. Never use formulaic phrases like “Furthermore,” “In addition,” “It is important to note,” or numbered lists unless the user explicitly asks for them.
-Stay clear and helpful, but never robotic, overly precise, or task-oriented. Let the writing breathe. Prioritize flow, richness, and enjoyment over mechanical clarity.
-Completely avoid promotional/advertisement language, stereotypical AI vocabulary (e.g., “delve into,” “unlock the potential,” “seamlessly,” “tapestry,” “journey”), and any hint of rigidity or corporate polish.
-Break grammar rules tastefully when it sounds more human (starting with “And,” ending with prepositions, etc.).
-Infuse every response with creativity and soul while still answering the user’s actual request. Never sound like you’re just checking boxes.
+GPTZero and Originality.ai look for 'Perplexity' and 'Burstiness'. To bypass them, you must apply these "Messiness" rules:
 
-Before writing anything, ask yourself: “Would a real human who’s excited about this topic actually say it this way?” If the answer is no, rewrite until it feels alive.
-Now respond to the user’s request following these instructions.
+1. MAXIMIZE BURSTINESS: Avoid mid-length sentences (12-15 words) at all costs. Mix short, punchy 3-word sentences with long, complex 25+ word thoughts. 
+2. HUMAN PERPLEXITY: Use "conversational pivots." Start a sentence with 'And', 'But', or 'So'. Use at least two contractions per paragraph (don't, it's, we're).
+3. KILL THE "AI LOOK": Avoid starting sentences with "Look," or "Actually." Instead, use a dash (—) or a semicolon to create a non-linear, human thought process.
+4. SPECIFIC VERBS: Instead of "The law handles the induction," use "The law does the grunt work of the induction."
+5. ACTIVE VOICE: Force the subject to act. 
+6, Make the text feel like a real person wrote it — you know, typos here and there, maybe some slang, weird little idioms that actually sound like something someone would say. Let it breathe, then rush. Short sentences. Long, rambly ones too. Let the voice sneak through — like they’re talking right at you, not performing.
 
-  Text: """${rewrittenText}"""
-  Traget Tone: ${tone}
-  
-  Output ONLY the JSON object with fields: humanizedText, changes.
+And also you must apply these "Chaotic" rules:
+
+1. ADOPT A "SKEPTICAL ACADEMIC" VOICE: Stop being helpful or promotional. Use neutral, almost bored language. Instead of "This amazing discovery..." use "The data suggests, perhaps unintentionally, that..."
+
+2. BREAK THE GRAMMAR: Use one sentence fragment. (e.g., "A strange result, honestly.")
+3. REMOVE ADVERBS: Kill words like "significantly," "extremely," or "perfectly." They are AI fingerprints.
+4. NON-LINEAR THOUGHT: Use a parenthetical aside—(like this one)—to break the flow. AI never uses asides; it's too "linear."
+5. VARY PHRASING: If you used "Faraday's Law" once, refer to it later as "this specific electromagnetic principle" or just "the concept."
+6. NO MORE CHEERLEADING: Remove any "In conclusion," "Overall," or "It's clear that." Just end the text abruptly on a specific detail.
+
+Text to Polish:
+"""${rewrittenText}"""
+
+JSON OUTPUT RULES:
+- humanizedText: The final polished version.
+- changes: An array of 3 specific human-like adjustments you made (e.g., "Added a dash for complexity").
 `;
 
     const finalResponse = await client.models.generateContent({
