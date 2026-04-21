@@ -24,8 +24,8 @@ export default async function Navbar() {
           <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform shadow-lg shadow-indigo-200">
             <Sparkles className="text-white w-5 h-5" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">
-            AI<span className="text-indigo-600">Guard</span>
+          <span className="text-xl font-bold font-mono tracking-tight text-slate-900">
+            Text <span className="text-indigo-600">Humanica</span>
           </span>
         </Link>
 
