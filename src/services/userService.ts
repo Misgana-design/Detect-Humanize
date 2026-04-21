@@ -1,12 +1,12 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { UserProfile } from "@/types";
+import { UserProfile } from "@/types/UserProfile";
 
 /**
  * Service to handle user-related data operations.
  */
 export const UserService = {
   async getProfile(): Promise<UserProfile | null> {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
