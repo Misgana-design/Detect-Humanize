@@ -1,57 +1,60 @@
-import { VertexAI, SchemaType } from "@google-cloud/vertexai";
+// geminiClient.ts
+import { GoogleGenAI } from "@google/genai";
+import fs from "node:fs"; // ← Added for /tmp file creation
 
-// 1. Initialize the Vertex AI client for your GCP Project
-// This will automatically use the JSON key from GOOGLE_APPLICATION_CREDENTIALS
-export const vertex_ai = new VertexAI({
+// === Runtime setup for GOOGLE_APPLICATION_CREDENTIALS (Vercel + local) ===
+if (
+  process.env.GCP_SERVICE_ACCOUNT_JSON &&
+  !process.env.GOOGLE_APPLICATION_CREDENTIALS
+) {
+  const credentialsPath = "/tmp/gcp-service-account.json";
+
+  // Write the JSON string to a temp file
+  fs.writeFileSync(
+    credentialsPath,
+    process.env.GCP_SERVICE_ACCOUNT_JSON,
+    "utf-8",
+  );
+
+  // Tell Google SDK where to find the credentials
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
+
+  console.log(
+    "✅ GOOGLE_APPLICATION_CREDENTIALS set from GCP_SERVICE_ACCOUNT_JSON (Vercel mode)",
+  );
+}
+
+// 1. Initialize using GoogleGenAI (now uses ADC via GOOGLE_APPLICATION_CREDENTIALS)
+export const client = new GoogleGenAI({
   project: process.env.GCP_PROJECT_ID!,
-  location: "us-central1",
+  location: "global",
+  vertexai: true, // Required to use Vertex AI & $300 credits
+  // ← NO googleAuthOptions needed anymore
 });
 
-// 2. Detection Schema (Vertex AI compatible)
+// 2. Detection Schema
 export const detectionSchema = {
-  type: SchemaType.OBJECT,
+  type: "OBJECT",
   properties: {
-    aiProbability: {
-      type: SchemaType.NUMBER,
-      description: "0 to 100 probability of AI generation",
-    },
-    confidence: {
-      type: SchemaType.STRING,
-      description: "low, medium, or high",
-    },
-    flaggedSentences: {
-      type: SchemaType.ARRAY,
-      items: { type: SchemaType.STRING },
-      description: "Exact sentences that appear AI-generated",
-    },
-    analysis: {
-      type: SchemaType.STRING,
-      description: "Brief reasoning for the score",
-    },
+    aiProbability: { type: "NUMBER" },
+    confidence: { type: "STRING" },
+    flaggedSentences: { type: "ARRAY", items: { type: "STRING" } },
+    analysis: { type: "STRING" },
   },
   required: ["aiProbability", "confidence", "flaggedSentences", "analysis"],
 };
 
 // 3. Humanizer Schema
 export const humanizerSchema = {
-  type: SchemaType.OBJECT,
+  type: "OBJECT",
   properties: {
-    humanizedText: {
-      type: SchemaType.STRING,
-      description: "The rewritten, natural-sounding text.",
-    },
-    changes: {
-      type: SchemaType.ARRAY,
-      items: { type: SchemaType.STRING },
-      description: "3-5 key structural or tonal changes made.",
-    },
+    humanizedText: { type: "STRING" },
+    changes: { type: "ARRAY", items: { type: "STRING" } },
   },
   required: ["humanizedText", "changes"],
 };
 
-// 4. Standard Model Names for 2026 logic
-// We keep these strings here so you only change them in one place
 export const MODELS = {
-  FREE: "gemini-3-flash-preview", // High speed / low cost
-  PRO: "gemini-3.1-pro-preview", // Deep reasoning / agentic
+  FREE: "gemini-3-flash-preview",
+  PRO: "gemini-3.1-pro-preview",
 };
