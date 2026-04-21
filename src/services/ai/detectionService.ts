@@ -20,7 +20,7 @@ export interface DetectionResult {
 }
 
 export class DetectionService {
-  private static readonly CHUNK_SIZE = 400;
+  private static readonly CHUNK_SIZE = 200;
 
   // 2026 Model IDs - Use '-preview' to avoid 404 errors in Vertex AI Garden
   private static readonly MODELS = {
