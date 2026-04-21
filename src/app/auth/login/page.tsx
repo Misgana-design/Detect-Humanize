@@ -1,13 +1,33 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { login } from "@/app/auth/actions";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>; // 2. Define it as a Promise
+  searchParams: Promise<{ error?: string }>;
 }) {
-  // 3. Await the params before accessing .error
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[80vh]">
+          Loading login form...
+        </div>
+      }
+    >
+      <LoginFormContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+// Inner async component – all dynamic work happens here
+async function LoginFormContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { error } = await searchParams;
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh]">
       <div className="w-full max-w-md p-8 space-y-6 bg-white border rounded-2xl shadow-sm">
@@ -18,7 +38,6 @@ export default async function LoginPage({
           </p>
         </div>
 
-        {/* Server Actions allow us to pass the function directly to the 'action' prop */}
         <form action={login} className="space-y-4">
           {error && (
             <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg">
