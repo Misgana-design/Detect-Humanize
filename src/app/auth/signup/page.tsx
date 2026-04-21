@@ -1,13 +1,33 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { signup } from "@/app/auth/actions";
 
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>; // 2. Define it as a Promise
+  searchParams: Promise<{ error?: string }>;
 }) {
-  // 3. Await the params before accessing .error
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[80vh]">
+          Loading signup form...
+        </div>
+      }
+    >
+      <SignupFormContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+// Inner async component – all the dynamic work happens here
+async function SignupFormContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { error } = await searchParams;
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh]">
       <div className="w-full max-w-md p-8 space-y-6 bg-white border rounded-2xl shadow-sm">
@@ -24,13 +44,13 @@ export default async function SignupPage({
           )}
 
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="password">
-              Full Name 
+            <label className="text-sm font-medium" htmlFor="name">
+              Full Name
             </label>
             <input
               id="name"
               name="name"
-              type="name"
+              type="text"
               required
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
