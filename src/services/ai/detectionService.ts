@@ -54,6 +54,17 @@ export class DetectionService {
     text: string,
     userTier: string = "free",
   ): Promise<DetectionResult> {
+    // === 3B: Empty text guard ===
+    if (!text?.trim()) {
+      return {
+        aiProbability: 0,
+        confidence: "low",
+        flaggedSentences: [],
+        analysis: "Empty or whitespace-only input",
+        modelUsed: userTier === "pro" ? this.MODELS.PRO : this.MODELS.FREE,
+      };
+    }
+
     const words = text.split(/\s+/);
     const chunks: string[] = [];
 
@@ -91,40 +102,51 @@ export class DetectionService {
           },
         ],
         config: {
-          // FIX 1: Move systemInstruction HERE
-          systemInstruction: `You are a Linguistic Forensic Expert. 
-          Your goal is to distinguish between 'Human Messiness' and 'AI Polishing'.
-          
-          SCORING RUBRIC:
-          - 0-20%: Text has typos, slang, unique idioms, or varying sentence lengths.
-          - 20-60%: Likely human but heavily edited or formal.
-          - 60-100%: Text is perfectly structured, uses "Moreover/Furthermore/In conclusion" excessively, and lacks personal perspective.
-          
-          Be aggressive. If the text reads like an LLM (smooth, repetitive rhythm), the score must be > 80%.`,
+          systemInstruction: `You are a Linguistic Forensic Expert.
+          Your goal is to distinguish between genuine human writing and AI-generated text.
+
+          SCORING RUBRIC (0-100% AI probability):
+          - 0-25%: Clear human traits — typos, slang, unique idioms, natural burstiness, varying sentence rhythm, personal voice.
+          - 25-60%: Heavily edited or formal human text, but still shows some human variance.
+          - 60-100%: Overly polished, repetitive rhythm, excessive transitional phrases (Moreover, Furthermore, In conclusion), lacks personal perspective or emotional tone.
+
+          IMPORTANT GUIDANCE:
+          - If the text appears deliberately humanized (intentional minor imperfections, manually added variance, or edited to sound more natural), be more lenient — lower the score.
+          - Only give >80% if the text is suspiciously perfect AND lacks any human markers.
+          - Be accurate, not overly punitive.`,
 
           responseMimeType: "application/json",
-          responseSchema: this.detectionSchema,
+          responseJsonSchema: this.detectionSchema,
           temperature: 0.1,
 
           // FEATURE: Enable 'Thinking' for Gemini 3 to improve detection depth
-          // This allows the model to "reason" internally before giving the JSON
           ...(modelName.includes("gemini-3") && {
             thinkingConfig: { includeThoughts: true },
           }),
         },
       });
 
-      const cleanJsonResponse = (text: string) => {
-        return text
-          .replace(/```json/g, "") // Remove ```json
-          .replace(/```/g, "") // Remove ```
-          .trim(); // Remove whitespace/newlines
-      };
-
-      const rawText = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      const rawText =
+        response.text ?? response.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawText) throw new Error("No text returned");
 
-      const result = JSON.parse(cleanJsonResponse(rawText)) as DetectionResult;
+      // === 3A: Safer JSON extraction (handles thinking + markdown fences) ===
+      let cleanedJson = rawText.trim();
+
+      // Remove possible markdown code fences that Gemini sometimes adds
+      if (cleanedJson.startsWith("```json")) {
+        cleanedJson = cleanedJson
+          .replace(/^```json\s*/, "")
+          .replace(/\s*```$/, "");
+      } else if (cleanedJson.startsWith("```")) {
+        cleanedJson = cleanedJson.replace(/^```\s*/, "").replace(/\s*```$/, "");
+      }
+
+      // Fallback regex (still useful in rare cases)
+      const match = cleanedJson.match(/\{[\s\S]*\}/);
+      if (match) cleanedJson = match[0];
+
+      const result = JSON.parse(cleanedJson) as DetectionResult;
 
       console.log(
         `[${modelName}] AI Score: ${result.aiProbability}% | Confidence: ${result.confidence}`,
@@ -154,14 +176,19 @@ export class DetectionService {
     if (results.length === 0) throw new Error("No results to aggregate");
     if (results.length === 1) return results[0];
 
-    // 1. SWITCHED: Use Math.max instead of a standard average
-    // This highlights the "most suspicious" part of the text.
-    const maxProbability = Math.max(...results.map((r) => r.aiProbability));
+    // Find the chunk with the highest AI probability (most suspicious part)
+    const maxIndex = results.reduce(
+      (maxIdx, result, idx) =>
+        result.aiProbability > results[maxIdx].aiProbability ? idx : maxIdx,
+      0,
+    );
+
+    const maxResult = results[maxIndex];
+    const maxProbability = maxResult.aiProbability;
 
     const allFlagged = results.flatMap((r) => r.flaggedSentences);
     const uniqueFlagged = [...new Set(allFlagged)];
 
-    // 2. Logic for Confidence: If the max score is high, confidence should be too.
     const confidences = results.map((r) => r.confidence);
     const confidence = confidences.includes("high")
       ? "high"
@@ -173,8 +200,11 @@ export class DetectionService {
       aiProbability: maxProbability,
       confidence,
       flaggedSentences: uniqueFlagged,
-      // 3. Updated analysis text to reflect the peak probability
-      analysis: `Analysis completed over ${results.length} text chunks. The highest AI signal detected was ${maxProbability}%.`,
+      // === Keep the richest analysis from the most suspicious chunk ===
+      analysis:
+        `Analysis completed over ${results.length} chunks.\n\n` +
+        `Most suspicious chunk (score ${maxProbability}%):\n` +
+        maxResult.analysis,
     };
   }
 }
