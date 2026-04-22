@@ -19,7 +19,10 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Please sign in to humanize text" },
+        { status: 401 },
+      );
     }
 
     const body = await req.json();
