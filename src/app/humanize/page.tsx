@@ -4,7 +4,14 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useHumanizer } from "@/hooks/useHumanizer";
 import { Tone } from "@/services/ai/humanizerService";
-import { Sparkles, Copy, Check, RotateCcw, FileText } from "lucide-react";
+import {
+  Sparkles,
+  Copy,
+  Check,
+  RotateCcw,
+  FileText,
+  AlertCircle,
+} from "lucide-react";
 
 // We wrap the content in a Suspense boundary because useSearchParams()
 // requires it for static rendering in Next.js
@@ -130,9 +137,10 @@ function HumanizerContent() {
             )}
           </button>
           {error && (
-            <p className="text-red-500 text-xs font-medium text-center">
+            <div className="flex font-mono items-center gap-2 text-black text-sm bg-red-50 p-3 rounded-lg border border-red-100">
+              <AlertCircle size={16} />
               {error.message}
-            </p>
+            </div>
           )}
         </div>
 
