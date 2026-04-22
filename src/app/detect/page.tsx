@@ -103,7 +103,7 @@ export default function DetectPage() {
             </div>
           </div>
           {error && (
-            <div className="flex items-center gap-2 text-red-500 text-sm bg-red-50 p-3 rounded-lg border border-red-100">
+            <div className="flex font-mono items-center gap-2 text-black text-sm bg-red-50 p-3 rounded-lg border border-red-100">
               <AlertCircle size={16} />
               {error.message}
             </div>
