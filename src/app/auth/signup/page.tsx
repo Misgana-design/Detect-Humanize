@@ -45,7 +45,7 @@ async function SignupFormContent({
 
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="name">
-              Full Name
+              Name
             </label>
             <input
               id="name"
