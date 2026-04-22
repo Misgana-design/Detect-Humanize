@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser();
 
     if (!user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Please sign in to use detector" }, { status: 401 });
 
     const { text } = await req.json();
     if (!text || text.split(/\s+/).length < 50) {
