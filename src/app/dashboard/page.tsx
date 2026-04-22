@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
-export const dynamic = "force-dynamic";
+
 
 // 1. THE SKELETON UI (Masks any layout shifting or loading lag)
 function DashboardSkeleton() {
