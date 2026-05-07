@@ -6,7 +6,7 @@
  *
  * Remove or protect this endpoint before going to production.
  *
- * Body: { tier: "basic" | "basic_weekly" | "pro" | "unlimited" | "enterprise" | "pro_weekly", cadence?: "monthly" | "yearly" | "weekly" }
+ * Body: { tier: "basic" | "pro" | "unlimited" | "enterprise" | "pro_weekly", cadence?: "monthly" | "yearly" | "weekly" }
  */
 
 import { NextResponse } from "next/server";
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
   const plan = getPlanDefinition(tier);
   if (plan.tier === "free") {
-    return NextResponse.json({ error: "Use tier=basic/basic_weekly/pro/unlimited/enterprise/pro_weekly" }, { status: 400 });
+    return NextResponse.json({ error: "Use tier=basic/pro/unlimited/enterprise/pro_weekly" }, { status: 400 });
   }
 
   if (!plan.supportedCadences.includes(cadence)) {
