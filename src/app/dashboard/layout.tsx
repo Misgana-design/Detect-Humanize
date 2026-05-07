@@ -1,4 +1,15 @@
 import { Sidebar } from "@/components/dashboard/Sidebar";
+import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: "Dashboard",
+    description: "Your Text Humanica dashboard, history, and account usage.",
+    path: "/dashboard",
+    noIndex: true,
+  });
+}
 
 export default function DashboardLayout({
   children,
