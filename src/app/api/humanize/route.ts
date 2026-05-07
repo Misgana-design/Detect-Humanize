@@ -1,15 +1,12 @@
-import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { HumanizerService, Tone } from "@/services/ai/humanizerService";
 import crypto from "crypto";
+import { NextResponse } from "next/server";
+import { getPlanDefinition, getRemainingWords } from "@/lib/billing/plans";
+import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
+import { HumanizerService, Tone, HumanizerTier } from "@/services/ai/humanizerService";
+import { runWithPriority } from "@/lib/queue/humanizeQueue";
+import { sendHumanizationEmail } from "@/services/email/emailService";
 
-export const maxDuration = 30;
-
-const PLAN_LIMITS = {
-  free: 500, // words
-  pro: 3000,
-  enterprise: 10000,
-};
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -27,35 +24,41 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const text: string = body.text;
-    const tone: Tone = body.tone || "professional";
-
-    // 👉 THE FIX: Accept an optional documentId from the frontend
+    const tone: Tone = body.tone || "default";
     const documentId: string | undefined = body.documentId;
+    const wordCount = text?.trim() ? text.trim().split(/\s+/).length : 0;
 
     if (!text || text.trim() === "") {
       return NextResponse.json({ error: "Text is required." }, { status: 400 });
     }
 
-    // 1. PLAN LIMIT CHECK
-    const wordCount = text.split(/\s+/).length;
     const { data: profile } = await supabase
       .from("profiles")
-      .select("subscription_tier")
+      .select("*")
       .eq("id", user.id)
       .single();
 
-    const tier =
-      (profile?.subscription_tier as keyof typeof PLAN_LIMITS) || "free";
-    if (wordCount > PLAN_LIMITS[tier]) {
+    const plan = getPlanDefinition(profile?.subscription_tier);
+    const wordsUsed = profile?.words_used ?? 0;
+
+    if (plan.maxWordsPerInput !== null && wordCount > plan.maxWordsPerInput) {
       return NextResponse.json(
         {
-          error: `Your ${tier} plan limits you to ${PLAN_LIMITS[tier]} words per request.`,
+          error: `${plan.name} allows up to ${plan.maxWordsPerInput.toLocaleString()} words per input.`,
         },
         { status: 403 },
       );
     }
 
-    // 2. CACHE CHECK (Cost Optimization)
+    if (plan.wordQuota !== null && wordsUsed + wordCount > plan.wordQuota) {
+      return NextResponse.json(
+        {
+          error: `${plan.name} includes ${plan.wordQuota.toLocaleString()} words per ${plan.quotaPeriod}.`,
+        },
+        { status: 402 },
+      );
+    }
+
     const cacheKey = crypto
       .createHash("sha256")
       .update(`${text.trim()}_${tone}`)
@@ -65,7 +68,7 @@ export async function POST(req: Request) {
       .from("humanization_cache")
       .select("result")
       .eq("hash", cacheKey)
-      .maybeSingle(); // Changed to maybeSingle to prevent throwing errors on miss
+      .maybeSingle();
 
     let aiResult;
     let isCached = false;
@@ -74,23 +77,35 @@ export async function POST(req: Request) {
       aiResult = cachedResult.result;
       isCached = true;
     } else {
-      // 3. EXECUTE AI SERVICE (Only if it wasn't in the cache)
-      aiResult = await HumanizerService.rewrite(text, tone);
+      // Determine humanizer tier: free → 1-stage Flash, basic → 3-stage Flash, pro+ → 3-stage Pro
+      const humanizerTier: HumanizerTier =
+        plan.tier === "free"
+          ? "free"
+          : plan.tier === "basic"
+            ? "basic"
+            : "pro";
+
+      const isPaid = plan.tier !== "free";
+
+      // Run through priority queue — paid users get high priority
+      aiResult = await runWithPriority(
+        () => HumanizerService.rewrite(text, tone, humanizerTier),
+        isPaid,
+      );
     }
 
-    // 4. PERSISTENCE
-    // We explicitly type this as Promise<any>[]
-    const parallelTasks: Promise<any>[] = [
-      // Wrapping in an async arrow function ensures a native Promise return
+    const parallelTasks: Promise<void | null>[] = [
       (async () => {
-        const { error } = await supabase.rpc("increment_api_usage", {
+        // Use service client to bypass RLS on the RPC call
+        const serviceClient = createServiceSupabaseClient();
+        const { error } = await serviceClient.rpc("consume_plan_usage", {
           user_id_input: user.id,
+          words_to_add: wordCount,
         });
         if (error) throw error;
       })(),
     ];
 
-    // Cache the result if this was a fresh Gemini run
     if (!isCached) {
       parallelTasks.push(
         (async () => {
@@ -103,7 +118,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Conditionally either update the existing scan OR insert a new file
     if (documentId) {
       parallelTasks.push(
         (async () => {
@@ -142,8 +156,22 @@ export async function POST(req: Request) {
 
     await Promise.all(parallelTasks);
 
+    // Send notification email (fire-and-forget — never block the response)
+    if (user.email) {
+      const remaining = getRemainingWords(plan.tier, wordsUsed + wordCount);
+      void sendHumanizationEmail({
+        to: user.email,
+        name: profile?.full_name || user.email.split("@")[0] || "there",
+        wordCount,
+        tone,
+        planName: plan.name,
+        wordsRemaining: remaining,
+        changes: aiResult.changes ?? [],
+      }).catch((err) => console.error("[email] Humanization email failed:", err));
+    }
+
     return NextResponse.json({ ...aiResult, cached: isCached });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Humanizer API Error:", error);
     return NextResponse.json(
       { error: "Failed to process text" },
