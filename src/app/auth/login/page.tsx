@@ -30,7 +30,7 @@ async function LoginFormContent({
 
   return (
     <div className="relative flex min-h-[80vh] items-center justify-center overflow-hidden px-4 py-12">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.14),_transparent_40%),linear-gradient(to_bottom,_#f8fafc,_#eef2ff)]" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.14),transparent_40%),linear-gradient(to_bottom,#f8fafc,#eef2ff)]" />
       <div className="w-full max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-2xl shadow-indigo-100 backdrop-blur">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-sm font-bold text-white shadow-lg shadow-indigo-200">
@@ -52,7 +52,10 @@ async function LoginFormContent({
           )}
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="email">
+            <label
+              className="text-sm font-medium text-slate-700"
+              htmlFor="email"
+            >
               Email
             </label>
             <input
@@ -99,7 +102,10 @@ async function LoginFormContent({
 
         <p className="mt-6 text-center text-sm text-slate-500">
           Don&apos;t have an account?{" "}
-          <Link href="/auth/signup" className="font-medium text-indigo-600 hover:underline">
+          <Link
+            href="/auth/signup"
+            className="font-medium text-indigo-600 hover:underline"
+          >
             Create one
           </Link>
         </p>
