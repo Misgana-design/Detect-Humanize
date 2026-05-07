@@ -10,6 +10,20 @@ export interface UserProfile {
   bio?: string | null;
   role?: "user" | "admin" | "moderator" | null;
   isActive?: boolean;
+  credits?: number | null;
+  api_usage_count?: number | null;
+  words_used?: number | null;
+  subscription_tier?:
+    | "free"
+    | "basic"
+    | "pro"
+    | "unlimited"
+    | "enterprise"
+    | "pro_weekly"
+    | null;
+  billing_cadence?: "free" | "monthly" | "yearly" | "weekly" | null;
+  polar_customer_id?: string | null;
+  polar_subscription_id?: string | null;
   createdAt: string; // ISO timestamp from Supabase
   updatedAt?: string | null; // ISO timestamp from Supabase
 }
