@@ -16,7 +16,7 @@ export async function humanizeTextAction(content: string) {
     .replace(/In conclusion/g, "So, basically");
 
   // Save to database
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("humanization_results")
     .insert({
       user_id: user.id,
