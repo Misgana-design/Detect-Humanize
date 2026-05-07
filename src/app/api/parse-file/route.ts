@@ -26,14 +26,14 @@ async function parsePdf(buffer: ArrayBuffer): Promise<string> {
   pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
 
   // Point to the standard fonts bundled with pdfjs to suppress the font warning
-  const standardFontDataUrl = pathToFileURL(
-    path.resolve(process.cwd(), "node_modules/pdfjs-dist/standard_fonts/"),
-  ).href + "/";
+  const standardFontDataUrl =
+    pathToFileURL(
+      path.resolve(process.cwd(), "node_modules/pdfjs-dist/standard_fonts/"),
+    ).href + "/";
 
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(buffer),
     useWorkerFetch: false,
-    isEvalSupported: false,
     standardFontDataUrl,
   });
 
