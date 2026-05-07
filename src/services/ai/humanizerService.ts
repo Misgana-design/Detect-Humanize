@@ -1,122 +1,209 @@
 import { client, humanizerSchema, MODELS } from "./geminiClient";
 
-export type Tone = "casual" | "professional" | "academic";
+export type Tone =
+  | "casual"
+  | "professional"
+  | "academic"
+  | "formal"
+  | "creative"
+  | "friendly"
+  | "storytelling"
+  | "default";
+
+export type HumanizerTier = "free" | "basic" | "pro";
 
 export interface HumanizerResult {
   humanizedText: string;
   changes: string[];
 }
 
+// ── Chunk size in words ───────────────────────────────────────────────────────
+// Free: smaller chunks to stay within Flash model limits
+// Paid: larger chunks for better context and coherence
+const CHUNK_SIZES: Record<HumanizerTier, number> = {
+  free:  300,
+  basic: 400,
+  pro:   500,
+};
+
+function splitIntoChunks(text: string, chunkSize: number): string[] {
+  const sentences = text.match(/[^.!?]+[.!?]+[\s]*/g) ?? [text];
+  const chunks: string[] = [];
+  let current = "";
+  let wordCount = 0;
+
+  for (const sentence of sentences) {
+    const sentenceWords = sentence.trim().split(/\s+/).length;
+    if (wordCount + sentenceWords > chunkSize && current.trim()) {
+      chunks.push(current.trim());
+      current = sentence;
+      wordCount = sentenceWords;
+    } else {
+      current += sentence;
+      wordCount += sentenceWords;
+    }
+  }
+
+  if (current.trim()) chunks.push(current.trim());
+  return chunks.length > 0 ? chunks : [text];
+}
+
 export class HumanizerService {
   /**
-   * Transforms AI-generated text into natural, human-like text using a 3-stage pipeline.
+   * Rewrites text using a tier-aware pipeline with chunking:
+   *  - free  → 1-stage Flash, chunked at 300 words
+   *  - basic → 3-stage Flash, chunked at 400 words
+   *  - pro+  → 3-stage Pro,   chunked at 500 words
    */
-  static async rewrite(text: string, tone: Tone): Promise<HumanizerResult> {
-    // ==========================================
-    // STAGE 1: Analysis (Detection + Breakdown)
-    // Low temperature for strictly analytical insight
-    // ==========================================
-    const analysisPrompt = `Analyze the following text and identify:
-    - AI-like patterns
-    - unnatural phrasing
-    - repetitive structure
-    - tone issues
+  static async rewrite(
+    text: string,
+    tone: Tone,
+    tier: HumanizerTier = "free",
+  ): Promise<HumanizerResult> {
+    const model = tier === "free" || tier === "basic" ? MODELS.FREE : MODELS.PRO;
+    const chunkSize = CHUNK_SIZES[tier];
+    const wordCount = text.trim().split(/\s+/).length;
 
-    Text:
-    """${text}"""`;
+    // Only chunk if text exceeds the chunk size
+    if (wordCount <= chunkSize) {
+      return tier === "free"
+        ? this.rewriteSingleStage(text, tone, model)
+        : this.rewriteThreeStage(text, tone, model);
+    }
 
-    const analysisResponse = await client.models.generateContent({
-      model: MODELS.PRO,
-      contents: analysisPrompt,
+    // Split into chunks and process in parallel
+    const chunks = splitIntoChunks(text, chunkSize);
+    console.log(`[humanizer] Chunking ${wordCount} words into ${chunks.length} chunks (tier=${tier})`);
+
+    const chunkResults = await Promise.all(
+      chunks.map((chunk) =>
+        tier === "free"
+          ? this.rewriteSingleStage(chunk, tone, model)
+          : this.rewriteThreeStage(chunk, tone, model),
+      ),
+    );
+
+    // Merge results
+    const humanizedText = chunkResults.map((r) => r.humanizedText).join("\n\n");
+    const allChanges = [...new Set(chunkResults.flatMap((r) => r.changes))].slice(0, 5);
+
+    return { humanizedText, changes: allChanges };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1-stage pipeline (free tier — Flash model, single prompt)
+  // ─────────────────────────────────────────────────────────────────────────
+  private static async rewriteSingleStage(
+    text: string,
+    tone: Tone,
+    model: string,
+  ): Promise<HumanizerResult> {
+    const prompt = `You are a text humanizer. Rewrite the following AI-generated text to sound natural and human-like.
+Target tone: ${tone === "default" ? "natural and conversational" : tone}.
+
+Rules:
+- Vary sentence length (mix short punchy sentences with longer ones)
+- Use contractions (don't, it's, we're)
+- Remove overly formal transitions (Moreover, Furthermore, In conclusion)
+- Keep the original meaning intact
+- Return ONLY valid JSON
+
+Text:
+"""${text}"""
+
+Return JSON: { "humanizedText": "...", "changes": ["change1", "change2", "change3"] }`;
+
+    const response = await client.models.generateContent({
+      model,
+      contents: prompt,
       config: {
-        temperature: 0.2, // Keep it cold and logical
+        responseMimeType: "application/json",
+        responseSchema: humanizerSchema,
+        temperature: 0.75,
       },
     });
 
-    const analysis =
-      analysisResponse.text || "No specific weaknesses identified.";
+    if (!response.text) throw new Error("Empty response from AI model.");
+    return JSON.parse(response.text) as HumanizerResult;
+  }
 
-    // ==========================================
-    // STAGE 2: Rewrite (The Core)
-    // Medium temperature to balance structure and flow
-    // ==========================================
-    const rewritePrompt = `Rewrite the following text to sound natural and human-like.
-    Target Tone: ${tone.toUpperCase()}
-    
-    Address these specific weaknesses identified in the original text:
-    ${analysis}
+  // ─────────────────────────────────────────────────────────────────────────
+  // 3-stage pipeline (basic = Flash, pro+ = Pro model)
+  // ─────────────────────────────────────────────────────────────────────────
+  private static async rewriteThreeStage(
+    text: string,
+    tone: Tone,
+    model: string,
+  ): Promise<HumanizerResult> {
+    // Stage 1: Analysis
+    const analysisResponse = await client.models.generateContent({
+      model,
+      contents: `Analyze the following text and identify:
+- AI-like patterns
+- unnatural phrasing
+- repetitive structure
+- tone issues
 
-    Rules:
-    - vary sentence length
-    - add slight imperfections
-    - use conversational tone
-    - avoid robotic phrasing
-    - keep original meaning
+Text:
+"""${text}"""`,
+      config: { temperature: 0.2 },
+    });
 
-    Text:
-    """${text}"""`;
+    const analysis = analysisResponse.text || "No specific weaknesses identified.";
 
+    // Stage 2: Rewrite
     const rewriteResponse = await client.models.generateContent({
-      model: MODELS.PRO,
-      contents: rewritePrompt,
-      config: {
-        temperature: 0.7, // Standard creative variation
-      },
+      model,
+      contents: `Rewrite the following text to sound natural and human-like.
+Target Tone: ${tone === "default" ? "NATURAL AND CONVERSATIONAL" : tone.toUpperCase()}
+
+Address these specific weaknesses:
+${analysis}
+
+Rules:
+- vary sentence length
+- add slight imperfections
+- use conversational tone
+- avoid robotic phrasing
+- keep original meaning
+
+Text:
+"""${text}"""`,
+      config: { temperature: 0.7 },
     });
 
     const rewrittenText = rewriteResponse.text || text;
 
-    // ==========================================
-    // STAGE 3: Humanization Enhancer (Secret Sauce)
-    // High temperature for human-like randomness and final JSON mapping
-    // ==========================================
-    const polishPrompt = `
-Final Mission: Destroy the AI Fingerprint. 
-Target Tone: ${tone}
+    // Stage 3: Polish
+    const finalResponse = await client.models.generateContent({
+      model,
+      contents: `Final Mission: Destroy the AI Fingerprint.
+Target Tone: ${tone === "default" ? "natural and conversational" : tone}
 
-GPTZero and Originality.ai look for 'Perplexity' and 'Burstiness'. To bypass them, you must apply these "Messiness" rules:
-
-1. MAXIMIZE BURSTINESS: Avoid mid-length sentences (12-15 words) at all costs. Mix short, punchy 3-word sentences with long, complex 25+ word thoughts. 
-2. HUMAN PERPLEXITY: Use "conversational pivots." Start a sentence with 'And', 'But', or 'So'. Use at least two contractions per paragraph (don't, it's, we're).
-3. KILL THE "AI LOOK": Avoid starting sentences with "Look," or "Actually." Instead, use a dash (—) or a semicolon to create a non-linear, human thought process.
-4. SPECIFIC VERBS: Instead of "The law handles the induction," use "The law does the grunt work of the induction."
-5. ACTIVE VOICE: Force the subject to act. 
-6, Make the text feel like a real person wrote it — you know, typos here and there, maybe some slang, weird little idioms that actually sound like something someone would say. Let it breathe, then rush. Short sentences. Long, rambly ones too. Let the voice sneak through — like they’re talking right at you, not performing.
-
-And also you must apply these "Chaotic" rules:
-
-1. ADOPT A "SKEPTICAL ACADEMIC" VOICE: Stop being helpful or promotional. Use neutral, almost bored language. Instead of "This amazing discovery..." use "The data suggests, perhaps unintentionally, that..."
-
-2. BREAK THE GRAMMAR: Use one sentence fragment. (e.g., "A strange result, honestly.")
-3. REMOVE ADVERBS: Kill words like "significantly," "extremely," or "perfectly." They are AI fingerprints.
-4. NON-LINEAR THOUGHT: Use a parenthetical aside—(like this one)—to break the flow. AI never uses asides; it's too "linear."
-5. VARY PHRASING: If you used "Faraday's Law" once, refer to it later as "this specific electromagnetic principle" or just "the concept."
-6. NO MORE CHEERLEADING: Remove any "In conclusion," "Overall," or "It's clear that." Just end the text abruptly on a specific detail.
+Apply these humanization rules:
+1. MAXIMIZE BURSTINESS: Mix short 3-word sentences with long 25+ word thoughts.
+2. HUMAN PERPLEXITY: Start sentences with 'And', 'But', or 'So'. Use contractions.
+3. KILL THE "AI LOOK": Use dashes (—) and semicolons instead of linear transitions.
+4. SPECIFIC VERBS: Replace generic verbs with vivid, specific ones.
+5. ACTIVE VOICE: Force the subject to act.
+6. SKEPTICAL ACADEMIC VOICE: Use neutral, almost bored language.
+7. BREAK THE GRAMMAR: Use one sentence fragment.
+8. REMOVE ADVERBS: Kill "significantly," "extremely," "perfectly."
+9. NON-LINEAR THOUGHT: Add a parenthetical aside—(like this one).
+10. NO CHEERLEADING: Remove "In conclusion," "Overall," "It's clear that."
 
 Text to Polish:
 """${rewrittenText}"""
 
-JSON OUTPUT RULES:
-- humanizedText: The final polished version.
-- changes: An array of 3 specific human-like adjustments you made (e.g., "Added a dash for complexity").
-`;
-
-    const finalResponse = await client.models.generateContent({
-      model: MODELS.PRO,
-      contents: polishPrompt,
+JSON OUTPUT: { "humanizedText": "final polished version", "changes": ["3 specific adjustments made"] }`,
       config: {
         responseMimeType: "application/json",
         responseSchema: humanizerSchema,
-        temperature: 0.9, // High variance for that final human imperfection
+        temperature: 0.9,
       },
     });
 
-    if (!finalResponse.text) {
-      throw new Error(
-        "Received an empty response from Gemini during final polish",
-      );
-    }
-
+    if (!finalResponse.text) throw new Error("Empty response from AI model during final polish.");
     return JSON.parse(finalResponse.text) as HumanizerResult;
   }
 }

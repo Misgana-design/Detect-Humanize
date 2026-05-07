@@ -152,8 +152,15 @@ export class DetectionService {
         `[${modelName}] AI Score: ${result.aiProbability}% | Confidence: ${result.confidence}`,
       );
       return result;
-    } catch (error: any) {
-      const isOverloaded = error.status === 503 || error.status === 429;
+    } catch (error: unknown) {
+      const status =
+        typeof error === "object" &&
+        error !== null &&
+        "status" in error &&
+        typeof (error as { status?: unknown }).status === "number"
+          ? (error as { status: number }).status
+          : undefined;
+      const isOverloaded = status === 503 || status === 429;
 
       if (isOverloaded && attempt <= 2) {
         console.warn(
