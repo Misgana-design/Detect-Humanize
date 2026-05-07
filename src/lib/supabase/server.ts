@@ -1,8 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 export async function createServerSupabaseClient() {
-  const cookieStore = await cookies(); // Await this too in Next.js 15!
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,11 +19,34 @@ export async function createServerSupabaseClient() {
               cookieStore.set(name, value, options),
             );
           } catch {
-            // The setAll method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing tokens.
+            // Called from a Server Component — safe to ignore.
           }
         },
       },
     },
   );
+}
+
+/**
+ * Service-role client — bypasses RLS entirely.
+ * Use ONLY in trusted server-side contexts (webhooks, migrations, admin tasks).
+ * Never expose this client to the browser.
+ */
+export function createServiceSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set. " +
+      "Add SUPABASE_SERVICE_ROLE_KEY to your .env.local (find it in Supabase → Settings → API → service_role key).",
+    );
+  }
+
+  return createClient(url, serviceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }

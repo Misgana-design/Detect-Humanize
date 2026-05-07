@@ -24,6 +24,10 @@ export function useHumanizer() {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          window.location.assign("/auth/signup");
+          throw new Error("Redirecting to signup...");
+        }
         const err = await res.json();
         throw new Error(err.error || "Failed to humanize text");
       }
