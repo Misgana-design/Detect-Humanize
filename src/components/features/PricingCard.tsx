@@ -10,7 +10,7 @@ export default function PricingPage() {
           Simple, Transparent Pricing
         </h1>
         <p className="text-slate-500">
-          Choose the plan that's right for your content needs.
+          Choose the plan that&apos;s right for your content needs.
         </p>
       </div>
 
@@ -50,7 +50,17 @@ export default function PricingPage() {
   );
 }
 
-function PlanCard({ title, price, features, highlight }: any) {
+function PlanCard({
+  title,
+  price,
+  features,
+  highlight,
+}: {
+  title: string;
+  price: string;
+  features: string[];
+  highlight?: boolean;
+}) {
   return (
     <div
       className={cn(
