@@ -34,7 +34,7 @@ const COMPARE_ROWS: CompareRow[] = [
   { category: "Humanization", feature: "Re-Humanize",        values: { free: false, basic: true, pro: true, unlimited: true, enterprise: true, pro_weekly: true } },
   // Quotas
   { category: "Quotas", feature: "Words per input",          values: { free: "500", basic: "500", pro: "1,500", unlimited: "2,500", enterprise: "2,500", pro_weekly: "1,000" } },
-  { category: "Quotas", feature: "Monthly word quota",       values: { free: "1,000", basic: "4,000", pro: "20,000", unlimited: "Unlimited", enterprise: "Unlimited", pro_weekly: "5,000/wk" } },
+  { category: "Quotas", feature: "Word quota",               values: { free: "1,000/mo", basic: "4,000/mo", pro: "20,000/mo", unlimited: "Unlimited", enterprise: "Unlimited", pro_weekly: "5,000/wk" } },
   // Exports
   { category: "Exports", feature: "Copy for Google Docs",    values: { free: false, basic: true, pro: true, unlimited: true, enterprise: true, pro_weekly: true } },
   { category: "Exports", feature: "PDF export",              values: { free: false, basic: true, pro: true, unlimited: true, enterprise: true, pro_weekly: true } },
@@ -154,7 +154,7 @@ export default function PricingPage() {
                 onClick={() =>
                   setBillingView((v) => (v === "yearly" ? "monthly" : "yearly"))
                 }
-                className={`relative h-7 w-14 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 ${billingView === "yearly" ? "bg-indigo-600" : "bg-slate-200"}`}
+                className={`relative h-7 w-14 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 hover:cursor-pointer ${billingView === "yearly" ? "bg-indigo-600" : "bg-slate-200"}`}
               >
                 <span
                   className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all duration-200 ${billingView === "yearly" ? "left-8" : "left-1"}`}
