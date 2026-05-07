@@ -38,12 +38,12 @@ export async function proxy(request: NextRequest) {
 
   const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
   const isAuthPage =
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/signup");
+    request.nextUrl.pathname.startsWith("/auth/login") ||
+    request.nextUrl.pathname.startsWith("/auth/signup");
 
   // Protection Logic
   if (!user && isDashboard) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
   // UX: Don't show login/signup to logged-in users
