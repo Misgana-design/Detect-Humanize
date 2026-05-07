@@ -1,5 +1,6 @@
-import { cn } from "@/lib/utils"; // Utility to merge classes
-import { VariantProps, cva } from "class-variance-authority";
+import { type ButtonHTMLAttributes, forwardRef } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center rounded-xl text-sm font-medium transition-all focus:outline-none disabled:opacity-50 active:scale-[0.98]",
@@ -10,7 +11,7 @@ const buttonVariants = cva(
           "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200",
         secondary:
           "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 shadow-sm",
-        ghost: "hover:bg-slate-100 hover:cursor-pointer text-slate-600",
+        ghost: "text-slate-600 hover:bg-slate-100 hover:cursor-pointer",
         outline:
           "border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50",
       },
@@ -20,13 +21,25 @@ const buttonVariants = cva(
         lg: "h-14 px-10 text-base",
       },
     },
-    defaultVariants: { variant: "primary", size: "default" },
+    defaultVariants: {
+      variant: "primary",
+      size: "default",
+    },
   },
 );
 
-export const Button = ({ className, variant, size, ...props }: any) => (
-  <button
-    className={cn(buttonVariants({ variant, size }), className)}
-    {...props}
-  />
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
+  VariantProps<typeof buttonVariants>;
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, type = "button", ...props }, ref) => (
+    <button
+      ref={ref}
+      type={type}
+      className={cn(buttonVariants({ variant, size }), className)}
+      {...props}
+    />
+  ),
 );
+
+Button.displayName = "Button";
