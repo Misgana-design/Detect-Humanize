@@ -6,10 +6,16 @@ import { faqEntries } from "@/lib/site";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    title: "FAQ",
+    title: "AI Detector & Humanizer FAQ",
     description:
-      "Answers to common questions about accuracy, humanization, uploads, and how Text Humanica works.",
+      "Answers about Text Humanica accuracy, AI humanization, GPTZero bypass workflows, Turnitin-style detection, uploads, privacy, and plan limits.",
     path: "/faq",
+    keywords: [
+      "AI detector FAQ",
+      "AI humanizer questions",
+      "GPTZero bypass FAQ",
+      "humanize AI text safely",
+    ],
   });
 }
 

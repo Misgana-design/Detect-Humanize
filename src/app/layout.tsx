@@ -20,9 +20,9 @@ const syne = Syne({
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    title: "AI Detector & Humanizer",
+    title: "Undetectable AI Detector & Humanizer",
     description:
-      "Detect AI-generated writing, humanize robotic drafts, and manage your workflow in one polished writing workspace.",
+      "Detect AI-generated writing, humanize AI text, bypass GPTZero-style flags, and manage your writing workflow in one polished AI workspace.",
     path: "/",
   });
 }

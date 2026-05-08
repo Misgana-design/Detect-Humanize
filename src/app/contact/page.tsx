@@ -6,10 +6,16 @@ import { Clock, Mail, MessageSquare, Zap } from "lucide-react";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    title: "Contact",
+    title: "Contact Support",
     description:
-      "Reach the Text Humanica team for support, billing questions, or partnership inquiries.",
+      "Contact Text Humanica for AI detector support, AI humanizer questions, billing help, enterprise plans, API access, or GPTZero bypass workflow guidance.",
     path: "/contact",
+    keywords: [
+      "Text Humanica support",
+      "AI humanizer support",
+      "AI detector support",
+      "enterprise AI writing API",
+    ],
   });
 }
 

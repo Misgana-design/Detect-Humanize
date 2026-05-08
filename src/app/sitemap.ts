@@ -15,9 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/detector",
     "/detect",
     "/humanize",
-    "/auth/login",
-    "/auth/signup",
-    "/account",
+    "/cookies",
   ].map((path) => ({
     url: `${siteConfig.url}${path}`,
     lastModified: now,

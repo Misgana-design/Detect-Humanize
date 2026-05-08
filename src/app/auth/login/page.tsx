@@ -6,7 +6,7 @@ import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ email?: string; error?: string }>;
 }) {
   return (
     <Suspense
@@ -24,9 +24,9 @@ export default async function LoginPage({
 async function LoginFormContent({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ email?: string; error?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { email, error } = await searchParams;
 
   return (
     <div className="relative flex min-h-[80vh] items-center justify-center overflow-hidden px-4 py-12">
@@ -63,6 +63,7 @@ async function LoginFormContent({
               name="email"
               type="email"
               placeholder="name@example.com"
+              defaultValue={email ?? ""}
               required
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
             />

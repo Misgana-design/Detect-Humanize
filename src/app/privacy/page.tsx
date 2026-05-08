@@ -28,7 +28,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-bold text-slate-900">1. Introduction</h2>
-            <p>{siteConfig.name} ("we", "us", "our") is committed to protecting your privacy. This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data when you use our Service at {siteConfig.url}.</p>
+            <p>{siteConfig.name} (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) is committed to protecting your privacy. This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data when you use our Service at {siteConfig.url}.</p>
           </section>
 
           <section>
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-slate-900">8. Children's Privacy</h2>
+            <h2 className="text-xl font-bold text-slate-900">8. Children&apos;s Privacy</h2>
             <p>The Service is not directed at children under 13. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, contact us and we will delete it promptly.</p>
           </section>
 

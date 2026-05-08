@@ -6,7 +6,7 @@ import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ email?: string; error?: string }>;
 }) {
   return (
     <Suspense
@@ -24,9 +24,11 @@ export default async function SignupPage({
 async function SignupFormContent({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ email?: string; error?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { email, error } = await searchParams;
+  const isExistingAccount =
+    error?.includes("already exists") || error?.includes("log in instead");
 
   return (
     <div className="relative flex min-h-[80vh] items-center justify-center overflow-hidden px-4 py-12">
@@ -47,7 +49,15 @@ async function SignupFormContent({
         <form action={signup} className="space-y-5">
           {error && (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              {decodeURIComponent(error)}
+              <p>{decodeURIComponent(error)}</p>
+              {isExistingAccount && (
+                <Link
+                  href={`/auth/login${email ? `?email=${encodeURIComponent(email)}` : ""}`}
+                  className="mt-2 inline-flex font-semibold text-rose-800 underline underline-offset-4"
+                >
+                  Go to login
+                </Link>
+              )}
             </div>
           )}
 
@@ -74,6 +84,7 @@ async function SignupFormContent({
               name="email"
               type="email"
               required
+              defaultValue={email ?? ""}
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
               placeholder="name@example.com"
             />

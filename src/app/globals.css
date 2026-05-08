@@ -13,6 +13,20 @@ body {
   color: #0f172a;
 }
 
+.brand-wordmark {
+  font-family: var(--font-syne), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01" 1, "kern" 1;
+}
+
+.brand-wordmark-accent {
+  color: #4f46e5;
+}
+
 .marquee {
   animation: marquee 24s linear infinite;
 }

@@ -25,11 +25,24 @@ export function buildMetadata({
 
   return {
     metadataBase: new URL(siteConfig.url),
+    applicationName: siteConfig.name,
     title: fullTitle,
     description,
     keywords: [...siteConfig.keywords, ...keywords],
+    authors: [{ name: siteConfig.name, url: siteConfig.url }],
+    creator: siteConfig.name,
+    publisher: siteConfig.name,
+    category: "AI writing software",
     alternates: {
       canonical: url,
+    },
+    icons: {
+      icon: [
+        { url: siteConfig.favicon, sizes: "any" },
+        { url: siteConfig.logo, type: "image/png" },
+      ],
+      shortcut: siteConfig.favicon,
+      apple: siteConfig.logo,
     },
     openGraph: {
       type: "website",
@@ -86,8 +99,28 @@ export function buildOrganizationJsonLd() {
     "@type": "Organization",
     name: siteConfig.name,
     url: siteConfig.url,
-    logo: absoluteUrl("/icon.png"),
+    logo: absoluteUrl(siteConfig.logo),
     sameAs: [siteConfig.url],
+  };
+}
+
+export function buildSoftwareApplicationJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: siteConfig.name,
+    applicationCategory: "WritingApplication",
+    operatingSystem: "Web",
+    url: siteConfig.url,
+    image: absoluteUrl(siteConfig.logo),
+    description: siteConfig.description,
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "USD",
+      lowPrice: "0",
+      highPrice: "79.99",
+      offerCount: 6,
+    },
   };
 }
 

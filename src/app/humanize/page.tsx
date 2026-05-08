@@ -6,10 +6,16 @@ import { buildBreadcrumbJsonLd, buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    title: "AI Humanizer",
+    title: "AI Humanizer to Bypass GPTZero & Humanize ChatGPT Text",
     description:
-      "Upload or paste robotic drafts, rewrite them in your preferred tone, and review the changes in one focused screen.",
+      "Humanize AI text from ChatGPT, Claude, or Gemini with natural tone, stronger burstiness, and cleaner phrasing designed to reduce AI detector flags.",
     path: "/humanize",
+    keywords: [
+      "AI humanizer",
+      "humanize AI text",
+      "bypass GPTZero",
+      "undetectable AI text",
+    ],
   });
 }
 
