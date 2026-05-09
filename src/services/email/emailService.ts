@@ -48,8 +48,8 @@ function baseTemplate(content: string): string {
           <tr>
             <td style="padding-bottom:24px;" align="center">
               <a href="${SITE_URL}" style="text-decoration:none;display:inline-flex;align-items:center;gap:10px;">
-                <span style="display:inline-block;width:36px;height:36px;background:#4f46e5;border-radius:10px;text-align:center;line-height:36px;font-size:16px;">✨</span>
-                <span style="font-size:18px;font-weight:700;color:#0f172a;">Text <span style="color:#4f46e5;">Humanica</span></span>
+                <img src="${SITE_URL}/logo-icon.png" alt="Text Humanica" width="36" height="36" style="border-radius:8px;display:block;" />
+                <span style="font-size:18px;font-weight:700;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;letter-spacing:-0.01em;">Text <span style="color:#4f46e5;">Humanica</span></span>
               </a>
             </td>
           </tr>
