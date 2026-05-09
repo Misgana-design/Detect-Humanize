@@ -37,12 +37,35 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
-  const isAuthPage =
+  const isAccount   = request.nextUrl.pathname.startsWith("/account");
+  const isProtected = isDashboard || isAccount;
+  const isAuthPage  =
     request.nextUrl.pathname.startsWith("/auth/login") ||
     request.nextUrl.pathname.startsWith("/auth/signup");
 
+  // If the user has a valid JWT but their profile row was deleted from the DB,
+  // sign them out and redirect to login. This prevents "ghost sessions".
+  if (user && isProtected) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!profile?.id) {
+      // Profile is gone — invalidate the session and redirect to login
+      await supabase.auth.signOut();
+      const loginUrl = new URL("/auth/login", request.url);
+      loginUrl.searchParams.set(
+        "error",
+        encodeURIComponent("Your account no longer exists. Please sign up again."),
+      );
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   // Protection Logic
-  if (!user && isDashboard) {
+  if (!user && isProtected) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
