@@ -1,12 +1,20 @@
-import Image from "next/image";
+/**
+ * Shared brand mark — used in Navbar, Footer, Sidebar, and any other location
+ * where the Text Humanica logo appears.
+ *
+ * Icon: your custom /logo-icon.png
+ * Font: DM Sans — balanced, premium, used by Notion/Loom-style AI startups
+ */
+
 import Link from "next/link";
+import Image from "next/image";
 
 type BrandSize = "sm" | "md" | "lg";
 
 const sizeMap = {
-  sm: { icon: 28, text: "text-[0.95rem]", gap: "gap-2" },
-  md: { icon: 36, text: "text-[1.05rem]", gap: "gap-2.5" },
-  lg: { icon: 44, text: "text-[1.35rem]", gap: "gap-3" },
+  sm: { icon: 28, textClass: "text-[0.9rem]",  gap: "gap-2"   },
+  md: { icon: 34, textClass: "text-[1rem]",    gap: "gap-2.5" },
+  lg: { icon: 42, textClass: "text-[1.25rem]", gap: "gap-3"   },
 };
 
 export function Brand({
@@ -26,6 +34,7 @@ export function Brand({
       onClick={onClick}
       className={`group inline-flex items-center ${s.gap} select-none`}
     >
+      {/* Your custom logo image */}
       <Image
         src="/logo-icon.png"
         alt="Text Humanica logo"
@@ -35,8 +44,10 @@ export function Brand({
         priority
       />
 
-      <span className={`brand-wordmark ${s.text} text-slate-950`}>
-        Text <span className="brand-wordmark-accent">Humanica</span>
+      {/* Wordmark — DM Sans for premium, balanced feel */}
+      <span className={`brand-wordmark ${s.textClass} text-slate-950`}>
+        Text{" "}
+        <span className="brand-wordmark-accent">Humanica</span>
       </span>
     </Link>
   );
