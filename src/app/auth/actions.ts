@@ -94,8 +94,30 @@ export async function signup(formData: FormData) {
 
 export async function login(formData: FormData) {
   const supabase = await createServerSupabaseClient();
-  const email = formData.get("email") as string;
+  const serviceSupabase = createServiceSupabaseClient();
+  const email = ((formData.get("email") as string) || "").trim().toLowerCase();
   const password = formData.get("password") as string;
+
+  // Check if an account exists for this email before attempting login.
+  // This gives a clear "no account found" message instead of the generic
+  // "Invalid login credentials" that Supabase returns for both wrong password
+  // and non-existent email.
+  const { data: existingProfile } = await serviceSupabase
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (!existingProfile?.id) {
+    return redirect(
+      "/auth/login?error=" +
+        encodeURIComponent(
+          "No account found with this email. Please sign up first.",
+        ) +
+        "&email=" +
+        encodeURIComponent(email),
+    );
+  }
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
