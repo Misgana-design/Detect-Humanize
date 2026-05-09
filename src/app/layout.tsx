@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Inter, Syne } from "next/font/google";
+import { Inter, DM_Sans } from "next/font/google";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Providers from "./providers";
@@ -11,11 +11,12 @@ import { buildMetadata, buildOrganizationJsonLd } from "@/lib/seo";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
-// Premium brand font — Syne: geometric, elegant, used by Linear/Framer-style AI startups
-const syne = Syne({
+// Premium brand font — DM Sans: balanced, modern, used by Notion/Loom-style AI startups.
+// Excellent readability at all sizes, not squeezed, feels trustworthy and clean.
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-syne",
-  weight: ["600", "700", "800"],
+  variable: "--font-dm-sans",
+  weight: ["500", "600", "700"],
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -33,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${syne.variable}`}>
+    <html lang="en" className={`${inter.variable} ${dmSans.variable}`}>
       <body className={inter.className}>
         <StructuredData data={buildOrganizationJsonLd()} />
         <Providers>
