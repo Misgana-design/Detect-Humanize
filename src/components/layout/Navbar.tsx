@@ -293,7 +293,7 @@ export default function Navbar() {
                   <Link
                     href="/auth/signup"
                     onClick={() => setMobileOpen(false)}
-                    className="block w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-indigo-700"
+                    className="block w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-indigo-700 hover:cursor-pointer"
                   >
                     Get Started
                   </Link>
