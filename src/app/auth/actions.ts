@@ -38,7 +38,7 @@ export async function signup(formData: FormData) {
 
   const parsed = signupSchema.safeParse(raw);
   if (!parsed.success) {
-    const firstError = parsed.error.errors[0]?.message ?? "Invalid input.";
+    const firstError = parsed.error.issues[0]?.message ?? "Invalid input.";
     return redirect("/auth/signup?error=" + encodeURIComponent(firstError));
   }
 
@@ -125,7 +125,7 @@ export async function login(formData: FormData) {
 
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
-    const firstError = parsed.error.errors[0]?.message ?? "Invalid input.";
+    const firstError = parsed.error.issues[0]?.message ?? "Invalid input.";
     return redirect("/auth/login?error=" + encodeURIComponent(firstError));
   }
 
