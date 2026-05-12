@@ -73,7 +73,7 @@ export function ProfileMenu({
             <div className="mt-1 rounded-xl px-3 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50">
               <div className="flex items-center gap-3">
                 <LogOut className="h-4 w-4" />
-                <LogoutButton className="text-sm text-slate-700 hover:text-red-600" />
+                <LogoutButton className="text-sm text-slate-700 hover:text-red-600 hover:cursor-pointer" />
               </div>
             </div>
           </div>
