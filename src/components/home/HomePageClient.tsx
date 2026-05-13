@@ -26,9 +26,21 @@ import { siteConfig, testimonials, trustedByLogos } from "@/lib/site";
 // ── Data ────────────────────────────────────────────────────────────────────
 
 const steps = [
-  { n: "1", title: "Paste or upload",  desc: "Drop in a draft or import a document in seconds." },
-  { n: "2", title: "Choose your tool", desc: "Run the AI detector or humanize directly — your call." },
-  { n: "3", title: "Refine and export",desc: "Save reports, compare versions, and keep your workflow moving." },
+  {
+    n: "1",
+    title: "Paste or upload",
+    desc: "Drop in a draft or import a document in seconds.",
+  },
+  {
+    n: "2",
+    title: "Choose your tool",
+    desc: "Run the AI detector or humanize directly — your call.",
+  },
+  {
+    n: "3",
+    title: "Refine and export",
+    desc: "Save reports, compare versions, and keep your workflow moving.",
+  },
 ];
 
 const homeFaqEntries = [
@@ -60,15 +72,37 @@ const homeFaqEntries = [
 ];
 
 const stats = [
-  { value: "400k+", label: "Active users", icon: <Users className="h-5 w-5" /> },
-  { value: "98.2%", label: "Detection accuracy", icon: <TrendingUp className="h-5 w-5" /> },
-  { value: "4.9 / 5", label: "Average rating", icon: <Star className="h-5 w-5 fill-current" /> },
-  { value: "< 10s", label: "Average analysis time", icon: <Zap className="h-5 w-5" /> },
+  {
+    value: "400k+",
+    label: "Active users",
+    icon: <Users className="h-5 w-5" />,
+  },
+  {
+    value: "98.2%",
+    label: "Detection accuracy",
+    icon: <TrendingUp className="h-5 w-5" />,
+  },
+  {
+    value: "4.9 / 5",
+    label: "Average rating",
+    icon: <Star className="h-5 w-5 fill-current" />,
+  },
+  {
+    value: "< 10s",
+    label: "Average analysis time",
+    icon: <Zap className="h-5 w-5" />,
+  },
 ];
 
 // ── Micro-components ─────────────────────────────────────────────────────────
 
-function HomeFaqItem({ question, answer }: { question: string; answer: string }) {
+function HomeFaqItem({
+  question,
+  answer,
+}: {
+  question: string;
+  answer: string;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border-b border-slate-100 last:border-0">
@@ -91,7 +125,15 @@ function HomeFaqItem({ question, answer }: { question: string; answer: string })
   );
 }
 
-function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+function FeatureCard({
+  icon,
+  title,
+  desc,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
   return (
     <article className="group rounded-3xl border border-slate-100 bg-slate-50 p-8 transition-all hover:bg-white hover:shadow-xl hover:shadow-indigo-500/5">
       <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm transition-transform group-hover:scale-110">
@@ -114,15 +156,18 @@ export function HomePageClient() {
     if (trimmed) {
       try {
         sessionStorage.setItem("detector_prefill_text", trimmed);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     // Only put short texts in the URL; long texts come from sessionStorage
     const shortEnough = trimmed.length < 1500;
-    const query = trimmed && shortEnough
-      ? `?text=${encodeURIComponent(trimmed)}&fromHome=1`
-      : trimmed
-        ? "?fromHome=1"
-        : "";
+    const query =
+      trimmed && shortEnough
+        ? `?text=${encodeURIComponent(trimmed)}&fromHome=1`
+        : trimmed
+          ? "?fromHome=1"
+          : "";
     router.push(`/detector${query}`);
   };
 
@@ -131,14 +176,17 @@ export function HomePageClient() {
     if (trimmed) {
       try {
         sessionStorage.setItem("humanize_prefill_text", trimmed);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     const shortEnough = trimmed.length < 1500;
-    const query = trimmed && shortEnough
-      ? `?text=${encodeURIComponent(trimmed)}&fromHome=1`
-      : trimmed
-        ? "?fromHome=1"
-        : "";
+    const query =
+      trimmed && shortEnough
+        ? `?text=${encodeURIComponent(trimmed)}&fromHome=1`
+        : trimmed
+          ? "?fromHome=1"
+          : "";
     router.push(`/humanize${query}`);
   };
 
@@ -202,8 +250,7 @@ export function HomePageClient() {
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
               One workspace for students, researchers, and writers who need to
-              submit with confidence. Bypass GPTZero, Turnitin, and
-              Originality.ai in seconds.
+              submit with confidence.
             </p>
 
             {/* Value props */}
@@ -395,19 +442,47 @@ export function HomePageClient() {
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {[
-              { icon: <ShieldCheck className="text-indigo-600" />, title: "Advanced Detection", desc: "Multi-layer forensic analysis surfaces AI patterns, suspicious phrasing, and sentence-level flags with a probability score." },
-              { icon: <Sparkles className="text-emerald-600" />, title: "3-Stage Humanizer", desc: "Analysis → Rewrite → Polish pipeline destroys the AI fingerprint by maximizing burstiness and perplexity." },
-              { icon: <FileText className="text-amber-600" />, title: "File Upload Support", desc: "Drag and drop TXT, DOCX, PDF, MD, and RTF files up to 10MB. Text is extracted and pre-filled instantly." },
-              { icon: <Zap className="text-rose-600" />, title: "Priority Processing", desc: "Paid plans jump the queue. Your requests are processed with high priority so you never wait behind free users." },
-              { icon: <CheckCircle2 className="text-sky-600" />, title: "Export-Ready", desc: "Copy directly to Google Docs format or download a formatted PDF. Your work, your format." },
-              { icon: <Upload className="text-violet-600" />, title: "Full History", desc: "Every scan and rewrite is saved. Compare original vs humanized side-by-side and re-humanize any document." },
+              {
+                icon: <ShieldCheck className="text-indigo-600" />,
+                title: "Advanced Detection",
+                desc: "Multi-layer forensic analysis surfaces AI patterns, suspicious phrasing, and sentence-level flags with a probability score.",
+              },
+              {
+                icon: <Sparkles className="text-emerald-600" />,
+                title: "3-Stage Humanizer",
+                desc: "Analysis → Rewrite → Polish pipeline destroys the AI fingerprint by maximizing burstiness and perplexity.",
+              },
+              {
+                icon: <FileText className="text-amber-600" />,
+                title: "File Upload Support",
+                desc: "Drag and drop TXT, DOCX, PDF, MD, and RTF files up to 10MB. Text is extracted and pre-filled instantly.",
+              },
+              {
+                icon: <Zap className="text-rose-600" />,
+                title: "Priority Processing",
+                desc: "Paid plans jump the queue. Your requests are processed with high priority so you never wait behind free users.",
+              },
+              {
+                icon: <CheckCircle2 className="text-sky-600" />,
+                title: "Export-Ready",
+                desc: "Copy directly to Google Docs format or download a formatted PDF. Your work, your format.",
+              },
+              {
+                icon: <Upload className="text-violet-600" />,
+                title: "Full History",
+                desc: "Every scan and rewrite is saved. Compare original vs humanized side-by-side and re-humanize any document.",
+              },
             ].map((f, i) => (
               <motion.div
                 key={f.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.05 }}
-                transition={{ delay: i * 0.08, duration: 0.45, ease: "easeOut" }}
+                transition={{
+                  delay: i * 0.08,
+                  duration: 0.45,
+                  ease: "easeOut",
+                }}
               >
                 <FeatureCard icon={f.icon} title={f.title} desc={f.desc} />
               </motion.div>
