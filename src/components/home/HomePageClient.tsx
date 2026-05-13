@@ -341,7 +341,7 @@ export function HomePageClient() {
             </p>
 
             {/* Detector logos strip */}
-            <div className="mt-5 border-t border-slate-100 pt-4">
+            {/* <div className="mt-5 border-t border-slate-100 pt-4">
               <p className="mb-2.5 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Bypasses
               </p>
@@ -361,7 +361,7 @@ export function HomePageClient() {
                   </span>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
