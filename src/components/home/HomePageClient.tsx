@@ -49,11 +49,11 @@ const homeFaqEntries = [
     answer:
       "Our detector uses Humanica Pro model with a multi-chunk linguistic forensic analysis. It scores text on burstiness, perplexity, and sentence rhythm — the same signals GPTZero and Originality.ai use. Paid plans use the Pro model for deeper analysis.",
   },
-  {
-    question: "Will the humanized text pass GPTZero and Turnitin?",
-    answer:
-      "Our 3-stage humanizer is specifically engineered to maximize burstiness and perplexity — the two metrics AI detectors rely on. Pro and above plans use our full pipeline which has been tested against GPTZero, Originality.ai, and Turnitin. Results vary by text length and original content.",
-  },
+  // {
+  //   question: "Will the humanized text pass GPTZero and Turnitin?",
+  //   answer:
+  //     "Our 3-stage humanizer is specifically engineered to maximize burstiness and perplexity — the two metrics AI detectors rely on. Pro and above plans use our full pipeline which has been tested against GPTZero, Originality.ai, and Turnitin. Results vary by text length and original content.",
+  // },
   {
     question: "What file types can I upload?",
     answer:
