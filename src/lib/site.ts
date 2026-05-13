@@ -42,7 +42,7 @@ export const faqEntries = [
   {
     question: "How accurate is the AI detector?",
     answer:
-      "Our detector uses Google's Gemini Pro model with a multi-chunk linguistic forensic analysis. It evaluates text on burstiness, perplexity, sentence rhythm, and transitional phrase density — the same signals used by GPTZero and Originality.ai. Free plan users get the Flash model; paid plans use the Pro model for deeper analysis. In our internal testing, the Pro model achieves over 95% accuracy on unmodified AI-generated text.",
+      "Our detector uses Humanica Pro model with a multi-chunk linguistic forensic analysis. It evaluates text on burstiness, perplexity, sentence rhythm, and transitional phrase density — the same signals used by GPTZero and Originality.ai. Free plan users get the Flash model; paid plans use the Pro model for deeper analysis. In our internal testing, the Pro model achieves over 95% accuracy on unmodified AI-generated text.",
   },
   {
     question: "Can I humanize ChatGPT content?",
