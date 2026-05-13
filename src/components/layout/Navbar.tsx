@@ -12,7 +12,7 @@ import { Brand } from "./Brand";
 const navLinks = [
   { name: "AI Detector", href: "/detector"  },
   { name: "Humanizer",   href: "/humanize"  },
-  { name: "Detectors",   href: "/detectors" },
+  // { name: "Detectors",   href: "/detectors" },
   { name: "Pricing",     href: "/pricing"   },
   { name: "FAQ",         href: "/faq"       },
 ];
