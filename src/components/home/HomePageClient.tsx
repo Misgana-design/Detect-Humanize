@@ -501,8 +501,8 @@ export function HomePageClient() {
           </p>
           <div className="group relative overflow-hidden">
             {/* Fade edges */}
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-linear-to-r from-white to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-linear-to-l from-white to-transparent" />
 
             <div className="marquee flex items-center gap-10 py-3 group-hover:[animation-play-state:paused]">
               {[...trustedByLogos, ...trustedByLogos].map((logo, index) => (
