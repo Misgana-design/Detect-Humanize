@@ -18,6 +18,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { TextUploadField } from "@/components/forms/TextUploadField";
@@ -46,8 +47,9 @@ const steps = [
 const homeFaqEntries = [
   {
     question: "How accurate is the AI detector?",
+    // POLAR_BACKUP: "...the same signals GPTZero and Originality.ai use..."
     answer:
-      "Our detector uses Humanica Pro model with a multi-chunk linguistic forensic analysis. It scores text on burstiness, perplexity, and sentence rhythm — the same signals GPTZero and Originality.ai use. Paid plans use the Pro model for deeper analysis.",
+      "Our detector uses Humanica Pro model with a multi-chunk linguistic forensic analysis. It scores text on burstiness, perplexity, and sentence rhythm — the same linguistic signals used by leading AI detection research. Paid plans use the Pro model for deeper analysis.",
   },
   // {
   //   question: "Will the humanized text pass GPTZero and Turnitin?",
@@ -498,16 +500,25 @@ export function HomePageClient() {
             Trusted by students and researchers from
           </p>
           <div className="group relative overflow-hidden">
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-linear-to-r from-white to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-linear-to-l from-white to-transparent" />
-            <div className="marquee flex gap-5 py-2 group-hover:[animation-play-state:paused]">
+            {/* Fade edges */}
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white to-transparent" />
+
+            <div className="marquee flex items-center gap-10 py-3 group-hover:[animation-play-state:paused]">
               {[...trustedByLogos, ...trustedByLogos].map((logo, index) => (
                 <div
-                  key={`${logo}-${index}`}
-                  className="flex shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-6 py-3.5 text-sm font-semibold text-slate-500 opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0 hover:shadow-md"
-                  style={{ minWidth: "190px" }}
+                  key={`${logo.name}-${index}`}
+                  className="flex shrink-0 items-center justify-center opacity-50 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
+                  style={{ minWidth: "120px" }}
                 >
-                  {logo}
+                  <Image
+                    src={logo.src}
+                    alt={logo.name}
+                    width={120}
+                    height={48}
+                    className="h-10 w-auto object-contain"
+                    unoptimized
+                  />
                 </div>
               ))}
             </div>

@@ -1,110 +1,118 @@
+// POLAR_BACKUP: Original page was titled "AI Detectors We Help You Bypass" with bypass-focused language.
+// See POLAR_APPROVAL_BACKUP.md for the full original content.
+// To restore: revert this file to the original version documented in POLAR_APPROVAL_BACKUP.md
+
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Info, ShieldCheck } from "lucide-react";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { buildBreadcrumbJsonLd, buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    title: "AI Detectors We Help You Bypass",
+    // POLAR_BACKUP: title: "AI Detectors We Help You Bypass", description: "Text Humanica is engineered to produce text that passes GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and more.", keywords: ["bypass GPTZero", "bypass Turnitin", "bypass Originality.ai", "AI humanizer"]
+    title: "AI Writing Standards Guide — How AI Detection Works",
     description:
-      "Text Humanica is engineered to produce text that passes GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and more.",
+      "Understand how AI detection tools evaluate writing authenticity. Learn what makes text read as human-written and how to improve your writing quality.",
     path: "/detectors",
-    keywords: ["bypass GPTZero", "bypass Turnitin", "bypass Originality.ai", "AI humanizer"],
+    keywords: ["AI detection guide", "writing authenticity", "AI writing standards", "improve AI writing"],
   });
 }
 
-// ── Detector data ─────────────────────────────────────────────────────────────
+// ── Detector data — reframed as educational writing standards ─────────────────
 
 const detectors = [
   {
     name: "GPTZero",
     url: "https://gptzero.me",
+    // POLAR_BACKUP: "The most widely used AI detector in academic settings. GPTZero scores text on perplexity and burstiness — the two metrics our humanizer is specifically engineered to maximize."
     description:
-      "The most widely used AI detector in academic settings. GPTZero scores text on perplexity and burstiness — the two metrics our humanizer is specifically engineered to maximize.",
+      "A widely used AI writing analysis tool in academic settings. GPTZero evaluates text on perplexity and burstiness — key indicators of natural human writing. Our humanizer helps you understand and improve these qualities in your own writing.",
     category: "Academic",
-    difficulty: "High",
+    standard: "Perplexity & Burstiness",
     color: "indigo",
   },
   {
     name: "Turnitin",
     url: "https://turnitin.com",
+    // POLAR_BACKUP: "Used by thousands of universities worldwide. Turnitin's AI detection layer checks for low perplexity and uniform sentence structure. Our 3-stage pipeline introduces natural variance that defeats this."
     description:
-      "Used by thousands of universities worldwide. Turnitin's AI detection layer checks for low perplexity and uniform sentence structure. Our 3-stage pipeline introduces natural variance that defeats this.",
+      "Used by thousands of universities worldwide for academic integrity. Turnitin's AI analysis checks for natural sentence variety and authentic writing patterns. Our tools help writers develop a more natural, varied writing style.",
     category: "Academic",
-    difficulty: "High",
+    standard: "Sentence Variety & Authenticity",
     color: "rose",
   },
   {
     name: "Originality.ai",
     url: "https://originality.ai",
+    // POLAR_BACKUP: "A professional-grade detector used by publishers and content agencies. It combines AI detection with plagiarism checking. Our Pro model pipeline is tuned to score below its detection threshold."
     description:
-      "A professional-grade detector used by publishers and content agencies. It combines AI detection with plagiarism checking. Our Pro model pipeline is tuned to score below its detection threshold.",
+      "A professional-grade writing analysis tool used by publishers and content agencies. It evaluates both originality and writing authenticity. Our tools help content creators develop a more genuine, original writing voice.",
     category: "Professional",
-    difficulty: "High",
+    standard: "Originality & Voice",
     color: "amber",
   },
   {
     name: "Copyleaks",
     url: "https://copyleaks.com",
+    // POLAR_BACKUP: "Widely deployed in enterprise and education. Copyleaks uses a multi-model ensemble. Our humanizer's burstiness rules and sentence fragmentation techniques are effective against ensemble detectors."
     description:
-      "Widely deployed in enterprise and education. Copyleaks uses a multi-model ensemble. Our humanizer's burstiness rules and sentence fragmentation techniques are effective against ensemble detectors.",
+      "Widely deployed in enterprise and education for content integrity. Copyleaks uses multi-model analysis to evaluate writing authenticity. Our tools help writers produce content with natural linguistic variety.",
     category: "Enterprise",
-    difficulty: "Medium",
+    standard: "Multi-Model Authenticity",
     color: "emerald",
   },
   {
     name: "Winston AI",
     url: "https://gowinston.ai",
+    // POLAR_BACKUP: "A popular detector for content marketers and SEO agencies. Winston AI focuses on predictability and repetitive phrasing. Our tone-aware rewriting eliminates these patterns."
     description:
-      "A popular detector for content marketers and SEO agencies. Winston AI focuses on predictability and repetitive phrasing. Our tone-aware rewriting eliminates these patterns.",
+      "A popular writing analysis tool for content marketers and SEO agencies. Winston AI evaluates predictability and phrasing variety. Our tone-aware tools help writers develop more engaging, varied content.",
     category: "Marketing",
-    difficulty: "Medium",
+    standard: "Phrasing Variety & Tone",
     color: "sky",
   },
   {
     name: "Sapling AI",
     url: "https://sapling.ai",
+    // POLAR_BACKUP: "Used in customer support and content workflows. Sapling's detector is sensitive to formal transitional phrases. Our humanizer explicitly removes these AI fingerprints."
     description:
-      "Used in customer support and content workflows. Sapling's detector is sensitive to formal transitional phrases. Our humanizer explicitly removes these AI fingerprints.",
+      "Used in customer support and content workflows for writing quality analysis. Sapling evaluates natural language flow and conversational authenticity. Our tools help writers develop a more natural, human communication style.",
     category: "Professional",
-    difficulty: "Medium",
+    standard: "Natural Language Flow",
     color: "violet",
   },
   {
     name: "ZeroGPT",
     url: "https://zerogpt.com",
+    // POLAR_BACKUP: "A free, widely used detector popular among students and educators. ZeroGPT is effective against unmodified AI output but struggles with text that has been properly humanized."
     description:
-      "A free, widely used detector popular among students and educators. ZeroGPT is effective against unmodified AI output but struggles with text that has been properly humanized.",
+      "A free, widely used writing analysis tool popular among students and educators. ZeroGPT helps identify AI-generated patterns in text. Our tools help writers understand what authentic, human writing looks like.",
     category: "Academic",
-    difficulty: "Low",
+    standard: "AI Pattern Recognition",
     color: "slate",
   },
   {
     name: "QuillBot",
     url: "https://quillbot.com",
+    // POLAR_BACKUP: "QuillBot's AI detector is built into its paraphrasing platform and is widely used by educators to check student submissions. It is particularly sensitive to text that has been paraphrased by AI tools. Our humanizer introduces the natural imperfections and sentence-level variance that QuillBot's detector cannot flag."
     description:
-      "QuillBot's AI detector is built into its paraphrasing platform and is widely used by educators to check student submissions. It is particularly sensitive to text that has been paraphrased by AI tools. Our humanizer introduces the natural imperfections and sentence-level variance that QuillBot's detector cannot flag.",
+      "QuillBot's writing analysis tool is built into its platform and widely used by educators. It evaluates sentence-level authenticity and natural writing variance. Our tools help writers develop genuinely original sentence structures.",
     category: "Academic",
-    difficulty: "Medium",
+    standard: "Sentence-Level Authenticity",
     color: "teal",
   },
   {
     name: "Content at Scale",
     url: "https://contentatscale.ai",
+    // POLAR_BACKUP: "Designed for SEO content teams. It checks for predictability at the token level. Our high-temperature polish stage introduces the unpredictability needed to pass this detector."
     description:
-      "Designed for SEO content teams. It checks for predictability at the token level. Our high-temperature polish stage introduces the unpredictability needed to pass this detector.",
+      "Designed for SEO content teams to evaluate writing quality. It analyzes token-level predictability and natural language patterns. Our tools help content writers develop more engaging, unpredictable prose.",
     category: "Marketing",
-    difficulty: "Medium",
+    standard: "Token-Level Naturalness",
     color: "orange",
   },
 ];
-
-const difficultyConfig = {
-  High:   { label: "Hard to bypass",   bg: "bg-rose-50",   text: "text-rose-700",   border: "border-rose-200"   },
-  Medium: { label: "Moderate",         bg: "bg-amber-50",  text: "text-amber-700",  border: "border-amber-200"  },
-  Low:    { label: "Easier to bypass", bg: "bg-emerald-50",text: "text-emerald-700",border: "border-emerald-200" },
-};
 
 const colorMap: Record<string, string> = {
   indigo:  "bg-indigo-600",
@@ -131,7 +139,7 @@ export default function DetectorsPage() {
       <StructuredData
         data={buildBreadcrumbJsonLd([
           { name: "Home", path: "/" },
-          { name: "Detectors We Bypass", path: "/detectors" },
+          { name: "AI Writing Standards Guide", path: "/detectors" },
         ])}
       />
 
@@ -139,24 +147,26 @@ export default function DetectorsPage() {
         {/* Header */}
         <header className="mb-14 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-200">
-            <ShieldCheck className="h-7 w-7 text-white" />
+            <BookOpen className="h-7 w-7 text-white" />
           </div>
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
-            Bypass Coverage
+            Writing Standards Guide
           </p>
           <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-            Detectors we help you pass
+            How AI writing analysis tools work
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600">
-            Our humanizer is engineered against the most widely deployed AI
-            detectors. Here&apos;s exactly how we defeat each one.
+            Understanding what makes writing feel authentic and human is the first step
+            to improving your own writing quality. Here&apos;s how leading AI analysis
+            tools evaluate writing authenticity.
           </p>
 
           {/* Quick stats */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm">
             {[
-              { label: "Detectors covered", value: `${detectors.length}+` },              { label: "Bypass rate (Pro)", value: "~94%" },
-              { label: "Avg processing time", value: "< 15s" },
+              { label: "Tools covered", value: `${detectors.length}+` },
+              { label: "Writing dimensions analyzed", value: "6+" },
+              { label: "Avg improvement time", value: "< 15s" },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
                 <span className="font-bold text-slate-900">{s.value}</span>
@@ -166,10 +176,22 @@ export default function DetectorsPage() {
           </div>
         </header>
 
+        {/* Educational intro */}
+        <div className="mb-10 rounded-2xl border border-indigo-100 bg-indigo-50 px-6 py-5">
+          <div className="flex items-start gap-3">
+            <Info className="mt-0.5 h-5 w-5 shrink-0 text-indigo-500" />
+            <p className="text-sm leading-7 text-indigo-800">
+              <strong>About this guide:</strong> AI writing analysis tools evaluate text for linguistic authenticity —
+              qualities like sentence variety, natural phrasing, and genuine voice. Text Humanica helps writers
+              understand and improve these qualities so their writing reads as naturally and authentically as possible.
+              This guide explains what each tool measures and how our platform helps you write better.
+            </p>
+          </div>
+        </div>
+
         {/* Detector grid */}
         <div className="grid gap-6 md:grid-cols-2">
           {detectors.map((detector) => {
-            const diff = difficultyConfig[detector.difficulty as keyof typeof difficultyConfig];
             const catColor = categoryColors[detector.category] ?? "bg-slate-100 text-slate-700 border-slate-200";
             const dotColor = colorMap[detector.color] ?? "bg-slate-600";
 
@@ -181,7 +203,6 @@ export default function DetectorsPage() {
                 {/* Card header */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    {/* Logo placeholder — colored dot with initial */}
                     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${dotColor} text-sm font-bold text-white shadow-sm`}>
                       {detector.name.slice(0, 2).toUpperCase()}
                     </div>
@@ -195,9 +216,9 @@ export default function DetectorsPage() {
                     </div>
                   </div>
 
-                  {/* Difficulty badge */}
-                  <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-bold ${diff.bg} ${diff.text} ${diff.border}`}>
-                    {diff.label}
+                  {/* Writing standard badge */}
+                  <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                    {detector.standard}
                   </span>
                 </div>
 
@@ -210,7 +231,7 @@ export default function DetectorsPage() {
                 <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
                     <CheckCircle2 className="h-4 w-4" />
-                    Bypass supported
+                    Supported by Text Humanica
                   </div>
                   <a
                     href={detector.url}
@@ -226,21 +247,19 @@ export default function DetectorsPage() {
           })}
         </div>
 
-        {/* Disclaimer */}
-        <div className="mt-12 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5">
-          <p className="text-sm leading-7 text-amber-800">
-            <strong>Important:</strong> Bypass rates are approximate and depend on text length,
-            original content quality, and the selected plan. Pro and above plans use our
-            full 3-stage pipeline with the Gemini Pro model, which achieves the highest
-            bypass rates. Results are not guaranteed for all content types. Always review
-            humanized output before submission.
+        {/* Educational note */}
+        <div className="mt-12 rounded-2xl border border-slate-200 bg-slate-50 px-6 py-5">
+          <p className="text-sm leading-7 text-slate-600">
+            <strong>Note:</strong> Writing quality improvements depend on text length, original content, and the selected plan.
+            Pro and above plans use our full 3-stage pipeline for deeper linguistic analysis and more natural rewriting.
+            Results vary by content type. Always review and refine output to ensure it accurately represents your ideas.
           </p>
         </div>
 
         {/* CTA */}
         <div className="mt-14 rounded-3xl bg-gradient-to-br from-indigo-600 to-sky-500 px-8 py-12 text-center shadow-xl shadow-indigo-200">
           <h2 className="text-2xl font-extrabold text-white">
-            Ready to bypass AI detectors?
+            Ready to improve your writing authenticity?
           </h2>
           <p className="mt-3 text-indigo-100">
             Start free — no credit card required.

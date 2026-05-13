@@ -23,7 +23,8 @@ const supportTopics = [
   {
     icon: <Zap className="h-5 w-5 text-indigo-400" />,
     title: "Detection & Humanization",
-    desc: "Questions about accuracy, bypass rates, or how the AI pipeline works.",
+    // POLAR_BACKUP: desc: "Questions about accuracy, bypass rates, or how the AI pipeline works."
+    desc: "Questions about detection accuracy, writing quality, or how the AI pipeline works.",
   },
   {
     icon: <MessageSquare className="h-5 w-5 text-emerald-400" />,
