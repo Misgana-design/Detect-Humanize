@@ -161,7 +161,7 @@ export default function Navbar() {
                 <Link href="/auth/signup">
                   <Button
                     size="sm"
-                    className="rounded-xl bg-indigo-600 px-4 text-white shadow-sm shadow-indigo-200 hover:bg-indigo-700"
+                    className="rounded-xl bg-indigo-600 px-4 text-white shadow-sm shadow-indigo-200 hover:bg-indigo-700 hover:cursor-pointer"
                   >
                     Get Started
                   </Button>
