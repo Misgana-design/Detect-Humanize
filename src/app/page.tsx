@@ -9,18 +9,15 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    // POLAR_BACKUP: title: "Undetectable AI Detector & Humanizer"
-    title: "AI Detector & Writing Humanizer",
+    title: "Undetectable AI Detector & Humanizer",
     description:
-      // POLAR_BACKUP: "Detect AI content, humanize AI text, bypass GPTZero-style detection, and rewrite ChatGPT drafts into natural, plagiarism-free writing."
-      "Detect AI content, humanize AI text into natural language, and rewrite ChatGPT drafts into authentic, original writing.",
+      "Detect AI content, humanize AI text, bypass GPTZero-style detection, and rewrite ChatGPT drafts into natural, plagiarism-free writing.",
     path: "/",
     keywords: [
-      // POLAR_BACKUP: "undetectable AI detector", "bypass GPTZero"
-      "AI writing detector",
+      "undetectable AI detector",
       "humanize ChatGPT text",
-      "improve AI writing",
-      "AI writing assistant",
+      "bypass GPTZero",
+      "AI writing detector",
     ],
   });
 }
