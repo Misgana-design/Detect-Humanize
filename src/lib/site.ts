@@ -49,11 +49,11 @@ export const faqEntries = [
     answer:
       "Yes. Our humanizer is specifically designed to rewrite ChatGPT, Claude, Gemini, and other LLM outputs. The 3-stage pipeline (Analysis → Rewrite → Polish) targets the exact linguistic patterns these models produce — uniform sentence length, excessive transitional phrases, and low perplexity — and replaces them with natural human variance.",
   },
-  // {
-  //   question: "Will the humanized text pass GPTZero and Turnitin?",
-  //   answer:
-  //     "Our Pro and above plans use a 3-stage pipeline with the Gemini Pro model, which is engineered to maximize burstiness and perplexity — the two core metrics AI detectors rely on. In our testing, Pro-humanized text consistently scores below detection thresholds on GPTZero, Turnitin, Originality.ai, and Copyleaks. Results vary by text length and original content. We recommend always reviewing the output before submission.",
-  // },
+  {
+    question: "Will the humanized text pass GPTZero and Turnitin?",
+    answer:
+      "Our Pro and above plans use a 3-stage pipeline with the Gemini Pro model, which is engineered to maximize burstiness and perplexity — the two core metrics AI detectors rely on. In our testing, Pro-humanized text consistently scores below detection thresholds on GPTZero, Turnitin, Originality.ai, and Copyleaks. Results vary by text length and original content. We recommend always reviewing the output before submission.",
+  },
   {
     question: "What file types can I upload?",
     answer:
