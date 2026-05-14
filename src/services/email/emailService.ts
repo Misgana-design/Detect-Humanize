@@ -219,8 +219,7 @@ export async function sendHumanizationEmail(payload: HumanizationEmailPayload): 
       <!-- Hero message -->
       <div style="background:linear-gradient(135deg,#ecfdf5,#f0fdf4);border:1px solid #bbf7d0;border-radius:16px;padding:20px 24px;margin-bottom:24px;">
         <p style="margin:0;font-size:16px;font-weight:700;color:#065f46;">
-          <!-- POLAR_BACKUP: Your content is now engineered to bypass GPTZero, Turnitin, and Originality.ai. -->
-          🎯 Your content has been rewritten to sound natural, authentic, and genuinely human.
+          🎯 Your content is now engineered to bypass GPTZero, Turnitin, and Originality.ai.
         </p>
         <p style="margin:8px 0 0;font-size:14px;color:#047857;line-height:1.6;">
           ${wordCount.toLocaleString()} words rewritten in <strong>${toneLabel}</strong> tone using our ${planName === "Free" ? "single-stage" : "3-stage Pro"} pipeline. Submit with confidence.
