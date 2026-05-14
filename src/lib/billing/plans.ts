@@ -81,7 +81,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     wordQuota: 4000,
     quotaPeriod: "month",
     features: [
-      "Improves text naturalness and reduces AI-detection patterns",
+      "Bypass all AI detectors including GPTZero",
       "500 words max per input",
       "4000 words per month",
       "Basic AI detection",
@@ -115,7 +115,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     wordQuota: 20000,
     quotaPeriod: "month",
     features: [
-      "Improves text naturalness and reduces AI-detection patterns",
+      "Bypass all AI detectors including GPTZero",
       "1500 max per input",
       "20,000 words/month",
       "All tones (casual, academic, professional,...)",
@@ -147,7 +147,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     wordQuota: null,
     quotaPeriod: "none",
     features: [
-      "Improves text naturalness and reduces AI-detection patterns",
+      "Bypass all AI detectors including GPTZero",
       "2500 words max per input",
       "Unlimited words/month",
       "Team dashboard",
@@ -179,7 +179,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     wordQuota: null,
     quotaPeriod: "none",
     features: [
-      "Improves text naturalness and reduces AI-detection patterns",
+      "Bypass all AI detectors including GPTZero",
       "2500 words max per input",
       "No daily rate limit",
       "Team access (multi-user)",
@@ -213,7 +213,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     wordQuota: 5000,
     quotaPeriod: "week",
     features: [
-      "Improves text naturalness and reduces AI-detection patterns",
+      "Bypass all AI detectors including GPTZero",
       "1000 max per input",
       "5,000 words/week",
       "All tones (casual, academic, professional,...)",
