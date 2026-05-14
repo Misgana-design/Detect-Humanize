@@ -8,14 +8,12 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: "AI Detector & Humanizer FAQ",
     description:
-      // POLAR_BACKUP: "Answers about Text Humanica accuracy, AI humanization, GPTZero bypass workflows, Turnitin-style detection, uploads, privacy, and plan limits."
-      "Answers about Text Humanica accuracy, AI humanization, writing authenticity, uploads, privacy, and plan limits.",
+      "Answers about Text Humanica accuracy, AI humanization, GPTZero bypass workflows, Turnitin-style detection, uploads, privacy, and plan limits.",
     path: "/faq",
     keywords: [
       "AI detector FAQ",
       "AI humanizer questions",
-      // POLAR_BACKUP: "GPTZero bypass FAQ"
-      "writing authenticity FAQ",
+      "GPTZero bypass FAQ",
       "humanize AI text safely",
     ],
   });
