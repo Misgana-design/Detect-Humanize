@@ -47,9 +47,8 @@ const steps = [
 const homeFaqEntries = [
   {
     question: "How accurate is the AI detector?",
-    // POLAR_BACKUP: "...the same signals GPTZero and Originality.ai use..."
     answer:
-      "Our detector uses Humanica Pro model with a multi-chunk linguistic forensic analysis. It scores text on burstiness, perplexity, and sentence rhythm — the same linguistic signals used by leading AI detection research. Paid plans use the Pro model for deeper analysis.",
+      "Our detector uses Humanica Pro model with a multi-chunk linguistic forensic analysis. It scores text on burstiness, perplexity, and sentence rhythm — the same signals GPTZero and Originality.ai use. Paid plans use the Pro model for deeper analysis.",
   },
   // {
   //   question: "Will the humanized text pass GPTZero and Turnitin?",
