@@ -6,18 +6,15 @@ import { buildBreadcrumbJsonLd, buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    // POLAR_BACKUP: title: "AI Detector for GPTZero, Turnitin & ChatGPT Text"
-    title: "AI Content Detector — Check Writing Authenticity & AI Probability",
+    title: "AI Detector for GPTZero, Turnitin & ChatGPT Text",
     description:
-      // POLAR_BACKUP: "Upload or paste text to check AI probability, flagged passages, and detector signals before GPTZero, Turnitin, Originality.ai, or Copyleaks review."
-      "Upload or paste text to check AI probability, flagged passages, and writing authenticity signals to improve your content before submission.",
+      "Upload or paste text to check AI probability, flagged passages, and detector signals before GPTZero, Turnitin, Originality.ai, or Copyleaks review.",
     path: "/detect",
     keywords: [
       "AI detector",
-      // POLAR_BACKUP: "GPTZero detector", "Turnitin AI detector"
+      "GPTZero detector",
+      "Turnitin AI detector",
       "AI probability checker",
-      "writing authenticity checker",
-      "AI content analysis",
     ],
   });
 }
