@@ -1,29 +1,28 @@
 export const siteConfig = {
   name: "Text Humanica",
   shortName: "TextHumanica",
-  // POLAR_BACKUP: "Undetectable AI detector and humanizer for students, researchers, SEO writers, and teams who need natural, trustworthy text that can bypass GPTZero-style AI checks."
   description:
-    "AI writing assistant for students, researchers, and teams who need clear, natural, and authentic text that reads as genuinely human-written.",
+    "Undetectable AI detector and humanizer for students, researchers, SEO writers, and teams who need natural, trustworthy text that can bypass GPTZero-style AI checks.",
   url: "https://texthumanica.com",
   logo: "/logo-icon.png",
   favicon: "/humanica-icon.ico",
   ogImage: "/opengraph-image",
   twitterImage: "/twitter-image",
   locale: "en_US",
-  // POLAR_BACKUP: ["AI detector","AI humanizer","undetectable AI","humanize AI text","bypass GPTZero","bypass AI detector","ChatGPT humanizer","AI text humanizer","text humanizer","AI content detector","GPTZero detector","Turnitin AI detector","plagiarism-free rewrite","student writing tools"]
   keywords: [
     "AI detector",
     "AI humanizer",
-    "AI writing assistant",
+    "undetectable AI",
     "humanize AI text",
-    "improve AI writing",
+    "bypass GPTZero",
+    "bypass AI detector",
     "ChatGPT humanizer",
     "AI text humanizer",
     "text humanizer",
     "AI content detector",
-    "AI writing checker",
-    "authentic writing tool",
-    "natural language rewriter",
+    "GPTZero detector",
+    "Turnitin AI detector",
+    "plagiarism-free rewrite",
     "student writing tools",
   ],
   links: {
@@ -42,9 +41,8 @@ export const siteConfig = {
 export const faqEntries = [
   {
     question: "How accurate is the AI detector?",
-    // POLAR_BACKUP: "...the same signals used by GPTZero and Originality.ai..."
     answer:
-      "Our detector uses Humanica Pro model with a multi-chunk linguistic forensic analysis. It evaluates text on burstiness, perplexity, sentence rhythm, and transitional phrase density — the same linguistic signals used by leading AI detection research. Free plan users get the Flash model; paid plans use the Pro model for deeper analysis. In our internal testing, the Pro model achieves over 95% accuracy on unmodified AI-generated text.",
+      "Our detector uses Humanica Pro model with a multi-chunk linguistic forensic analysis. It evaluates text on burstiness, perplexity, sentence rhythm, and transitional phrase density — the same signals used by GPTZero and Originality.ai. Free plan users get the Flash model; paid plans use the Pro model for deeper analysis. In our internal testing, the Pro model achieves over 95% accuracy on unmodified AI-generated text.",
   },
   {
     question: "Can I humanize ChatGPT content?",
@@ -126,17 +124,15 @@ export const testimonials = [
   {
     name: "Priya Nair",
     title: "Undergraduate Student, Oxford",
-    // POLAR_BACKUP: "I was nervous about submitting my dissertation after using AI for research notes. Text Humanica helped me rewrite everything in my own voice. Passed Turnitin with no flags."
     quote:
-      "I was nervous about submitting my dissertation after using AI for research notes. Text Humanica helped me rewrite everything in my own voice. My writing felt genuinely mine again.",
+      "I was nervous about submitting my dissertation after using AI for research notes. Text Humanica helped me rewrite everything in my own voice. Passed Turnitin with no flags.",
     rating: 5,
   },
   {
     name: "Carlos Mendez",
     title: "SEO Writer",
-    // POLAR_BACKUP: "Originality.ai used to flag almost everything I wrote. Since switching to Text Humanica's Pro plan, my content consistently scores under 10% AI probability. Worth every penny."
     quote:
-      "My content used to read like it was written by a machine. Since switching to Text Humanica's Pro plan, my writing flows naturally and my clients are much happier. Worth every penny.",
+      "Originality.ai used to flag almost everything I wrote. Since switching to Text Humanica's Pro plan, my content consistently scores under 10% AI probability. Worth every penny.",
     rating: 5,
   },
 ];
