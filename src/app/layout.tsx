@@ -21,11 +21,9 @@ const dmSans = DM_Sans({
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    // POLAR_BACKUP: title: "Undetectable AI Detector & Humanizer"
-    title: "AI Detector & Writing Humanizer",
+    title: "Undetectable AI Detector & Humanizer",
     description:
-      // POLAR_BACKUP: "Detect AI-generated writing, humanize AI text, bypass GPTZero-style flags, and manage your writing workflow in one polished AI workspace."
-      "Detect AI-generated writing, humanize AI text into natural language, and manage your writing workflow in one polished AI workspace.",
+      "Detect AI-generated writing, humanize AI text, bypass GPTZero-style flags, and manage your writing workflow in one polished AI workspace.",
     path: "/",
   });
 }
