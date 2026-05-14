@@ -50,11 +50,11 @@ const homeFaqEntries = [
     answer:
       "Our detector uses Humanica Pro model with a multi-chunk linguistic forensic analysis. It scores text on burstiness, perplexity, and sentence rhythm — the same signals GPTZero and Originality.ai use. Paid plans use the Pro model for deeper analysis.",
   },
-  // {
-  //   question: "Will the humanized text pass GPTZero and Turnitin?",
-  //   answer:
-  //     "Our 3-stage humanizer is specifically engineered to maximize burstiness and perplexity — the two metrics AI detectors rely on. Pro and above plans use our full pipeline which has been tested against GPTZero, Originality.ai, and Turnitin. Results vary by text length and original content.",
-  // },
+  {
+    question: "Will the humanized text pass GPTZero and Turnitin?",
+    answer:
+      "Our 3-stage humanizer is specifically engineered to maximize burstiness and perplexity — the two metrics AI detectors rely on. Pro and above plans use our full pipeline which has been tested against GPTZero, Originality.ai, and Turnitin. Results vary by text length and original content.",
+  },
   {
     question: "What file types can I upload?",
     answer:
@@ -197,7 +197,7 @@ export function HomePageClient() {
       <div className="pointer-events-none absolute left-1/2 top-0 -z-10 h-176 w-full -translate-x-1/2 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.18),transparent_40%),linear-gradient(to_bottom,rgba(248,250,252,1),rgba(238,242,255,1))]" />
 
       {/* ── Announcement bar ── */}
-      {/* <div className="border-b border-indigo-100 bg-indigo-50 py-2.5 text-center text-xs font-medium text-indigo-700">
+      <div className="border-b border-indigo-100 bg-indigo-50 py-2.5 text-center text-xs font-medium text-indigo-700">
         🎉 Now bypassing GPTZero, Originality.ai, Turnitin, and more —{" "}
         <Link
           href="/detectors"
@@ -205,7 +205,7 @@ export function HomePageClient() {
         >
           see all supported detectors
         </Link>
-      </div> */}
+      </div>
 
       {/* ── Hero ── */}
       <section className="pb-16 pt-16">
@@ -251,7 +251,7 @@ export function HomePageClient() {
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
               One workspace for students, researchers, and writers who need to
-              submit with confidence.
+              submit with confidence. Bypass GPTZero, Turnitin and Originality.ai in seconds.
             </p>
 
             {/* Value props */}
@@ -342,7 +342,7 @@ export function HomePageClient() {
             </p>
 
             {/* Detector logos strip */}
-            {/* <div className="mt-5 border-t border-slate-100 pt-4">
+            <div className="mt-5 border-t border-slate-100 pt-4">
               <p className="mb-2.5 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Bypasses
               </p>
@@ -362,7 +362,7 @@ export function HomePageClient() {
                   </span>
                 ))}
               </div>
-            </div> */}
+            </div>
           </div>
         </div>
       </section>
