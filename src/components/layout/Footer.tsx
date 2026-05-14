@@ -7,7 +7,7 @@ const footerLinks = {
   Product: [
     { href: "/detector",  label: "AI Detector"       },
     { href: "/humanize",  label: "Humanizer"         },
-    // { href: "/detectors", label: "Detectors We Bypass"},
+    { href: "/detectors", label: "Detectors We Bypass"},
     { href: "/pricing",   label: "Pricing"           },
   ],
   Company: [
