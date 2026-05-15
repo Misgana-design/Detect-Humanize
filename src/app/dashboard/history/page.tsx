@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
+  ArrowLeft,
   BarChart3,
   Check,
   Clock,
@@ -40,11 +41,13 @@ function ComparisonPanel({
   isPaidUser,
   isFree,
   onReHumanize,
+  onBack,
 }: {
   doc: HistoryDocument;
   isPaidUser: boolean | null | undefined;
   isFree: boolean;
   onReHumanize: (doc: HistoryDocument) => void;
+  onBack: () => void;
 }) {
   const [copiedPlain, setCopiedPlain] = useState(false);
   const [copiedDocs, setCopiedDocs] = useState(false);
@@ -62,10 +65,12 @@ function ComparisonPanel({
       [`<div style="font-family: Arial; line-height: 1.6;">${doc.humanized_content.replace(/\n/g, "<br>")}</div>`],
       { type: "text/html" },
     );
-    navigator.clipboard.write([new ClipboardItem({ "text/html": blob })]).then(() => {
-      setCopiedDocs(true);
-      setTimeout(() => setCopiedDocs(false), 2000);
-    });
+    navigator.clipboard
+      .write([new ClipboardItem({ "text/html": blob })])
+      .then(() => {
+        setCopiedDocs(true);
+        setTimeout(() => setCopiedDocs(false), 2000);
+      });
   };
 
   const handleDownloadPdf = () => {
@@ -77,7 +82,8 @@ function ComparisonPanel({
     pdf.setFontSize(10);
     pdf.text(
       `Tone: ${doc.tone_used ?? "default"} | Date: ${new Date(doc.created_at).toLocaleDateString()}`,
-      20, 32,
+      20,
+      32,
     );
     pdf.line(20, 37, 190, 37);
     const lines = pdf.splitTextToSize(doc.humanized_content ?? "", 170);
@@ -87,10 +93,18 @@ function ComparisonPanel({
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      {/* ── Panel header ── */}
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
-        <div className="flex items-center gap-3">
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      {/* Panel header */}
+      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3 sm:px-5">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Back button — mobile only */}
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 rounded-lg p-1 text-slate-500 hover:bg-slate-200 lg:hidden"
+            aria-label="Back to list"
+          >
+            <ArrowLeft size={16} />
+          </button>
           <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
             Comparison Mode
           </span>
@@ -102,19 +116,20 @@ function ComparisonPanel({
         </div>
         <span className="text-xs text-slate-400">
           {new Date(doc.created_at).toLocaleDateString(undefined, {
-            year: "numeric", month: "short", day: "numeric",
+            year: "numeric",
+            month: "short",
+            day: "numeric",
           })}
         </span>
       </div>
 
-      {/* ── Action bar — always visible at top ── */}
+      {/* Action bar */}
       {doc.humanized_content ? (
-        <div className="border-b border-slate-100 bg-white px-5 py-3">
+        <div className="border-b border-slate-100 bg-white px-4 py-3 sm:px-5">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {/* Copy plain — always available */}
             <button
               onClick={handleCopyPlain}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:cursor-pointer"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               {copiedPlain ? (
                 <><Check size={12} className="text-emerald-500" /> Copied!</>
@@ -123,7 +138,6 @@ function ComparisonPanel({
               )}
             </button>
 
-            {/* Re-Humanize — paid only */}
             <button
               onClick={() => isPaidUser && onReHumanize(doc)}
               disabled={!isPaidUser}
@@ -131,7 +145,7 @@ function ComparisonPanel({
               className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
                 !isPaidUser
                   ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
-                  : "bg-slate-900 text-white hover:bg-black hover:cursor-pointer"
+                  : "bg-slate-900 text-white hover:bg-black"
               }`}
             >
               {!isPaidUser ? (
@@ -141,7 +155,6 @@ function ComparisonPanel({
               )}
             </button>
 
-            {/* Copy for Docs — paid only */}
             <button
               onClick={() => isPaidUser && handleCopyForDocs()}
               disabled={!isPaidUser}
@@ -151,7 +164,7 @@ function ComparisonPanel({
                   ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
                   : copiedDocs
                     ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700 hover:cursor-pointer"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700"
               }`}
             >
               {!isPaidUser ? (
@@ -163,7 +176,6 @@ function ComparisonPanel({
               )}
             </button>
 
-            {/* Download PDF — paid only */}
             <button
               onClick={() => isPaidUser && handleDownloadPdf()}
               disabled={!isPaidUser}
@@ -171,13 +183,13 @@ function ComparisonPanel({
               className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
                 !isPaidUser
                   ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
-                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:cursor-pointer"
+                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
               }`}
             >
               {!isPaidUser ? (
                 <><Lock size={12} /> PDF</>
               ) : (
-                <><Download size={12} /> Download PDF</>
+                <><Download size={12} /> PDF</>
               )}
             </button>
           </div>
@@ -192,9 +204,8 @@ function ComparisonPanel({
           )}
         </div>
       ) : (
-        /* Not humanized yet — action bar at top */
-        <div className="border-b border-slate-100 bg-amber-50 px-5 py-3">
-          <div className="flex items-center justify-between gap-4">
+        <div className="border-b border-slate-100 bg-amber-50 px-4 py-3 sm:px-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <Sparkles size={14} className="text-amber-600" />
               <p className="text-xs font-semibold text-amber-800">
@@ -206,46 +217,44 @@ function ComparisonPanel({
                 href="/pricing"
                 className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-white px-3 py-1.5 text-xs font-bold text-amber-700 transition hover:bg-amber-50"
               >
-                <Lock size={11} />
-                Upgrade to Humanize
+                <Lock size={11} /> Upgrade to Humanize
               </a>
             ) : (
               <button
                 onClick={() => onReHumanize(doc)}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm shadow-indigo-100 transition hover:bg-indigo-700"
               >
-                <Sparkles size={11} />
-                Humanize this text
+                <Sparkles size={11} /> Humanize this text
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* ── Side-by-side text — scrollable ── */}
-      <div className="grid min-h-0 flex-1 divide-y divide-slate-100 md:grid-cols-2 md:divide-x md:divide-y-0">
+      {/* Side-by-side text — stacks on mobile, side-by-side on md+ */}
+      <div className="grid divide-y divide-slate-100 md:grid-cols-2 md:divide-x md:divide-y-0">
         {/* Original */}
-        <div className="flex min-h-0 flex-col p-4">
-          <h4 className="mb-2 shrink-0 text-[10px] font-black uppercase tracking-widest text-rose-500">
+        <div className="flex flex-col p-4">
+          <h4 className="mb-2 text-[10px] font-black uppercase tracking-widest text-rose-500">
             Original AI Text
           </h4>
-          <div className="flex-1 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm leading-relaxed text-slate-600">
+          <div className="max-h-64 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm leading-relaxed text-slate-600 md:max-h-96">
             {doc.original_content}
           </div>
         </div>
 
         {/* Humanized */}
-        <div className="flex min-h-0 flex-col p-4">
-          <h4 className="mb-2 flex shrink-0 items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-600">
+        <div className="flex flex-col p-4">
+          <h4 className="mb-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-600">
             <Sparkles size={10} /> Humanized Version
           </h4>
 
           {doc.humanized_content ? (
-            <div className="flex-1 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 text-sm leading-relaxed text-slate-800 shadow-inner">
+            <div className="max-h-64 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 text-sm leading-relaxed text-slate-800 shadow-inner md:max-h-96">
               {doc.humanized_content}
             </div>
           ) : (
-            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-400">
                 <Sparkles size={20} />
               </div>
@@ -275,6 +284,8 @@ export default function HistoryPage() {
 
   const [isConfirming, setIsConfirming] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  // On mobile: "list" shows the document list, "detail" shows the comparison panel
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
 
   const selectedId = searchParams.get("doc");
 
@@ -304,11 +315,14 @@ export default function HistoryPage() {
     const params = new URLSearchParams(searchParams.toString());
     params.set("doc", id);
     router.push(`/dashboard/history?${params.toString()}`);
+    setMobileView("detail");
   };
 
   const { mutate: clearHistory, isPending: isClearing } = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase.from("documents").delete().eq("user_id", user.id);
       if (error) throw error;
@@ -317,6 +331,7 @@ export default function HistoryPage() {
       queryClient.invalidateQueries({ queryKey: ["user-history"] });
       setIsConfirming(false);
       router.replace("/dashboard/history");
+      setMobileView("list");
     },
   });
 
@@ -327,23 +342,22 @@ export default function HistoryPage() {
     },
     onSuccess: (_, docId) => {
       queryClient.invalidateQueries({ queryKey: ["user-history"] });
-      if (selectedId === docId) router.replace("/dashboard/history");
+      if (selectedId === docId) {
+        router.replace("/dashboard/history");
+        setMobileView("list");
+      }
     },
   });
 
-  // Use sessionStorage to pass long texts — avoids URL length limits
   const handleReHumanize = (doc: HistoryDocument) => {
     try {
       sessionStorage.setItem("humanize_prefill_text", doc.original_content);
       sessionStorage.setItem("humanize_prefill_docId", doc.id);
     } catch {
-      // sessionStorage unavailable — fall back to URL (truncated if needed)
+      // sessionStorage unavailable
     }
     const params = new URLSearchParams();
-    // Only put short texts in the URL; long texts come from sessionStorage
-    if (doc.original_content.length < 1500) {
-      params.set("text", doc.original_content);
-    }
+    if (doc.original_content.length < 1500) params.set("text", doc.original_content);
     params.set("documentId", doc.id);
     params.set("fromHistory", "1");
     router.push(`/humanize?${params.toString()}`);
@@ -383,13 +397,18 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6 text-slate-900">
+    <div className="space-y-5 text-slate-900 sm:space-y-6">
       {/* Header */}
       <header>
-        <h1 className="text-2xl font-bold">Document History</h1>
-        <p className="text-slate-500">Review and compare your past humanized scans.</p>
-        <div className="relative mt-4 w-full md:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+        <h1 className="text-xl font-bold sm:text-2xl">Document History</h1>
+        <p className="text-sm text-slate-500">
+          Review and compare your past humanized scans.
+        </p>
+        <div className="relative mt-4 w-full sm:w-64">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={16}
+          />
           <input
             type="text"
             placeholder="Search documents..."
@@ -401,11 +420,11 @@ export default function HistoryPage() {
       </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         {[
-          { label: "Total Scans", value: totalScans,  icon: <FileText size={16} />, color: "text-blue-600",   bg: "bg-blue-50"   },
-          { label: "Active Tones",value: uniqueTones,  icon: <Zap size={16} />,      color: "text-purple-600", bg: "bg-purple-50" },
-          { label: "Top Style",   value: topTone,      icon: <BarChart3 size={16} />,color: "text-green-600",  bg: "bg-green-50"  },
+          { label: "Total Scans",  value: totalScans,  icon: <FileText size={16} />, color: "text-blue-600",   bg: "bg-blue-50"   },
+          { label: "Active Tones", value: uniqueTones,  icon: <Zap size={16} />,      color: "text-purple-600", bg: "bg-purple-50" },
+          { label: "Top Style",    value: topTone,      icon: <BarChart3 size={16} />,color: "text-green-600",  bg: "bg-green-50"  },
           {
             label: "Last Scan",
             value: documents[0]?.created_at
@@ -416,20 +435,35 @@ export default function HistoryPage() {
             bg: "bg-orange-50",
           },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-            <div className="mb-2 flex items-center gap-3">
-              <div className={`rounded-lg p-2 ${stat.bg} ${stat.color}`}>{stat.icon}</div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
+          <div
+            key={stat.label}
+            className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm sm:p-4"
+          >
+            <div className="mb-2 flex items-center gap-2 sm:gap-3">
+              <div className={`rounded-lg p-1.5 sm:p-2 ${stat.bg} ${stat.color}`}>
+                {stat.icon}
+              </div>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 sm:text-[10px]">
+                {stat.label}
+              </span>
             </div>
-            <p className="truncate text-xl font-bold capitalize text-slate-900">{stat.value}</p>
+            <p className="truncate text-lg font-bold capitalize text-slate-900 sm:text-xl">
+              {stat.value}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* Main grid — fixed height so comparison panel doesn't push buttons off screen */}
-      <div className="grid gap-6 lg:grid-cols-[280px_1fr]" style={{ minHeight: "600px" }}>
-        {/* Document list */}
-        <aside className="flex flex-col gap-2">
+      {/* ── Main area ── */}
+      {/* Desktop: side-by-side. Mobile: toggle between list and detail */}
+      <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
+
+        {/* Document list — hidden on mobile when viewing detail */}
+        <aside
+          className={`flex flex-col gap-2 ${
+            mobileView === "detail" ? "hidden lg:flex" : "flex"
+          }`}
+        >
           {filteredDocuments.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-12 text-center">
               <Search size={20} className="mb-3 text-slate-300" />
@@ -488,9 +522,12 @@ export default function HistoryPage() {
                 >
                   <Lock size={14} className="text-indigo-400" />
                   <p className="text-xs font-bold text-indigo-700">
-                    {documents.length - FREE_DOC_LIMIT} more document{documents.length - FREE_DOC_LIMIT !== 1 ? "s" : ""} hidden
+                    {documents.length - FREE_DOC_LIMIT} more document
+                    {documents.length - FREE_DOC_LIMIT !== 1 ? "s" : ""} hidden
                   </p>
-                  <p className="text-[11px] text-indigo-500">Upgrade to see full history</p>
+                  <p className="text-[11px] text-indigo-500">
+                    Upgrade to see full history
+                  </p>
                 </a>
               )}
               {isFree && documents.length <= FREE_DOC_LIMIT && documents.length > 0 && (
@@ -499,7 +536,10 @@ export default function HistoryPage() {
                   className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-center transition hover:bg-slate-100"
                 >
                   <Lock size={12} className="text-slate-400" />
-                  <p className="text-xs text-slate-500">Free plan: last 3 docs only. <span className="font-semibold text-indigo-600">Upgrade</span></p>
+                  <p className="text-xs text-slate-500">
+                    Free plan: last 3 docs only.{" "}
+                    <span className="font-semibold text-indigo-600">Upgrade</span>
+                  </p>
                 </a>
               )}
             </>
@@ -537,14 +577,19 @@ export default function HistoryPage() {
           )}
         </aside>
 
-        {/* Comparison panel */}
-        <main className="min-h-0">
+        {/* Comparison panel — hidden on mobile when viewing list */}
+        <main
+          className={`min-h-0 ${
+            mobileView === "list" ? "hidden lg:block" : "block"
+          }`}
+        >
           {selectedDoc ? (
             <ComparisonPanel
               doc={selectedDoc}
               isPaidUser={isPaidUser}
               isFree={isFree}
               onReHumanize={handleReHumanize}
+              onBack={() => setMobileView("list")}
             />
           ) : (
             <div className="flex h-64 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 text-sm text-slate-400">
