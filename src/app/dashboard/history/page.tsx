@@ -114,7 +114,7 @@ function ComparisonPanel({
             {/* Copy plain — always available */}
             <button
               onClick={handleCopyPlain}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:cursor-pointer"
             >
               {copiedPlain ? (
                 <><Check size={12} className="text-emerald-500" /> Copied!</>
@@ -131,7 +131,7 @@ function ComparisonPanel({
               className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
                 !isPaidUser
                   ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
-                  : "bg-slate-900 text-white hover:bg-black"
+                  : "bg-slate-900 text-white hover:bg-black hover:cursor-pointer"
               }`}
             >
               {!isPaidUser ? (
@@ -151,7 +151,7 @@ function ComparisonPanel({
                   ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
                   : copiedDocs
                     ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700 hover:cursor-pointer"
               }`}
             >
               {!isPaidUser ? (
@@ -171,7 +171,7 @@ function ComparisonPanel({
               className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
                 !isPaidUser
                   ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
-                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:cursor-pointer"
               }`}
             >
               {!isPaidUser ? (
