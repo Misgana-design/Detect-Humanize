@@ -102,7 +102,7 @@ export default function Navbar() {
       >
         <div className="mx-auto flex h-15 max-w-7xl items-center justify-between px-5 lg:px-8">
           {/* Brand */}
-          <Brand size="md" />
+          <Brand size="lg" />
 
           {/* Desktop nav — centered */}
           <div className="hidden items-center gap-1 md:flex">
