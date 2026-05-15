@@ -28,7 +28,7 @@ export default function Footer() {
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <Brand size="md" />
+            <Brand size="lg" />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">
               Detect AI content, humanize with confidence, and keep your writing
               workflow clean end-to-end.
