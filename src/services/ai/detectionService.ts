@@ -1,13 +1,4 @@
-// 1. Fixed Import: Use GoogleGenAI instead of Client
-import { GoogleGenAI } from "@google/genai";
-
-// Initialize the Unified Client
-// The SDK automatically uses your gcp-key.json via GOOGLE_APPLICATION_CREDENTIALS
-const client = new GoogleGenAI({
-  project: process.env.GCP_PROJECT_ID!,
-  location: "global",
-  vertexai: true, // Ensures usage of Vertex AI and your $300 credits
-});
+import { client, detectionSchema, MODELS } from "./geminiClient";
 
 export interface DetectionResult {
   aiProbability: number;
@@ -22,34 +13,6 @@ export interface DetectionResult {
 export class DetectionService {
   private static readonly CHUNK_SIZE = 200;
 
-  // 2026 Model IDs - Use '-preview' to avoid 404 errors in Vertex AI Garden
-  private static readonly MODELS = {
-    FREE: "gemini-3-flash-preview",
-    PRO: "gemini-3.1-pro-preview",
-  };
-
-  private static readonly detectionSchema = {
-    type: "OBJECT",
-    properties: {
-      analysis: {
-        type: "STRING",
-        description:
-          "Detailed linguistic forensic analysis identifying specific AI markers vs human variance.",
-      },
-      flaggedSentences: {
-        type: "ARRAY",
-        items: { type: "STRING" },
-      },
-      confidence: { type: "STRING", enum: ["low", "medium", "high"] },
-      aiProbability: {
-        type: "NUMBER",
-        description:
-          "0-100 score. Be aggressive: if the text is overly polished or lacks 'burstiness', it is likely AI.",
-      },
-    },
-    required: ["analysis", "flaggedSentences", "confidence", "aiProbability"],
-  };
-
   static async analyzeText(
     text: string,
     userTier: string = "free",
@@ -61,7 +24,7 @@ export class DetectionService {
         confidence: "low",
         flaggedSentences: [],
         analysis: "Empty or whitespace-only input",
-        modelUsed: userTier === "pro" ? this.MODELS.PRO : this.MODELS.FREE,
+        modelUsed: userTier === "pro" ? MODELS.PRO : MODELS.FREE,
       };
     }
 
@@ -81,7 +44,7 @@ export class DetectionService {
 
     return {
       ...aggregated,
-      modelUsed: userTier === "pro" ? this.MODELS.PRO : this.MODELS.FREE,
+      modelUsed: userTier === "pro" ? MODELS.PRO : MODELS.FREE,
     };
   }
 
@@ -90,7 +53,7 @@ export class DetectionService {
     userTier: string,
     attempt = 1,
   ): Promise<DetectionResult> {
-    const modelName = userTier === "pro" ? this.MODELS.PRO : this.MODELS.FREE;
+    const modelName = userTier === "pro" ? MODELS.PRO : MODELS.FREE;
 
     try {
       const response = await client.models.generateContent({
@@ -116,7 +79,7 @@ export class DetectionService {
           - Be accurate, not overly punitive.`,
 
           responseMimeType: "application/json",
-          responseJsonSchema: this.detectionSchema,
+          responseJsonSchema: detectionSchema,
           temperature: 0.1,
 
           // FEATURE: Enable 'Thinking' for Gemini 3 to improve detection depth
