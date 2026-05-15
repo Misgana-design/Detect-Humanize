@@ -198,6 +198,7 @@ Apply these humanization rules:
 8. REMOVE ADVERBS: Kill "significantly," "extremely," "perfectly."
 9. NON-LINEAR THOUGHT: Add a parenthetical aside—(like this one).
 10. NO CHEERLEADING: Remove "In conclusion," "Overall," "It's clear that."
+11, Make the text feel like a real person wrote it — you know, typos here and there, maybe some slang, weird little idioms that actually sound like something someone would say. Let it breathe, then rush. Short sentences. Long, rambly ones too. Let the voice sneak through — like they’re talking right at you, not performing.
 
 Text to Polish:
 """${rewrittenText}"""
