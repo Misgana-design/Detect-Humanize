@@ -21,9 +21,9 @@ export interface HumanizerResult {
 // Free: smaller chunks to stay within Flash model limits
 // Paid: larger chunks for better context and coherence
 const CHUNK_SIZES: Record<HumanizerTier, number> = {
-  free:  300,
+  free: 300,
   basic: 400,
-  pro:   500,
+  pro: 500,
 };
 
 function splitIntoChunks(text: string, chunkSize: number): string[] {
@@ -60,7 +60,8 @@ export class HumanizerService {
     tone: Tone,
     tier: HumanizerTier = "free",
   ): Promise<HumanizerResult> {
-    const model = tier === "free" || tier === "basic" ? MODELS.FREE : MODELS.PRO;
+    const model =
+      tier === "free" || tier === "basic" ? MODELS.FREE : MODELS.PRO;
     const chunkSize = CHUNK_SIZES[tier];
     const wordCount = text.trim().split(/\s+/).length;
 
@@ -73,7 +74,9 @@ export class HumanizerService {
 
     // Split into chunks and process in parallel
     const chunks = splitIntoChunks(text, chunkSize);
-    console.log(`[humanizer] Chunking ${wordCount} words into ${chunks.length} chunks (tier=${tier})`);
+    console.log(
+      `[humanizer] Chunking ${wordCount} words into ${chunks.length} chunks (tier=${tier})`,
+    );
 
     const chunkResults = await Promise.all(
       chunks.map((chunk) =>
@@ -85,7 +88,9 @@ export class HumanizerService {
 
     // Merge results
     const humanizedText = chunkResults.map((r) => r.humanizedText).join("\n\n");
-    const allChanges = [...new Set(chunkResults.flatMap((r) => r.changes))].slice(0, 5);
+    const allChanges = [
+      ...new Set(chunkResults.flatMap((r) => r.changes)),
+    ].slice(0, 5);
 
     return { humanizedText, changes: allChanges };
   }
@@ -105,6 +110,7 @@ Rules:
 - Vary sentence length (mix short punchy sentences with longer ones)
 - Use contractions (don't, it's, we're)
 - Remove overly formal transitions (Moreover, Furthermore, In conclusion)
+- 6, Make the text feel like a real person wrote it — you know, typos here and there, maybe some slang, weird little idioms that actually sound like something someone would say. Let it breathe, then rush. Short sentences. Long, rambly ones too. Let the voice sneak through — like they’re talking right at you, not performing.
 - Keep the original meaning intact
 - Return ONLY valid JSON
 
@@ -149,7 +155,8 @@ Text:
       config: { temperature: 0.2 },
     });
 
-    const analysis = analysisResponse.text || "No specific weaknesses identified.";
+    const analysis =
+      analysisResponse.text || "No specific weaknesses identified.";
 
     // Stage 2: Rewrite
     const rewriteResponse = await client.models.generateContent({
@@ -203,7 +210,8 @@ JSON OUTPUT: { "humanizedText": "final polished version", "changes": ["3 specifi
       },
     });
 
-    if (!finalResponse.text) throw new Error("Empty response from AI model during final polish.");
+    if (!finalResponse.text)
+      throw new Error("Empty response from AI model during final polish.");
     return JSON.parse(finalResponse.text) as HumanizerResult;
   }
 }
