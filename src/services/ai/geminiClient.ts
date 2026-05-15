@@ -36,12 +36,23 @@ export const client = new GoogleGenAI({
 export const detectionSchema = {
   type: "OBJECT",
   properties: {
-    aiProbability: { type: "NUMBER" },
-    confidence: { type: "STRING" },
-    flaggedSentences: { type: "ARRAY", items: { type: "STRING" } },
-    analysis: { type: "STRING" },
+    analysis: {
+      type: "STRING",
+      description:
+        "Detailed linguistic forensic analysis identifying specific AI markers vs human variance.",
+    },
+    flaggedSentences: {
+      type: "ARRAY",
+      items: { type: "STRING" },
+    },
+    confidence: { type: "STRING", enum: ["low", "medium", "high"] },
+    aiProbability: {
+      type: "NUMBER",
+      description:
+        "0-100 score. Be aggressive: if the text is overly polished or lacks 'burstiness', it is likely AI.",
+    },
   },
-  required: ["aiProbability", "confidence", "flaggedSentences", "analysis"],
+  required: ["analysis", "flaggedSentences", "confidence", "aiProbability"],
 };
 
 // 3. Humanizer Schema
