@@ -18,12 +18,15 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="flex min-h-screen bg-white">
-      {/* 1. The Sidebar (Persistent) */}
+      {/* Sidebar — desktop persistent, mobile drawer */}
       <Sidebar />
 
-      {/* 2. The Page Content (Changes based on URL) */}
+      {/* Page content */}
       <main className="flex-1 overflow-y-auto bg-slate-50/50">
-        <div className="max-w-7xl mx-auto py-8 px-6">{children}</div>
+        {/* pt-14 offsets the fixed mobile top bar; lg:pt-0 removes it on desktop */}
+        <div className="mx-auto max-w-7xl px-4 py-6 pt-20 sm:px-6 lg:px-6 lg:pt-8">
+          {children}
+        </div>
       </main>
     </div>
   );
