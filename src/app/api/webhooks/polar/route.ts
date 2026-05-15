@@ -44,11 +44,12 @@ function getString(...values: unknown[]): string | null {
   return null;
 }
 
-function normalizePolarData(data: PolarRecord) {
+function normalizePolarData(data: PolarRecord, eventType: string) {
   const customer = asRecord(data.customer);
   const subscription = asRecord(data.subscription);
   const metadata = asRecord(data.metadata);
   const subscriptionMetadata = asRecord(subscription?.metadata);
+  const isSubscriptionEvent = eventType.startsWith("subscription.");
 
   const externalCustomerId = getString(
     data.externalCustomerId,
@@ -74,6 +75,7 @@ function normalizePolarData(data: PolarRecord) {
   const subscriptionId = getString(
     data.subscriptionId,
     data.subscription_id,
+    isSubscriptionEvent ? data.id : null,
     subscription?.id,
     metadata?.subscription_id,
     metadata?.subscriptionId,
@@ -255,7 +257,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const data = normalizePolarData((event as { data: PolarRecord }).data);
+    const data = normalizePolarData((event as { data: PolarRecord }).data, event.type);
 
     switch (event.type) {
       case "order.paid":
