@@ -137,7 +137,7 @@ export function DetectorPageClient() {
             <button
               onClick={handleScan}
               disabled={isPending || wordCount < 50}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 hover:cursor-pointer"
             >
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
