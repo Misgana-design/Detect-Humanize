@@ -15,11 +15,41 @@ import {
 import { TextUploadField } from "@/components/forms/TextUploadField";
 import { useDetection } from "@/hooks/useDetection";
 
-// Colour helpers based on AI probability score
+// ── Colour helpers ────────────────────────────────────────────────────────────
+
 function scoreColor(p: number) {
-  if (p >= 75) return { text: "text-red-600",    bg: "bg-red-50",    ring: "ring-red-200",    bar: "bg-red-500"    };
-  if (p >= 45) return { text: "text-amber-600",  bg: "bg-amber-50",  ring: "ring-amber-200",  bar: "bg-amber-500"  };
-  return              { text: "text-emerald-600", bg: "bg-emerald-50",ring: "ring-emerald-200",bar: "bg-emerald-500" };
+  if (p >= 75)
+    return {
+      text: "text-red-600",
+      bg: "bg-red-50",
+      ring: "ring-red-200",
+      bar: "bg-red-500",
+      stroke: "#ef4444",
+      glow: "shadow-red-100",
+      badge: "bg-red-100 text-red-700 border-red-200",
+      cta: "bg-red-600 hover:bg-red-700 shadow-red-100",
+    };
+  if (p >= 45)
+    return {
+      text: "text-amber-600",
+      bg: "bg-amber-50",
+      ring: "ring-amber-200",
+      bar: "bg-amber-500",
+      stroke: "#f59e0b",
+      glow: "shadow-amber-100",
+      badge: "bg-amber-100 text-amber-700 border-amber-200",
+      cta: "bg-amber-600 hover:bg-amber-700 shadow-amber-100",
+    };
+  return {
+    text: "text-emerald-600",
+    bg: "bg-emerald-50",
+    ring: "ring-emerald-200",
+    bar: "bg-emerald-500",
+    stroke: "#10b981",
+    glow: "shadow-emerald-100",
+    badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    cta: "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100",
+  };
 }
 
 function scoreLabel(p: number) {
@@ -29,10 +59,86 @@ function scoreLabel(p: number) {
 }
 
 function scoreIcon(p: number) {
-  if (p >= 75) return <ShieldAlert className="h-6 w-6" />;
-  if (p >= 45) return <Brain className="h-6 w-6" />;
-  return <ShieldCheck className="h-6 w-6" />;
+  if (p >= 75) return <ShieldAlert className="h-5 w-5" />;
+  if (p >= 45) return <Brain className="h-5 w-5" />;
+  return <ShieldCheck className="h-5 w-5" />;
 }
+
+// ── Progress ring ─────────────────────────────────────────────────────────────
+
+function ProgressRing({
+  percent,
+  stroke,
+  size = 160,
+  strokeWidth = 12,
+}: {
+  percent: number;
+  stroke: string;
+  size?: number;
+  strokeWidth?: number;
+}) {
+  const r = (size - strokeWidth) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (percent / 100) * circ;
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      className="-rotate-90"
+      aria-hidden="true"
+    >
+      {/* Track */}
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        className="text-slate-100"
+      />
+      {/* Progress */}
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeDasharray={circ}
+        strokeDashoffset={offset}
+        style={{ transition: "stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1)" }}
+      />
+    </svg>
+  );
+}
+
+// ── Metric pill ───────────────────────────────────────────────────────────────
+
+function MetricPill({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string | number;
+  hint?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-center">
+      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+        {label}
+      </span>
+      <span className="text-sm font-bold capitalize text-slate-900">{value}</span>
+      {hint && <span className="text-[9px] text-slate-400">{hint}</span>}
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function DetectorPageClient() {
   const router = useRouter();
@@ -40,7 +146,6 @@ export function DetectorPageClient() {
   const initialText = searchParams.get("text");
   const fromHome = searchParams.get("fromHome") === "1";
 
-  // For long texts from the homepage, read from sessionStorage instead of URL
   const resolveInitialText = () => {
     if (fromHome) {
       try {
@@ -65,7 +170,6 @@ export function DetectorPageClient() {
   const handleScan = () => mutate(text);
 
   const handleRedirectToHumanizer = () => {
-    // Use sessionStorage for long texts to avoid URL length limits
     try {
       sessionStorage.setItem("humanize_prefill_text", text);
       if (data?.documentId) {
@@ -75,7 +179,6 @@ export function DetectorPageClient() {
 
     const params = new URLSearchParams({ fromHistory: "1" });
     if (data?.documentId) params.set("documentId", data.documentId);
-    // Also put short texts in URL as fallback
     if (text.length < 1500) params.set("text", text);
     router.push(`/humanize?${params.toString()}`);
   };
@@ -107,27 +210,28 @@ export function DetectorPageClient() {
   };
 
   const colors = data ? scoreColor(data.aiProbability) : null;
+  const pct = data ? Math.round(data.aiProbability) : 0;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 p-6">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:space-y-8 sm:p-6">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           AI Content Detector
         </h1>
-        <p className="mt-2 text-slate-500">
+        <p className="mt-2 text-sm text-slate-500 sm:text-base">
           Paste or upload text to detect AI-generated patterns, flagged
           sentences, and a detailed forensic breakdown.
         </p>
       </header>
 
-      <div className="grid items-start gap-8 lg:grid-cols-2">
+      <div className="grid items-start gap-6 sm:gap-8 lg:grid-cols-2">
         {/* ── Input panel ── */}
         <section className="space-y-4">
           <TextUploadField
             value={text}
             onChange={setText}
             placeholder="Paste or drop your text here..."
-            minHeightClassName="min-h-[380px]"
+            minHeightClassName="min-h-[320px] sm:min-h-[380px]"
           />
 
           <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
@@ -137,7 +241,7 @@ export function DetectorPageClient() {
             <button
               onClick={handleScan}
               disabled={isPending || wordCount < 50}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 hover:cursor-pointer"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -157,7 +261,8 @@ export function DetectorPageClient() {
         </section>
 
         {/* ── Results panel ── */}
-        <section className="flex min-h-168 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section className="flex min-h-[420px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:min-h-[520px]">
+
           {/* Empty state */}
           {!data && !isPending && (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 p-10 text-center">
@@ -173,7 +278,7 @@ export function DetectorPageClient() {
             </div>
           )}
 
-          {/* Loading state */}
+          {/* Loading state — preserved exactly as requested */}
           {isPending && (
             <div className="flex flex-1 flex-col items-center justify-center gap-6 p-10 text-center">
               <div className="relative flex h-20 w-20 items-center justify-center">
@@ -209,52 +314,70 @@ export function DetectorPageClient() {
             </div>
           )}
 
-          {/* Results */}
+          {/* ── Results ── */}
           {data && colors && (
             <div className="flex h-full flex-col">
-              {/* Score header */}
-              <div className={`border-b border-slate-100 p-6 ${colors.bg}`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                      AI Probability Score
-                    </p>
-                    <div
-                      className={`mt-1 text-6xl font-black tabular-nums ${colors.text}`}
-                    >
-                      {Math.round(data.aiProbability)}
-                      <span className="text-3xl">%</span>
-                    </div>
-                    <div
-                      className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ${colors.text} ${colors.ring} bg-white`}
-                    >
-                      {scoreIcon(data.aiProbability)}
-                      {scoreLabel(data.aiProbability)}
+
+              {/* Score header — progress ring + metrics */}
+              <div className={`border-b border-slate-100 p-5 sm:p-6 ${colors.bg}`}>
+                <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:gap-6">
+
+                  {/* Progress ring */}
+                  <div className="relative shrink-0">
+                    <ProgressRing
+                      percent={pct}
+                      stroke={colors.stroke}
+                      size={148}
+                      strokeWidth={13}
+                    />
+                    {/* Centre label */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className={`text-4xl font-black tabular-nums leading-none ${colors.text}`}>
+                        {pct}
+                        <span className="text-xl">%</span>
+                      </span>
+                      <span className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        AI Score
+                      </span>
                     </div>
                   </div>
 
-                  {/* Confidence badge */}
-                  <div className="shrink-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                      Confidence
-                    </p>
-                    <p className="mt-1 text-lg font-bold capitalize text-slate-900">
-                      {data.confidence}
-                    </p>
-                  </div>
-                </div>
+                  {/* Right side */}
+                  <div className="flex flex-1 flex-col gap-3 text-center sm:text-left">
+                    {/* Verdict badge */}
+                    <div
+                      className={`inline-flex items-center gap-1.5 self-center rounded-full border px-3 py-1.5 text-xs font-bold sm:self-start ${colors.badge}`}
+                    >
+                      {scoreIcon(pct)}
+                      {scoreLabel(pct)}
+                    </div>
 
-                {/* Progress bar */}
-                <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/60">
-                  <div
-                    className={`h-full rounded-full transition-all duration-700 ${colors.bar}`}
-                    style={{ width: `${Math.round(data.aiProbability)}%` }}
-                  />
+                    {/* Metric pills */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <MetricPill
+                        label="Confidence"
+                        value={data.confidence}
+                      />
+                      <MetricPill
+                        label="Flagged"
+                        value={`${data.flaggedSentences?.length ?? 0} sentences`}
+                      />
+                      <MetricPill
+                        label="Words"
+                        value={wordCount}
+                      />
+                      <MetricPill
+                        label="Model"
+                        value="Pro"
+                        hint="Humanica Pro"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Flagged text */}
-              <div className="flex-1 overflow-y-auto p-6">
+              {/* Annotated text + analysis */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                 <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
                   Annotated Text
                   {data.flaggedSentences?.length > 0 && (
@@ -277,16 +400,24 @@ export function DetectorPageClient() {
                     </p>
                   </div>
                 )}
+
+                {/* Legend */}
+                <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5">
+                  <span className="inline-block h-3 w-3 rounded-sm bg-red-100 ring-1 ring-red-300" />
+                  <span className="text-[11px] text-slate-500">
+                    Highlighted sentences are flagged as likely AI-generated
+                  </span>
+                </div>
               </div>
 
               {/* CTA */}
               <div className="border-t border-slate-100 bg-white p-4">
                 <button
                   onClick={handleRedirectToHumanizer}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3.5 font-bold text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 hover:cursor-pointer"
+                  className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3.5 font-bold text-white shadow-lg transition ${colors.cta}`}
                 >
                   <Sparkles size={18} />
-                  Improve with Humanizer
+                  Humanize this text
                   <ChevronRight size={16} />
                 </button>
               </div>
