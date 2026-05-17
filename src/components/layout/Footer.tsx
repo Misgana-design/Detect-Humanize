@@ -5,14 +5,17 @@ import { Brand } from "./Brand";
 
 const footerLinks = {
   Product: [
-    { href: "/detector",  label: "AI Detector"       },
-    { href: "/humanize",  label: "Humanizer"         },
-    { href: "/detectors", label: "Detectors We Bypass"},
-    { href: "/pricing",   label: "Pricing"           },
+    { href: "/detector",  label: "AI Detector"        },
+    { href: "/humanize",  label: "Humanizer"          },
+    { href: "/detectors", label: "Detectors We Bypass" },
+    { href: "/pricing",   label: "Pricing"            },
   ],
-  Company: [
-    { href: "/faq",     label: "FAQ"     },
-    { href: "/contact", label: "Contact" },
+  Resources: [
+    { href: "/blog",       label: "Blog"        },
+    { href: "/tools",      label: "Comparisons" },
+    { href: "/use-cases",  label: "Use Cases"   },
+    { href: "/faq",        label: "FAQ"         },
+    { href: "/contact",    label: "Contact"     },
   ],
   Legal: [
     { href: "/privacy", label: "Privacy" },
