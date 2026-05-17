@@ -48,7 +48,7 @@ export function UpgradeBanner() {
         <button
           type="button"
           onClick={() => void handleUpgrade()}
-          className="inline-flex items-center justify-center px-5 py-2.5 font-semibold text-white bg-black rounded-xl hover:bg-slate-800 transition-all shadow-md text-xs gap-2 whitespace-nowrap"
+          className="inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-black px-5 py-2.5 text-xs font-semibold text-white shadow-md transition-all hover:bg-slate-800"
         >
           <CreditCard size={14} />
           Subscribe with Polar
