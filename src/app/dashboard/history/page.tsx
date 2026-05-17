@@ -129,12 +129,16 @@ function ComparisonPanel({
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <button
               onClick={handleCopyPlain}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:cursor-pointer"
             >
               {copiedPlain ? (
-                <><Check size={12} className="text-emerald-500" /> Copied!</>
+                <>
+                  <Check size={12} className="text-emerald-500" /> Copied!
+                </>
               ) : (
-                <><Copy size={12} /> Copy Text</>
+                <>
+                  <Copy size={12} /> Copy Text
+                </>
               )}
             </button>
 
@@ -145,13 +149,17 @@ function ComparisonPanel({
               className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
                 !isPaidUser
                   ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
-                  : "bg-slate-900 text-white hover:bg-black"
+                  : "bg-slate-900 text-white hover:bg-black hover:cursor-pointer"
               }`}
             >
               {!isPaidUser ? (
-                <><Lock size={12} /> Re-Humanize</>
+                <>
+                  <Lock size={12} /> Re-Humanize
+                </>
               ) : (
-                <><Sparkles size={12} /> Re-Humanize</>
+                <>
+                  <Sparkles size={12} /> Re-Humanize
+                </>
               )}
             </button>
 
@@ -164,15 +172,21 @@ function ComparisonPanel({
                   ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
                   : copiedDocs
                     ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700 hover:cursor-pointer"
               }`}
             >
               {!isPaidUser ? (
-                <><Lock size={12} /> Docs</>
+                <>
+                  <Lock size={12} /> Docs
+                </>
               ) : copiedDocs ? (
-                <><Check size={12} /> Copied!</>
+                <>
+                  <Check size={12} /> Copied!
+                </>
               ) : (
-                <><FileText size={12} /> Copy for Docs</>
+                <>
+                  <FileText size={12} /> Copy for Docs
+                </>
               )}
             </button>
 
@@ -183,20 +197,27 @@ function ComparisonPanel({
               className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
                 !isPaidUser
                   ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
-                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:cursor-pointer"
               }`}
             >
               {!isPaidUser ? (
-                <><Lock size={12} /> PDF</>
+                <>
+                  <Lock size={12} /> PDF
+                </>
               ) : (
-                <><Download size={12} /> PDF</>
+                <>
+                  <Download size={12} /> PDF
+                </>
               )}
             </button>
           </div>
 
           {!isPaidUser && (
             <p className="mt-2 text-center text-[11px] text-slate-400">
-              <a href="/pricing" className="font-semibold text-indigo-600 hover:underline">
+              <a
+                href="/pricing"
+                className="font-semibold text-indigo-600 hover:underline"
+              >
                 Upgrade to Basic or above
               </a>{" "}
               to unlock Re-Humanize, Copy for Docs, and PDF export.
@@ -258,7 +279,9 @@ function ComparisonPanel({
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-400">
                 <Sparkles size={20} />
               </div>
-              <p className="text-sm font-semibold text-slate-700">No humanized version yet</p>
+              <p className="text-sm font-semibold text-slate-700">
+                No humanized version yet
+              </p>
               <p className="mt-1 text-xs text-slate-400">
                 Use the button above to humanize this text.
               </p>
