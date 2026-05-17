@@ -14,7 +14,7 @@ const navLinks = [
   { name: "Humanizer",   href: "/humanize"  },
   { name: "Detectors",   href: "/detectors" },
   { name: "Pricing",     href: "/pricing"   },
-  { name: "FAQ",         href: "/faq"       },
+  { name: "Blog",        href: "/blog"      },
 ];
 
 export default function Navbar() {
