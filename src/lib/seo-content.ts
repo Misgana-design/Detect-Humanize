@@ -1,4 +1,4 @@
-// ─────────────────────────────────────────────────────────────────────────────
+��// ─────────────────────────────────────────────────────────────────────────────
 // Programmatic SEO content data
 // All blog posts, tool comparison pages, and use-case pages are driven from
 // this single file so adding new pages is a one-line change.
@@ -144,7 +144,7 @@ export const blogPosts: BlogPost[] = [
     faq: [
       {
         q: "Is there a completely free AI detector and humanizer with no sign up?",
-        a: "Most combined tools require sign-up. Text Humanica requires a free account (30 seconds with Google) but no credit card. Pure detection tools like ZeroGPT work without sign-up but don't include a humanizer.",
+        a: "Most combined tools require sign-up. Text Humanica requires a free account (30 seconds with Googlebut no credit card. Pure detection tools like ZeroGPT work without sign-up but don't include a humanizer.",
       },
       {
         q: "Are there free AI humanizer tools with unlimited words?",
@@ -184,11 +184,11 @@ export const blogPosts: BlogPost[] = [
       },
       {
         heading: "Manual humanization techniques",
-        body: "If you're humanizing manually: (1) Vary sentence length dramatically — mix short punchy sentences with longer complex ones. (2) Remove all 'Furthermore', 'Moreover', 'In addition' phrases. (3) Add personal observations or specific examples. (4) Use contractions where appropriate. (5) Break up long paragraphs. (6) Introduce minor grammatical informality where the context allows.",
+        body: "If you're humanizing manually: (1Vary sentence length dramatically — mix short punchy sentences with longer complex ones. (2) Remove all 'Furthermore', 'Moreover', 'In addition' phrases. (3Add personal observations or specific examples. (4Use contractions where appropriate. (5Break up long paragraphs. (6Introduce minor grammatical informality where the context allows.",
       },
       {
         heading: "Using a humanizer tool",
-        body: "Manual humanization is time-consuming. A dedicated humanizer like Text Humanica automates the 3-stage process in under 15 seconds. The Pro model is specifically tuned to maximize burstiness and perplexity — the two metrics AI detectors rely on most. You can choose from 8 tones (Academic, Casual, Professional, Creative, Formal, Friendly, Persuasive, Simple) to match your writing context.",
+        body: "Manual humanization is time-consuming. A dedicated humanizer like Text Humanica automates the 3-stage process in under 15 seconds. The Pro model is specifically tuned to maximize burstiness and perplexity — the two metrics AI detectors rely on most. You can choose from 8 tones (Academic, Casual, Professional, Creative, Formal, Friendly, Persuasive, Simpleto match your writing context.",
       },
       {
         heading: "How to verify your humanized text",
@@ -284,7 +284,7 @@ export const blogPosts: BlogPost[] = [
     sections: [
       {
         heading: "Why GPTZero flags your text",
-        body: "GPTZero uses two primary signals: perplexity (how predictable each word is given the context) and burstiness (how much sentence length and complexity varies). AI models like GPT-4 and Claude produce text with very low perplexity and very low burstiness — both sentences and word choices are highly predictable. GPTZero is trained to identify this pattern.",
+        body: "GPTZero uses two primary signals: perplexity (how predictable each word is given the contextand burstiness (how much sentence length and complexity varies). AI models like GPT-4 and Claude produce text with very low perplexity and very low burstiness — both sentences and word choices are highly predictable. GPTZero is trained to identify this pattern.",
       },
       {
         heading: "Method 1: Use a 3-stage humanizer",
@@ -292,7 +292,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         heading: "Method 2: Manual rewriting techniques",
-        body: "If you prefer manual editing: (1) Vary sentence length dramatically — GPTZero is very sensitive to uniform sentence length. (2) Add specific examples, numbers, and personal observations. (3) Use contractions and informal phrasing where appropriate. (4) Break up long, complex sentences into shorter ones and vice versa. (5) Remove all 'Furthermore', 'Moreover', 'In conclusion' phrases.",
+        body: "If you prefer manual editing: (1) Vary sentence length dramatically — GPTZero is very sensitive to uniform sentence length. (2) Add specific examples, numbers, and personal observations. (3Use contractions and informal phrasing where appropriate. (4Break up long, complex sentences into shorter ones and vice versa. (5) Remove all 'Furthermore', 'Moreover', 'In conclusion' phrases.",
       },
       {
         heading: "Method 3: Targeted sentence editing",
@@ -392,7 +392,7 @@ export const blogPosts: BlogPost[] = [
     sections: [
       {
         heading: "What makes AI text detectable",
-        body: "AI detectors don't read text the way humans do — they analyze statistical properties. The key signals are: (1) Perplexity: how predictable each word is given the context. AI text has very low perplexity. (2) Burstiness: how much sentence length and complexity varies. AI text has very low burstiness. (3) Transitional phrase density: AI models overuse phrases like 'Furthermore', 'Moreover', 'It is worth noting'. (4) Sentence rhythm: AI text tends to have a uniform, almost metronomic rhythm.",
+        body: "AI detectors don't read text the way humans do — they analyze statistical properties. The key signals are: (1Perplexity: how predictable each word is given the context. AI text has very low perplexity. (2) Burstiness: how much sentence length and complexity varies. AI text has very low burstiness. (3Transitional phrase density: AI models overuse phrases like 'Furthermore', 'Moreover', 'It is worth noting'. (4) Sentence rhythm: AI text tends to have a uniform, almost metronomic rhythm.",
       },
       {
         heading: "The only reliable method: deep linguistic restructuring",
@@ -400,7 +400,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         heading: "Using Text Humanica for undetectable output",
-        body: "Text Humanica's 3-stage pipeline is specifically engineered to produce undetectable output. Stage 1 (Analysis) identifies the highest-risk sentences. Stage 2 (Rewrite) restructures them to maximize burstiness and perplexity. Stage 3 (Polish) does a final pass to ensure naturalness and meaning preservation. Pro plan users consistently achieve AI probability scores below 10% on GPTZero, Turnitin, and Originality.ai.",
+        body: "Text Humanica's 3-stage pipeline is specifically engineered to produce undetectable output. Stage 1 (Analysis) identifies the highest-risk sentences. Stage 2 (Rewriterestructures them to maximize burstiness and perplexity. Stage 3 (Polishdoes a final pass to ensure naturalness and meaning preservation. Pro plan users consistently achieve AI probability scores below 10% on GPTZero, Turnitin, and Originality.ai.",
       },
       {
         heading: "Detector-by-detector bypass rates",
@@ -408,7 +408,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         heading: "Verifying your output",
-        body: "Always verify humanized text before submitting. Run it through Text Humanica's detector to get an AI probability score and see which sentences (if any) are still flagged. For academic submissions, aim for below 20%. For professional content, below 30% is generally safe.",
+        body: "Always verify humanized text before submitting. Run it through Text Humanica's detector to get an AI probability score and see which sentences (if anyare still flagged. For academic submissions, aim for below 20%. For professional content, below 30% is generally safe.",
       },
     ],
     faq: [
@@ -507,7 +507,7 @@ export const toolPages: ToolPage[] = [
       "98.2% detection accuracy vs GPTZero's 96.1%",
       "3.1% false positive rate vs GPTZero's 8.2%",
       "Built-in 3-stage humanizer — GPTZero has none",
-      "File upload (PDF, DOCX, TXT) — GPTZero text-only",
+      "File upload (PDF, DOCX, TXT— GPTZero text-only",
       "Full document history and comparison mode",
     ],
     cons: [
