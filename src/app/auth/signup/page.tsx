@@ -49,7 +49,7 @@ async function SignupFormContent({
         <form action={signup} className="space-y-5">
           {error && (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              <p>{decodeURIComponent(error)}</p>
+              <p>{error}</p>
               {isExistingAccount && (
                 <Link
                   href={`/auth/login${email ? `?email=${encodeURIComponent(email)}` : ""}`}
@@ -121,7 +121,7 @@ async function SignupFormContent({
           <div className="h-px flex-1 bg-slate-200" />
         </div>
 
-        <GoogleAuthButton label="Continue with Google" />
+        <GoogleAuthButton label="Continue with Google" intent="signup" />
 
         <p className="mt-6 text-center text-sm text-slate-500">
           Already have an account?{" "}

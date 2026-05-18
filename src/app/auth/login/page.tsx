@@ -47,7 +47,7 @@ async function LoginFormContent({
         <form action={login} className="space-y-5">
           {error && (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              {decodeURIComponent(error)}
+              {error}
             </div>
           )}
 
@@ -99,7 +99,7 @@ async function LoginFormContent({
           <div className="h-px flex-1 bg-slate-200" />
         </div>
 
-        <GoogleAuthButton label="Continue with Google" />
+        <GoogleAuthButton label="Continue with Google" intent="login" />
 
         <p className="mt-6 text-center text-sm text-slate-500">
           Don&apos;t have an account?{" "}

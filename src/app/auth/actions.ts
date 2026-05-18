@@ -26,6 +26,11 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required."),
 });
 
+function authPath(pathname: "/auth/login" | "/auth/signup", params: Record<string, string>) {
+  const searchParams = new URLSearchParams(params);
+  return `${pathname}?${searchParams.toString()}`;
+}
+
 // ── Signup ────────────────────────────────────────────────────────────────────
 
 export async function signup(formData: FormData) {
@@ -39,7 +44,7 @@ export async function signup(formData: FormData) {
   const parsed = signupSchema.safeParse(raw);
   if (!parsed.success) {
     const firstError = parsed.error.issues[0]?.message ?? "Invalid input.";
-    return redirect("/auth/signup?error=" + encodeURIComponent(firstError));
+    return redirect(authPath("/auth/signup", { error: firstError }));
   }
 
   const { name: fullName, email, password } = parsed.data;
@@ -58,16 +63,15 @@ export async function signup(formData: FormData) {
 
     if (lookupError) {
       redirectPath =
-        "/auth/signup?error=" +
-        encodeURIComponent("We could not verify this email. Please try again.");
+        authPath("/auth/signup", {
+          error: "We could not verify this email. Please try again.",
+        });
     } else if (existingProfile?.id) {
       redirectPath =
-        "/auth/signup?error=" +
-        encodeURIComponent(
-          "An account with this email already exists. Please log in instead.",
-        ) +
-        "&email=" +
-        encodeURIComponent(email);
+        authPath("/auth/signup", {
+          error: "An account with this email already exists. Please log in instead.",
+          email,
+        });
     } else {
       // 3. Create the auth user
       const supabase = await createServerSupabaseClient();
@@ -83,21 +87,17 @@ export async function signup(formData: FormData) {
           error.message.toLowerCase().includes("registered");
 
         redirectPath = alreadyRegistered
-          ? "/auth/signup?error=" +
-            encodeURIComponent(
-              "An account with this email already exists. Please log in instead.",
-            ) +
-            "&email=" +
-            encodeURIComponent(email)
-          : "/auth/signup?error=" + encodeURIComponent(error.message);
+          ? authPath("/auth/signup", {
+              error: "An account with this email already exists. Please log in instead.",
+              email,
+            })
+          : authPath("/auth/signup", { error: error.message });
       } else if (data.user && data.user.identities?.length === 0) {
         redirectPath =
-          "/auth/signup?error=" +
-          encodeURIComponent(
-            "An account with this email already exists. Please log in instead.",
-          ) +
-          "&email=" +
-          encodeURIComponent(email);
+          authPath("/auth/signup", {
+            error: "An account with this email already exists. Please log in instead.",
+            email,
+          });
       }
       // Profile creation is handled by the handle_new_user DB trigger (migration 010).
       // No manual upsert needed here — the trigger fires atomically on auth.users insert.
@@ -107,8 +107,9 @@ export async function signup(formData: FormData) {
     if (isRedirectError(err)) throw err;
     console.error("[signup] Unexpected error:", err);
     redirectPath =
-      "/auth/signup?error=" +
-      encodeURIComponent("Something went wrong. Please try again.");
+      authPath("/auth/signup", {
+        error: "Something went wrong. Please try again.",
+      });
   }
 
   return redirect(redirectPath);
@@ -126,7 +127,7 @@ export async function login(formData: FormData) {
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
     const firstError = parsed.error.issues[0]?.message ?? "Invalid input.";
-    return redirect("/auth/login?error=" + encodeURIComponent(firstError));
+    return redirect(authPath("/auth/login", { error: firstError }));
   }
 
   const { email, password } = parsed.data;
@@ -149,20 +150,45 @@ export async function login(formData: FormData) {
 
     if (!existingProfile?.id) {
       redirectPath =
-        "/auth/login?error=" +
-        encodeURIComponent(
-          "No account found with this email. Please sign up first.",
-        ) +
-        "&email=" +
-        encodeURIComponent(email);
+        authPath("/auth/login", {
+          error: "No account found with this email. Please sign up first.",
+          email,
+        });
     } else {
       // 3. Attempt sign-in
       const supabase = await createServerSupabaseClient();
       const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
-        redirectPath =
-          "/auth/login?error=" + encodeURIComponent(error.message);
+        redirectPath = authPath("/auth/login", {
+          error: error.message,
+          email,
+        });
+      } else {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          redirectPath = authPath("/auth/login", {
+            error: "Could not verify your session. Please try again.",
+            email,
+          });
+        } else {
+          const { data: signedInProfile } = await serviceSupabase
+            .from("profiles")
+            .select("id")
+            .eq("id", user.id)
+            .maybeSingle();
+
+          if (!signedInProfile?.id) {
+            await supabase.auth.signOut();
+            redirectPath = authPath("/auth/signup", {
+              error: "No account found with this email. Please sign up first.",
+              email,
+            });
+          }
+        }
       }
       // On success, redirectPath stays "/dashboard"
     }
@@ -170,8 +196,9 @@ export async function login(formData: FormData) {
     if (isRedirectError(err)) throw err;
     console.error("[login] Unexpected error:", err);
     redirectPath =
-      "/auth/login?error=" +
-      encodeURIComponent("Something went wrong. Please try again.");
+      authPath("/auth/login", {
+        error: "Something went wrong. Please try again.",
+      });
   }
 
   return redirect(redirectPath);

@@ -6,9 +6,11 @@ import { createClient } from "@/lib/supabase/client";
 export function GoogleAuthButton({
   label,
   next = "/dashboard",
+  intent = "signup",
 }: {
   label: string;
   next?: string;
+  intent?: "login" | "signup";
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export function GoogleAuthButton({
     try {
       const supabase = createClient();
 
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}&intent=${intent}`;
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
