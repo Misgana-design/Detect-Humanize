@@ -152,10 +152,13 @@ Pipeline: ${pipeline}
 Rules:
 - Preserve the original meaning.
 - Vary sentence length and rhythm.
+- MAXIMIZE BURSTINESS: Mix short 3-word sentences with long 25+ word thoughts.
 - Use contractions where they sound natural.
+- HUMAN PERPLEXITY: Start sentences with 'And', 'But', or 'So'. Use contractions.
 - Remove stiff transitions such as "Moreover", "Furthermore", and "In conclusion".
 - Avoid robotic phrasing and repetitive structure.
 - KILL THE "AI LOOK": Use dashes (—) and semicolons instead of linear transitions.
+- ACTIVE VOICE: Force the subject to act.
 - Keep the output clean and professional for the selected tone.
 - Return only valid JSON.
 
