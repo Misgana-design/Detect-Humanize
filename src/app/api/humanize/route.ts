@@ -8,6 +8,54 @@ import { sendHumanizationEmail } from "@/services/email/emailService";
 
 export const maxDuration = 60;
 
+type HumanizeRequestBody = {
+  text?: unknown;
+  tone?: unknown;
+  documentId?: unknown;
+};
+
+const VALID_TONES = new Set<Tone>([
+  "default",
+  "casual",
+  "professional",
+  "academic",
+  "formal",
+  "creative",
+  "friendly",
+  "storytelling",
+]);
+
+async function parseHumanizeBody(req: Request): Promise<HumanizeRequestBody> {
+  try {
+    return (await req.json()) as HumanizeRequestBody;
+  } catch {
+    throw Object.assign(new Error("Invalid request body. Please refresh and try again."), {
+      status: 400,
+    });
+  }
+}
+
+function getStatus(error: unknown) {
+  return typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof (error as { status?: unknown }).status === "number"
+    ? (error as { status: number }).status
+    : 500;
+}
+
+function getPublicErrorMessage(error: unknown, status: number) {
+  if (status >= 400 && status < 500 && error instanceof Error) {
+    return error.message;
+  }
+
+  if (status === 503) {
+    return "AI is currently busy. Try again in a few seconds.";
+  }
+
+  return "We could not humanize this text right now. Please try again.";
+}
+
 export async function POST(req: Request) {
   try {
     const supabase = await createServerSupabaseClient();
@@ -22,21 +70,34 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
-    const text: string = body.text;
-    const tone: Tone = body.tone || "default";
-    const documentId: string | undefined = body.documentId;
+    const body = await parseHumanizeBody(req);
+    const text = typeof body.text === "string" ? body.text : "";
+    const tone: Tone =
+      typeof body.tone === "string" && VALID_TONES.has(body.tone as Tone)
+        ? (body.tone as Tone)
+        : "default";
+    const documentId =
+      typeof body.documentId === "string" && body.documentId.trim()
+        ? body.documentId
+        : undefined;
     const wordCount = text?.trim() ? text.trim().split(/\s+/).length : 0;
 
     if (!text || text.trim() === "") {
       return NextResponse.json({ error: "Text is required." }, { status: 400 });
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", user.id)
       .single();
+
+    if (profileError || !profile) {
+      return NextResponse.json(
+        { error: "We could not load your account. Please sign in again." },
+        { status: 401 },
+      );
+    }
 
     const plan = getPlanDefinition(profile?.subscription_tier);
     const wordsUsed = profile?.words_used ?? 0;
@@ -92,6 +153,14 @@ export async function POST(req: Request) {
         () => HumanizerService.rewrite(text, tone, humanizerTier),
         isPaid,
       );
+    }
+
+    if (
+      !aiResult ||
+      typeof aiResult.humanizedText !== "string" ||
+      !Array.isArray(aiResult.changes)
+    ) {
+      throw new Error("AI returned an invalid humanization response.");
     }
 
     const parallelTasks: Promise<void | null>[] = [
@@ -172,10 +241,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ...aiResult, cached: isCached });
   } catch (error: unknown) {
+    const status = getStatus(error);
+    const message = getPublicErrorMessage(error, status);
     console.error("Humanizer API Error:", error);
+
     return NextResponse.json(
-      { error: "Failed to process text" },
-      { status: 500 },
+      { error: message },
+      { status },
     );
   }
 }
