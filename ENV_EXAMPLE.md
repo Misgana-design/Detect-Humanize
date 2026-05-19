@@ -18,6 +18,11 @@ GEMINI_API_KEY=your_gemini_api_key
 # POLAR_WEBHOOK_SECRET=your_polar_webhook_secret
 # NEXT_PUBLIC_SITE_URL=https://your-production-domain.com
 # NEXT_PUBLIC_APP_URL=https://your-production-domain.com
+
+# Optional: Resend email notifications
+# RESEND_API_KEY=re_your_resend_api_key
+# RESEND_FROM_EMAIL=notifications@texthumanica.com
+# CONTACT_NOTIFY_EMAIL=your-personal-email@gmail.com   ← receives contact form submissions
 # POLAR_PRODUCT_BASIC_MONTHLY_ID=your_basic_monthly_product_id
 # POLAR_PRODUCT_BASIC_YEARLY_ID=your_basic_yearly_product_id
 # POLAR_PRODUCT_PRO_MONTHLY_ID=your_pro_monthly_product_id

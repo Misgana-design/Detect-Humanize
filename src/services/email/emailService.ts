@@ -288,3 +288,92 @@ export async function sendHumanizationEmail(payload: HumanizationEmailPayload): 
     html: baseTemplate(content),
   });
 }
+
+// ── Contact notification email ────────────────────────────────────────────────
+
+interface ContactNotificationPayload {
+  fullName: string;
+  email: string;
+  message: string;
+  submittedAt: string;
+}
+
+/**
+ * Sends a notification to the site owner when someone submits the contact form.
+ * Destination is controlled by the CONTACT_NOTIFY_EMAIL env var.
+ * Falls back silently if Resend is not configured.
+ */
+export async function sendContactNotificationEmail(
+  payload: ContactNotificationPayload,
+): Promise<void> {
+  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.startsWith("re_your")) return;
+
+  const notifyTo = process.env.CONTACT_NOTIFY_EMAIL;
+  if (!notifyTo) {
+    console.warn("[contact] CONTACT_NOTIFY_EMAIL is not set — skipping notification email.");
+    return;
+  }
+
+  const { fullName, email, message, submittedAt } = payload;
+
+  const content = `
+    <!-- Top accent -->
+    <div style="height:4px;background:linear-gradient(90deg,#4f46e5,#0ea5e9);"></div>
+
+    <div style="padding:36px 40px 32px;">
+      <p style="margin:0 0 6px;font-size:13px;color:#6366f1;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">New Contact Message</p>
+      <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#0f172a;line-height:1.3;">
+        📬 Someone reached out via texthumanica.com
+      </h1>
+
+      <!-- Sender card -->
+      <div style="background:#f8fafc;border-radius:14px;padding:20px 24px;margin-bottom:20px;border:1px solid #e2e8f0;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding-bottom:12px;">
+              <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">From</p>
+              <p style="margin:4px 0 0;font-size:16px;font-weight:700;color:#0f172a;">${fullName}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:12px;">
+              <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Email</p>
+              <a href="mailto:${email}" style="margin:4px 0 0;display:block;font-size:15px;font-weight:600;color:#4f46e5;text-decoration:none;">${email}</a>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Submitted</p>
+              <p style="margin:4px 0 0;font-size:13px;color:#64748b;">${submittedAt}</p>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Message -->
+      <div style="margin-bottom:24px;">
+        <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Message</p>
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-left:4px solid #4f46e5;border-radius:0 12px 12px 0;padding:16px 20px;">
+          <p style="margin:0;font-size:14px;line-height:1.8;color:#334155;white-space:pre-wrap;">${message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+        </div>
+      </div>
+
+      <!-- Reply CTA -->
+      <a href="mailto:${email}?subject=Re: Your message to Text Humanica" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:12px;font-size:14px;font-weight:700;">
+        Reply to ${fullName} →
+      </a>
+
+      <p style="margin:20px 0 0;font-size:12px;color:#94a3b8;">
+        This message was also saved to your Supabase <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">contact_messages</code> table.
+      </p>
+    </div>
+  `;
+
+  await resend.emails.send({
+    from: `Text Humanica <${FROM}>`,
+    to: notifyTo,
+    replyTo: email,
+    subject: `📬 New contact message from ${fullName}`,
+    html: baseTemplate(content),
+  });
+}

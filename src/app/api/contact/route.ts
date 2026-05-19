@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { sendContactNotificationEmail } from "@/services/email/emailService";
 
 function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -47,7 +48,6 @@ export async function POST(request: Request) {
 
     if (dbError) {
       console.error("[contact] db insert error:", dbError.message);
-      // Don't expose DB errors to the client — return a generic message
       return NextResponse.json(
         { error: "Failed to send your message. Please try again." },
         { status: 500 },
@@ -55,6 +55,21 @@ export async function POST(request: Request) {
     }
 
     console.log("[contact] message saved", { fullName, email, receivedAt: new Date().toISOString() });
+
+    // Send notification email to site owner — fire-and-forget, never blocks the response
+    sendContactNotificationEmail({
+      fullName,
+      email,
+      message,
+      submittedAt: new Date().toLocaleString("en-US", {
+        timeZone: "UTC",
+        dateStyle: "full",
+        timeStyle: "short",
+      }) + " UTC",
+    }).catch((err: unknown) => {
+      // Log but don't fail the request — DB insert already succeeded
+      console.error("[contact] notification email failed:", err instanceof Error ? err.message : err);
+    });
 
     return NextResponse.json({
       success: true,
