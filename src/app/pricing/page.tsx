@@ -30,7 +30,7 @@ const COMPARE_ROWS: CompareRow[] = [
   { category: "Humanization", feature: "Humanizer",          values: { free: true, basic: true, pro: true, unlimited: true, enterprise: true, pro_weekly: true } },
   { category: "Humanization", feature: "Humanizer pipeline", values: { free: "1-stage", basic: "3-stage", pro: "3-stage", unlimited: "3-stage", enterprise: "3-stage", pro_weekly: "3-stage" } },
   { category: "Humanization", feature: "Humanizer model",    values: { free: "Flash", basic: "Flash", pro: "Pro", unlimited: "Pro", enterprise: "Pro", pro_weekly: "Pro" } },
-  { category: "Humanization", feature: "Available tones",    values: { free: "Default only", basic: "All 8 tones", pro: "All 8 tones", unlimited: "All 8 tones", enterprise: "All 8 tones", pro_weekly: "All 8 tones" } },
+  { category: "Humanization", feature: "Available tones",    values: { free: "Casual only", basic: "All tones", pro: "All tones", unlimited: "All tones", enterprise: "All tones", pro_weekly: "All tones" } },
   { category: "Humanization", feature: "Re-Humanize",        values: { free: false, basic: true, pro: true, unlimited: true, enterprise: true, pro_weekly: true } },
   // Quotas
   { category: "Quotas", feature: "Words per input",          values: { free: "500", basic: "500", pro: "1,500", unlimited: "2,500", enterprise: "2,500", pro_weekly: "1,000" } },
