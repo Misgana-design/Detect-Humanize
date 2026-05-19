@@ -160,6 +160,7 @@ Rules:
 - KILL THE "AI LOOK": Use dashes (—) and semicolons instead of linear transitions.
 - ACTIVE VOICE: Force the subject to act.
 - Keep the output clean and professional for the selected tone.
+- Make the text feel like a real person wrote it — you know, weird little idioms    that actually sound like something someone would say.
 - Return only valid JSON.
 
 Text:
