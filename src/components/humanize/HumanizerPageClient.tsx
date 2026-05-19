@@ -11,8 +11,7 @@ import { type Tone } from "@/services/ai/humanizerService";
 type ToneOption = { value: Tone; label: string; proOnly: boolean };
 
 const TONES: ToneOption[] = [
-  { value: "default",      label: "Default",      proOnly: false },
-  { value: "casual",       label: "Casual",        proOnly: true  },
+  { value: "casual",       label: "Casual",        proOnly: false },
   { value: "professional", label: "Professional",  proOnly: true  },
   { value: "academic",     label: "Academic",      proOnly: true  },
   { value: "formal",       label: "Formal",        proOnly: true  },
@@ -118,7 +117,7 @@ export function HumanizerPageClient() {
   };
 
   const [text, setText] = useState(() => resolveInitialText());
-  const [tone, setTone] = useState<Tone>("default");
+  const [tone, setTone] = useState<Tone>("casual");
   const [documentId] = useState<string | null>(() => resolveInitialDocId());
   const [copied, setCopied] = useState(false);
 
