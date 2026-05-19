@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { HumanizerResult, Tone } from "@/services/ai/humanizerService";
+import { readJsonResponse } from "@/lib/http/apiClient";
 
 interface HumanizerPayload {
   text: string;
@@ -23,15 +24,15 @@ export function useHumanizer() {
         body: JSON.stringify({ text, tone, documentId }),
       });
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          window.location.assign("/auth/signup");
-          throw new Error("Redirecting to signup...");
-        }
-        const err = await res.json();
-        throw new Error(err.error || "Failed to humanize text");
+      if (res.status === 401) {
+        window.location.assign("/auth/signup");
+        throw new Error("Please sign in to humanize text.");
       }
-      return res.json();
+
+      return readJsonResponse<HumanizerResult & { cached?: boolean }>(
+        res,
+        "Failed to humanize text. Please try again.",
+      );
     },
     // This is the "magic" part for your History page
     onSuccess: () => {
