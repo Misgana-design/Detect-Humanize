@@ -81,7 +81,7 @@ function ComparisonPanel({
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(10);
     pdf.text(
-      `Tone: ${doc.tone_used ?? "default"} | Date: ${new Date(doc.created_at).toLocaleDateString()}`,
+      `Tone: ${doc.tone_used ?? "casual"} | Date: ${new Date(doc.created_at).toLocaleDateString()}`,
       20,
       32,
     );
@@ -516,7 +516,7 @@ export default function HistoryPage() {
                       {doc.title || "Untitled Scan"}
                     </p>
                     <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-slate-400">
-                      <span className="capitalize">{doc.tone_used || "default"}</span>
+                      <span className="capitalize">{doc.tone_used || "casual"}</span>
                       <span>{formatDistanceToNow(new Date(doc.created_at))} ago</span>
                     </div>
                     {doc.humanized_content && (
