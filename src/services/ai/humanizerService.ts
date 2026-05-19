@@ -15,7 +15,6 @@ export type HumanizerTier = "free" | "basic" | "pro";
 export interface HumanizerResult {
   humanizedText: string;
   changes: string[];
-  fallback?: boolean;
 }
 
 type GenerateContentParams = Parameters<typeof client.models.generateContent>[0];
@@ -139,56 +138,6 @@ function splitIntoChunks(text: string, chunkSize: number): string[] {
   return chunks.length > 0 ? chunks : [text];
 }
 
-function applyLocalHumanization(text: string, tone: Tone): HumanizerResult {
-  const replacements: Array<[RegExp, string]> = [
-    [/\bMoreover,\s*/gi, "Also, "],
-    [/\bFurthermore,\s*/gi, "Plus, "],
-    [/\bAdditionally,\s*/gi, "Also, "],
-    [/\bIn conclusion,\s*/gi, "To wrap up, "],
-    [/\bIt is important to note that\s*/gi, ""],
-    [/\butilize\b/gi, "use"],
-    [/\bfacilitate\b/gi, "help"],
-    [/\bdemonstrate\b/gi, "show"],
-    [/\bapproximately\b/gi, "about"],
-    [/\bsignificantly\b/gi, "noticeably"],
-    [/\bdo not\b/gi, "don't"],
-    [/\bdoes not\b/gi, "doesn't"],
-    [/\bcannot\b/gi, "can't"],
-    [/\bwill not\b/gi, "won't"],
-    [/\bit is\b/gi, "it's"],
-    [/\bthat is\b/gi, "that's"],
-  ];
-
-  let humanized = text.trim().replace(/\r\n/g, "\n");
-
-  for (const [pattern, replacement] of replacements) {
-    humanized = humanized.replace(pattern, replacement);
-  }
-
-  humanized = humanized
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/\s+([,.;:!?])/g, "$1");
-
-  if (tone === "casual" || tone === "friendly") {
-    humanized = humanized.replace(/\bEnsure\b/g, "Make sure");
-  }
-
-  if (tone === "academic" || tone === "formal") {
-    humanized = humanized.replace(/\bPlus,\s*/g, "Additionally, ");
-  }
-
-  return {
-    humanizedText: humanized,
-    changes: [
-      "Used the backup humanizer after the AI provider was unavailable.",
-      "Simplified robotic transitions and formal phrasing.",
-      "Applied contractions and spacing cleanup while preserving meaning.",
-    ],
-    fallback: true,
-  };
-}
-
 export class HumanizerService {
   static async rewrite(
     text: string,
@@ -226,7 +175,6 @@ export class HumanizerService {
     return {
       humanizedText,
       changes,
-      fallback: chunkResults.some((result) => result.fallback),
     };
   }
 
@@ -250,25 +198,20 @@ Text:
 
 Return JSON: { "humanizedText": "...", "changes": ["change1", "change2", "change3"] }`;
 
-    try {
-      const response = await generateContentWithRetry(
-        {
-          model,
-          contents: prompt,
-          config: {
-            responseMimeType: "application/json",
-            responseSchema: humanizerSchema,
-            temperature: 0.75,
-          },
+    const response = await generateContentWithRetry(
+      {
+        model,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: humanizerSchema,
+          temperature: 0.75,
         },
-        "single-stage rewrite",
-      );
+      },
+      "single-stage rewrite",
+    );
 
-      return parseHumanizerResult(response.text, "single-stage rewrite");
-    } catch (error) {
-      console.error("[humanizer] Falling back to local rewrite:", errorMessage(error));
-      return applyLocalHumanization(text, tone);
-    }
+    return parseHumanizerResult(response.text, "single-stage rewrite");
   }
 
   private static async rewriteThreeStage(
@@ -276,11 +219,10 @@ Return JSON: { "humanizedText": "...", "changes": ["change1", "change2", "change
     tone: Tone,
     model: string,
   ): Promise<HumanizerResult> {
-    try {
-      const analysisResponse = await generateContentWithRetry(
-        {
-          model,
-          contents: `Analyze the following text and identify:
+    const analysisResponse = await generateContentWithRetry(
+      {
+        model,
+        contents: `Analyze the following text and identify:
 - AI-like patterns
 - unnatural phrasing
 - repetitive structure
@@ -288,18 +230,18 @@ Return JSON: { "humanizedText": "...", "changes": ["change1", "change2", "change
 
 Text:
 """${text}"""`,
-          config: { temperature: 0.2 },
-        },
-        "analysis",
-      );
+        config: { temperature: 0.2 },
+      },
+      "analysis",
+    );
 
-      const analysis =
-        analysisResponse.text || "No specific weaknesses identified.";
+    const analysis =
+      analysisResponse.text || "No specific weaknesses identified.";
 
-      const rewriteResponse = await generateContentWithRetry(
-        {
-          model,
-          contents: `Rewrite the following text to sound natural and human-like.
+    const rewriteResponse = await generateContentWithRetry(
+      {
+        model,
+        contents: `Rewrite the following text to sound natural and human-like.
 Target tone: ${tone === "default" ? "natural and conversational" : tone}.
 
 Address these weaknesses:
@@ -313,17 +255,17 @@ Rules:
 
 Text:
 """${text}"""`,
-          config: { temperature: 0.7 },
-        },
-        "rewrite",
-      );
+        config: { temperature: 0.7 },
+      },
+      "rewrite",
+    );
 
-      const rewrittenText = rewriteResponse.text || text;
+    const rewrittenText = rewriteResponse.text || text;
 
-      const finalResponse = await generateContentWithRetry(
-        {
-          model,
-          contents: `Polish this text into natural human writing.
+    const finalResponse = await generateContentWithRetry(
+      {
+        model,
+        contents: `Polish this text into natural human writing.
 Target tone: ${tone === "default" ? "natural and conversational" : tone}.
 
 1. MAXIMIZE BURSTINESS: Mix short 3-word sentences with long 25+ word thoughts.
@@ -343,19 +285,15 @@ Text to polish:
 """${rewrittenText}"""
 
 JSON output: { "humanizedText": "final polished version", "changes": ["3 specific adjustments made"] }`,
-          config: {
-            responseMimeType: "application/json",
-            responseSchema: humanizerSchema,
-            temperature: 0.9,
-          },
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: humanizerSchema,
+          temperature: 0.9,
         },
-        "final polish",
-      );
+      },
+      "final polish",
+    );
 
-      return parseHumanizerResult(finalResponse.text, "final polish");
-    } catch (error) {
-      console.error("[humanizer] Falling back to local rewrite:", errorMessage(error));
-      return applyLocalHumanization(text, tone);
-    }
+    return parseHumanizerResult(finalResponse.text, "final polish");
   }
 }
