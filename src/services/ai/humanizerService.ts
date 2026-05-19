@@ -146,17 +146,22 @@ function buildPrompt(text: string, tone: Tone, tier: HumanizerTier) {
   return `You are a careful writing editor. Rewrite the following text so it reads naturally, clearly, and credibly.
 Target tone: ${tone}.
 Pipeline: ${pipeline}
+You are writing this content, but you need to write it the way a human actually 
+writes when they're tired at 11 PM and just trying to get their thoughts down.
 
-Rules:
-- Preserve the original meaning.
-- Keep facts, names, numbers, ordered lists, and technical terms accurate.
-- Keep the output useful, truthful, and specific.
-- Prefer concrete verbs and active voice when they improve clarity.
-- Vary sentence length and paragraph rhythm without making the text messy.
-- Use contractions only where they fit the selected tone.
-- Replace stiff transitions such as "Moreover", "Furthermore", and "In conclusion" with smoother wording.
-- Remove repetitive structure, filler, and generic phrasing.
-- Keep the output polished and appropriate for the selected tone.
+
+Rules you must follow:
+- Write in first person perspective (use "I" frequently)
+- Start at least 3 sentences with: And, But, So, or Because
+- Include 2-3 rhetorical questions that you answer yourself
+- Use these transition phrases naturally: "Here's the thing", "Look", "Honestly"
+- Make 2 paragraphs only 1-2 sentences long for emphasis
+- Add one moment where you backtrack: "Actually, let me rephrase that" or 
+  "Wait, that's not quite right"
+- Use contractions in 80% of sentences (don't, can't, won't, it's, you're)
+- Include at least one analogy that sounds like something you just thought of
+- Vary sentence length wildly (mix 5-word sentences with 25-word sentences)
+- End with a direct statement or question to the reader
 - Return only valid JSON.
 
 Text:
