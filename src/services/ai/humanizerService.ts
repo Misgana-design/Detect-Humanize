@@ -24,7 +24,7 @@ const CHUNK_SIZES: Record<HumanizerTier, number> = {
   pro: 500,
 };
 
-const AI_CALL_TIMEOUT_MS = 45_000;
+const AI_CALL_TIMEOUT_MS = 65_000;
 const AI_RETRY_ATTEMPTS = 2;
 
 function sleep(ms: number) {
