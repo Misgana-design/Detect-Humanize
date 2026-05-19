@@ -15,12 +15,11 @@ export function useHumanizer() {
     mutationFn: async ({
       text,
       tone,
-      documentId, // Destructure it here
-    }: HumanizerPayload): Promise<HumanizerResult & { cached?: boolean }> => {
+      documentId,
+    }: HumanizerPayload): Promise<HumanizerResult & { cached?: boolean; fallback?: boolean }> => {
       const res = await fetch("/api/humanize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Include documentId in the request body
         body: JSON.stringify({ text, tone, documentId }),
       });
 
@@ -29,7 +28,7 @@ export function useHumanizer() {
         throw new Error("Please sign in to humanize text.");
       }
 
-      return readJsonResponse<HumanizerResult & { cached?: boolean }>(
+      return readJsonResponse<HumanizerResult & { cached?: boolean; fallback?: boolean }>(
         res,
         "Failed to humanize text. Please try again.",
       );
