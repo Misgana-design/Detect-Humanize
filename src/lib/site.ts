@@ -96,6 +96,7 @@ export const testimonials = [
   {
     name: "Maya Tesfaye",
     title: "Graduate Researcher, AAU",
+    category: "Academic",
     quote:
       "The workflow feels fast and clear. I can check tone, rewrite safely, and keep moving without breaking focus. It saved me hours before my thesis submission.",
     rating: 5,
@@ -103,27 +104,15 @@ export const testimonials = [
   {
     name: "Daniel Brooks",
     title: "PhD Candidate, MIT",
+    category: "Academic",
     quote:
       "The detector notes are easy to understand, and the humanizer gives me a stronger first draft to refine. The Pro model output is genuinely impressive.",
     rating: 5,
   },
   {
-    name: "Lina Alvarez",
-    title: "Student Success Coach",
-    quote:
-      "It is clean, practical, and much easier to explain to students than a pile of disconnected writing tools. I recommend it to every student I work with.",
-    rating: 5,
-  },
-  {
-    name: "James Okonkwo",
-    title: "Content Strategist",
-    quote:
-      "I run a content agency and we process hundreds of articles a week. The bulk API and priority processing on the Unlimited plan have been a game changer for our workflow.",
-    rating: 5,
-  },
-  {
     name: "Priya Nair",
     title: "Undergraduate Student, Oxford",
+    category: "Academic",
     quote:
       "I was nervous about submitting my dissertation after using AI for research notes. Text Humanica helped me rewrite everything in my own voice. Passed Turnitin with no flags.",
     rating: 5,
@@ -131,8 +120,49 @@ export const testimonials = [
   {
     name: "Carlos Mendez",
     title: "SEO Writer",
+    category: "SEO",
     quote:
       "Originality.ai used to flag almost everything I wrote. Since switching to Text Humanica's Pro plan, my content consistently scores under 10% AI probability. Worth every penny.",
+    rating: 5,
+  },
+  {
+    name: "James Okonkwo",
+    title: "Content Agency Owner",
+    category: "Agency",
+    quote:
+      "We process hundreds of articles a week. The bulk API and priority processing on the Unlimited plan cut our review time in half. It pays for itself every single month.",
+    rating: 5,
+  },
+  {
+    name: "Lina Alvarez",
+    title: "Student Success Coach",
+    category: "Education",
+    quote:
+      "It is clean, practical, and much easier to explain to students than a pile of disconnected writing tools. I recommend it to every student I work with.",
+    rating: 5,
+  },
+  {
+    name: "Tariq Hassan",
+    title: "Freelance Copywriter",
+    category: "Freelance",
+    quote:
+      "My clients started asking for AI-free content. Text Humanica lets me deliver that without slowing down my workflow. The Professional tone is exactly what I needed.",
+    rating: 5,
+  },
+  {
+    name: "Sophie Renard",
+    title: "Marketing Manager, Paris",
+    category: "Marketing",
+    quote:
+      "We use AI to draft campaign copy and Text Humanica to make it sound like us. The brand voice stays consistent and nothing gets flagged. Exactly what our team needed.",
+    rating: 5,
+  },
+  {
+    name: "Amir Patel",
+    title: "Startup Founder",
+    category: "Business",
+    quote:
+      "I write all our investor updates and blog posts with AI assistance. Text Humanica makes sure they read as genuinely mine. The detector gives me confidence before I hit send.",
     rating: 5,
   },
 ];
