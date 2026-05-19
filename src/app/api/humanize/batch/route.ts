@@ -22,11 +22,20 @@ export const maxDuration = 60; // Vercel Pro allows up to 60s
 
 const BATCH_LIMIT = 10;
 const BULK_ELIGIBLE_TIERS = new Set(["unlimited", "enterprise"]);
+const VALID_TONES = new Set<Tone>([
+  "casual",
+  "professional",
+  "academic",
+  "formal",
+  "creative",
+  "friendly",
+  "storytelling",
+]);
 
 interface BatchItem {
   id?: string;
   text: string;
-  tone?: Tone;
+  tone?: unknown;
 }
 
 type BatchResultItem =
@@ -122,7 +131,10 @@ export async function POST(req: Request) {
     // Process all items concurrently with per-item error isolation
     const results: BatchResultItem[] = await Promise.all(
       items.map(async (item): Promise<BatchResultItem> => {
-        const tone: Tone = item.tone ?? "default";
+        const tone: Tone =
+          typeof item.tone === "string" && VALID_TONES.has(item.tone as Tone)
+            ? (item.tone as Tone)
+            : "casual";
         const cacheKey = crypto
           .createHash("sha256")
           .update(`${item.text.trim()}_${tone}`)
