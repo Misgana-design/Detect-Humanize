@@ -233,9 +233,28 @@ export function HumanizerPageClient() {
             </button>
           </div>
           {error && (
-            <div className="flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700">
-              <AlertCircle size={16} className="shrink-0" />
-              {error.message}
+            <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
+              <div className="h-1 w-full bg-gradient-to-r from-red-500 to-rose-500" />
+              <div className="p-5">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100">
+                    <AlertCircle size={18} className="text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-slate-900">Humanization failed</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {error.message}
+                    </p>
+                    <button
+                      onClick={handleHumanize}
+                      disabled={isPending || wordCount < 50}
+                      className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Sparkles size={12} /> Try again
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -264,19 +283,35 @@ export function HumanizerPageClient() {
             {data && !isPending && (
               <div className="flex h-full min-h-0 flex-col">
                 {/* Result header */}
-                <div className="shrink-0 border-b border-slate-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3">
+                <div className={`shrink-0 border-b border-slate-100 px-4 py-3 ${data.fallback ? "bg-gradient-to-r from-amber-50 to-yellow-50" : "bg-gradient-to-r from-emerald-50 to-teal-50"}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 shadow-sm shadow-emerald-200">
-                        <Sparkles size={13} className="text-white" />
-                      </div>
-                      <span className="text-sm font-bold text-emerald-800">Humanized Output</span>
+                      {data.fallback ? (
+                        <>
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400 shadow-sm shadow-amber-200">
+                            <AlertCircle size={13} className="text-white" />
+                          </div>
+                          <span className="text-sm font-bold text-amber-800">Backup Humanizer Used</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 shadow-sm shadow-emerald-200">
+                            <Sparkles size={13} className="text-white" />
+                          </div>
+                          <span className="text-sm font-bold text-emerald-800">Humanized Output</span>
+                        </>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                    <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${data.fallback ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
                       <Zap size={10} className="fill-current" />
-                      {isFree ? "1-stage" : "3-stage Pro"}
+                      {data.fallback ? "Local fallback" : isFree ? "1-stage" : "3-stage Pro"}
                     </div>
                   </div>
+                  {data.fallback && (
+                    <p className="mt-2 text-xs leading-5 text-amber-700">
+                      The AI service was temporarily unavailable. A basic rewrite was applied — transitions simplified and contractions added. For full humanization, try again in a moment.
+                    </p>
+                  )}
                 </div>
 
                 {/* Scrollable content */}

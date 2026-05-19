@@ -249,9 +249,29 @@ export function DetectorPageClient() {
             </button>
           </div>
           {error && (
-            <div className="flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700">
-              <AlertCircle size={16} className="shrink-0" />
-              {error.message}
+            <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
+              {/* Top accent */}
+              <div className="h-1 w-full bg-gradient-to-r from-red-500 to-rose-500" />
+              <div className="p-5">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100">
+                    <AlertCircle size={18} className="text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-slate-900">Analysis failed</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {error.message}
+                    </p>
+                    <button
+                      onClick={handleScan}
+                      disabled={isPending || wordCount < 50}
+                      className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Zap size={12} /> Try again
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </section>
