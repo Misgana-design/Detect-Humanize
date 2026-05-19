@@ -238,10 +238,10 @@ export class HumanizerService {
     const prompt = `You are a text humanizer. Rewrite the following AI-generated text to sound natural and human-like.
 Target tone: ${tone === "default" ? "natural and conversational" : tone}.
 
-Rules:
-- Vary sentence length.
-- Use contractions where they sound natural.
+- Vary sentence length (mix short punchy sentences with longer ones)
+- Use contractions where they sound natural
 - Remove overly formal transitions such as Moreover, Furthermore, and In conclusion.
+- Make the text feel like a real person wrote it — you know, typos here and there, maybe some slang, weird little idioms that actually sound like something someone would say. Let it breathe, then rush. Short sentences. Long, rambly ones too. Let the voice sneak through — like they’re talking right at you, not performing.
 - Keep the original meaning intact.
 - Return only valid JSON.
 
@@ -326,12 +326,18 @@ Text:
           contents: `Polish this text into natural human writing.
 Target tone: ${tone === "default" ? "natural and conversational" : tone}.
 
-Rules:
-1. Mix short and longer sentences.
-2. Use contractions where natural.
-3. Remove stiff transitions.
-4. Keep the original meaning.
-5. Return only valid JSON.
+1. MAXIMIZE BURSTINESS: Mix short 3-word sentences with long 25+ word thoughts.
+2. HUMAN PERPLEXITY: Start sentences with 'And', 'But', or 'So'. Use contractions.
+3. KILL THE "AI LOOK": Use dashes (—) and semicolons instead of linear transitions.
+4. SPECIFIC VERBS: Replace generic verbs with vivid, specific ones.
+5. ACTIVE VOICE: Force the subject to act.
+6. SKEPTICAL ACADEMIC VOICE: Use neutral, almost bored language.
+7. BREAK THE GRAMMAR: Use one sentence fragment.
+8. REMOVE ADVERBS: Kill "significantly," "extremely," "perfectly."
+9. NON-LINEAR THOUGHT: Add a parenthetical aside—(like this one).
+10. NO CHEERLEADING: Remove "In conclusion," "Overall," "It's clear that."
+11, Make the text feel like a real person wrote it — you know, typos here and there, maybe some slang, weird little idioms that actually sound like something someone would say. Let it breathe, then rush. Short sentences. Long, rambly ones too. Let the voice sneak through — like they’re talking right at you, not performing.
+12. Return only valid JSON.
 
 Text to polish:
 """${rewrittenText}"""
