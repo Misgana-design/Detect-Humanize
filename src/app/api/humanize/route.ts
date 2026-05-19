@@ -175,7 +175,7 @@ export async function POST(req: Request) {
       })(),
     ];
 
-    if (!isCached) {
+    if (!isCached && !aiResult.fallback) {
       parallelTasks.push(
         (async () => {
           const { error } = await supabase.from("humanization_cache").upsert({
