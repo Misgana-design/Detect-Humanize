@@ -25,7 +25,7 @@ const CHUNK_SIZES: Record<HumanizerTier, number> = {
   pro: 500,
 };
 
-const AI_CALL_TIMEOUT_MS = 18_000;
+const AI_CALL_TIMEOUT_MS = 45_000;
 const AI_RETRY_ATTEMPTS = 2;
 
 function sleep(ms: number) {
@@ -138,6 +138,32 @@ function splitIntoChunks(text: string, chunkSize: number): string[] {
   return chunks.length > 0 ? chunks : [text];
 }
 
+function buildPrompt(text: string, tone: Tone, tier: HumanizerTier) {
+  const targetTone = tone === "default" ? "natural and conversational" : tone;
+  const pipeline =
+    tier === "free"
+      ? "Use a concise single-pass rewrite."
+      : "Internally do three steps in one response: identify AI-like patterns, rewrite for natural rhythm, then polish. Return only the final polished result.";
+
+  return `You are a text humanizer. Rewrite the following text to sound natural and human-like.
+Target tone: ${targetTone}.
+Pipeline: ${pipeline}
+
+Rules:
+- Preserve the original meaning.
+- Vary sentence length and rhythm.
+- Use contractions where they sound natural.
+- Remove stiff transitions such as "Moreover", "Furthermore", and "In conclusion".
+- Avoid robotic phrasing and repetitive structure.
+- Keep the output clean and professional for the selected tone.
+- Return only valid JSON.
+
+Text:
+"""${text}"""
+
+JSON output: { "humanizedText": "final humanized version", "changes": ["3 specific adjustments made"] }`;
+}
+
 export class HumanizerService {
   static async rewrite(
     text: string,
@@ -150,9 +176,7 @@ export class HumanizerService {
     const wordCount = text.trim().split(/\s+/).length;
 
     if (wordCount <= chunkSize) {
-      return tier === "free"
-        ? this.rewriteSingleStage(text, tone, model)
-        : this.rewriteThreeStage(text, tone, model);
+      return this.rewriteChunk(text, tone, tier, model, "rewrite");
     }
 
     const chunks = splitIntoChunks(text, chunkSize);
@@ -161,139 +185,44 @@ export class HumanizerService {
     );
 
     const chunkResults: HumanizerResult[] = [];
-    for (const chunk of chunks) {
+    for (let index = 0; index < chunks.length; index++) {
       chunkResults.push(
-        tier === "free"
-          ? await this.rewriteSingleStage(chunk, tone, model)
-          : await this.rewriteThreeStage(chunk, tone, model),
+        await this.rewriteChunk(
+          chunks[index],
+          tone,
+          tier,
+          model,
+          `rewrite chunk ${index + 1}/${chunks.length}`,
+        ),
       );
     }
 
-    const humanizedText = chunkResults.map((result) => result.humanizedText).join("\n\n");
-    const changes = [...new Set(chunkResults.flatMap((result) => result.changes))].slice(0, 5);
-
     return {
-      humanizedText,
-      changes,
+      humanizedText: chunkResults.map((result) => result.humanizedText).join("\n\n"),
+      changes: [...new Set(chunkResults.flatMap((result) => result.changes))].slice(0, 5),
     };
   }
 
-  private static async rewriteSingleStage(
+  private static async rewriteChunk(
     text: string,
     tone: Tone,
+    tier: HumanizerTier,
     model: string,
+    label: string,
   ): Promise<HumanizerResult> {
-    const prompt = `You are a text humanizer. Rewrite the following AI-generated text to sound natural and human-like.
-Target tone: ${tone === "default" ? "natural and conversational" : tone}.
-
-- Vary sentence length (mix short punchy sentences with longer ones)
-- Use contractions where they sound natural
-- Remove overly formal transitions such as Moreover, Furthermore, and In conclusion.
-- Make the text feel like a real person wrote it — you know, typos here and there, maybe some slang, weird little idioms that actually sound like something someone would say. Let it breathe, then rush. Short sentences. Long, rambly ones too. Let the voice sneak through — like they’re talking right at you, not performing.
-- Keep the original meaning intact.
-- Return only valid JSON.
-
-Text:
-"""${text}"""
-
-Return JSON: { "humanizedText": "...", "changes": ["change1", "change2", "change3"] }`;
-
     const response = await generateContentWithRetry(
       {
         model,
-        contents: prompt,
+        contents: buildPrompt(text, tone, tier),
         config: {
           responseMimeType: "application/json",
           responseSchema: humanizerSchema,
-          temperature: 0.75,
+          temperature: tier === "free" ? 0.75 : 0.85,
         },
       },
-      "single-stage rewrite",
+      label,
     );
 
-    return parseHumanizerResult(response.text, "single-stage rewrite");
-  }
-
-  private static async rewriteThreeStage(
-    text: string,
-    tone: Tone,
-    model: string,
-  ): Promise<HumanizerResult> {
-    const analysisResponse = await generateContentWithRetry(
-      {
-        model,
-        contents: `Analyze the following text and identify:
-- AI-like patterns
-- unnatural phrasing
-- repetitive structure
-- tone issues
-
-Text:
-"""${text}"""`,
-        config: { temperature: 0.2 },
-      },
-      "analysis",
-    );
-
-    const analysis =
-      analysisResponse.text || "No specific weaknesses identified.";
-
-    const rewriteResponse = await generateContentWithRetry(
-      {
-        model,
-        contents: `Rewrite the following text to sound natural and human-like.
-Target tone: ${tone === "default" ? "natural and conversational" : tone}.
-
-Address these weaknesses:
-${analysis}
-
-Rules:
-- vary sentence length
-- add natural, conversational rhythm
-- avoid robotic phrasing
-- keep original meaning
-
-Text:
-"""${text}"""`,
-        config: { temperature: 0.7 },
-      },
-      "rewrite",
-    );
-
-    const rewrittenText = rewriteResponse.text || text;
-
-    const finalResponse = await generateContentWithRetry(
-      {
-        model,
-        contents: `Polish this text into natural human writing.
-Target tone: ${tone === "default" ? "natural and conversational" : tone}.
-
-1. MAXIMIZE BURSTINESS: Mix short 3-word sentences with long 25+ word thoughts.
-2. HUMAN PERPLEXITY: Start sentences with 'And', 'But', or 'So'. Use contractions.
-3. KILL THE "AI LOOK": Use dashes (—) and semicolons instead of linear transitions.
-4. SPECIFIC VERBS: Replace generic verbs with vivid, specific ones.
-5. ACTIVE VOICE: Force the subject to act.
-6. SKEPTICAL ACADEMIC VOICE: Use neutral, almost bored language.
-7. BREAK THE GRAMMAR: Use one sentence fragment.
-8. REMOVE ADVERBS: Kill "significantly," "extremely," "perfectly."
-9. NON-LINEAR THOUGHT: Add a parenthetical aside—(like this one).
-10. NO CHEERLEADING: Remove "In conclusion," "Overall," "It's clear that."
-11, Make the text feel like a real person wrote it — you know, typos here and there, maybe some slang, weird little idioms that actually sound like something someone would say. Let it breathe, then rush. Short sentences. Long, rambly ones too. Let the voice sneak through — like they’re talking right at you, not performing.
-12. Return only valid JSON.
-
-Text to polish:
-"""${rewrittenText}"""
-
-JSON output: { "humanizedText": "final polished version", "changes": ["3 specific adjustments made"] }`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: humanizerSchema,
-          temperature: 0.9,
-        },
-      },
-      "final polish",
-    );
-
-    return parseHumanizerResult(finalResponse.text, "final polish");
+    return parseHumanizerResult(response.text, label);
   }
 }
