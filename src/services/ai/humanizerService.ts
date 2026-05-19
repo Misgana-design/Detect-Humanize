@@ -15,16 +15,107 @@ export type HumanizerTier = "free" | "basic" | "pro";
 export interface HumanizerResult {
   humanizedText: string;
   changes: string[];
+  fallback?: boolean;
 }
 
-// ── Chunk size in words ───────────────────────────────────────────────────────
-// Free: smaller chunks to stay within Flash model limits
-// Paid: larger chunks for better context and coherence
+type GenerateContentParams = Parameters<typeof client.models.generateContent>[0];
+
 const CHUNK_SIZES: Record<HumanizerTier, number> = {
   free: 300,
   basic: 400,
   pro: 500,
 };
+
+const AI_CALL_TIMEOUT_MS = 18_000;
+const AI_RETRY_ATTEMPTS = 2;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function isTransientError(error: unknown) {
+  const message = errorMessage(error).toLowerCase();
+  return (
+    message.includes("timeout") ||
+    message.includes("temporarily") ||
+    message.includes("unavailable") ||
+    message.includes("overload") ||
+    message.includes("rate") ||
+    message.includes("quota") ||
+    message.includes("503") ||
+    message.includes("504") ||
+    message.includes("429")
+  );
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(
+      () => reject(new Error(`AI request timed out after ${timeoutMs}ms.`)),
+      timeoutMs,
+    );
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
+async function generateContentWithRetry(
+  params: GenerateContentParams,
+  label: string,
+) {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= AI_RETRY_ATTEMPTS; attempt++) {
+    try {
+      return await withTimeout(
+        client.models.generateContent(params),
+        AI_CALL_TIMEOUT_MS,
+      );
+    } catch (error) {
+      lastError = error;
+      console.warn(
+        `[humanizer] ${label} attempt ${attempt}/${AI_RETRY_ATTEMPTS} failed:`,
+        errorMessage(error),
+      );
+
+      if (attempt === AI_RETRY_ATTEMPTS || !isTransientError(error)) break;
+      await sleep(400 * attempt);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("AI request failed.");
+}
+
+function parseHumanizerResult(raw: string | undefined, label: string): HumanizerResult {
+  if (!raw) throw new Error(`Empty response from AI model during ${label}.`);
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<HumanizerResult>;
+    if (
+      typeof parsed.humanizedText !== "string" ||
+      !Array.isArray(parsed.changes)
+    ) {
+      throw new Error("Response did not match the expected shape.");
+    }
+
+    return {
+      humanizedText: parsed.humanizedText,
+      changes: parsed.changes.filter((change): change is string => typeof change === "string"),
+    };
+  } catch (error) {
+    throw new Error(`AI returned invalid JSON during ${label}: ${errorMessage(error)}`);
+  }
+}
 
 function splitIntoChunks(text: string, chunkSize: number): string[] {
   const sentences = text.match(/[^.!?]+[.!?]+[\s]*/g) ?? [text];
@@ -48,13 +139,57 @@ function splitIntoChunks(text: string, chunkSize: number): string[] {
   return chunks.length > 0 ? chunks : [text];
 }
 
+function applyLocalHumanization(text: string, tone: Tone): HumanizerResult {
+  const replacements: Array<[RegExp, string]> = [
+    [/\bMoreover,\s*/gi, "Also, "],
+    [/\bFurthermore,\s*/gi, "Plus, "],
+    [/\bAdditionally,\s*/gi, "Also, "],
+    [/\bIn conclusion,\s*/gi, "To wrap up, "],
+    [/\bIt is important to note that\s*/gi, ""],
+    [/\butilize\b/gi, "use"],
+    [/\bfacilitate\b/gi, "help"],
+    [/\bdemonstrate\b/gi, "show"],
+    [/\bapproximately\b/gi, "about"],
+    [/\bsignificantly\b/gi, "noticeably"],
+    [/\bdo not\b/gi, "don't"],
+    [/\bdoes not\b/gi, "doesn't"],
+    [/\bcannot\b/gi, "can't"],
+    [/\bwill not\b/gi, "won't"],
+    [/\bit is\b/gi, "it's"],
+    [/\bthat is\b/gi, "that's"],
+  ];
+
+  let humanized = text.trim().replace(/\r\n/g, "\n");
+
+  for (const [pattern, replacement] of replacements) {
+    humanized = humanized.replace(pattern, replacement);
+  }
+
+  humanized = humanized
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1");
+
+  if (tone === "casual" || tone === "friendly") {
+    humanized = humanized.replace(/\bEnsure\b/g, "Make sure");
+  }
+
+  if (tone === "academic" || tone === "formal") {
+    humanized = humanized.replace(/\bPlus,\s*/g, "Additionally, ");
+  }
+
+  return {
+    humanizedText: humanized,
+    changes: [
+      "Used the backup humanizer after the AI provider was unavailable.",
+      "Simplified robotic transitions and formal phrasing.",
+      "Applied contractions and spacing cleanup while preserving meaning.",
+    ],
+    fallback: true,
+  };
+}
+
 export class HumanizerService {
-  /**
-   * Rewrites text using a tier-aware pipeline with chunking:
-   *  - free  → 1-stage Flash, chunked at 300 words
-   *  - basic → 3-stage Flash, chunked at 400 words
-   *  - pro+  → 3-stage Pro,   chunked at 500 words
-   */
   static async rewrite(
     text: string,
     tone: Tone,
@@ -65,39 +200,36 @@ export class HumanizerService {
     const chunkSize = CHUNK_SIZES[tier];
     const wordCount = text.trim().split(/\s+/).length;
 
-    // Only chunk if text exceeds the chunk size
     if (wordCount <= chunkSize) {
       return tier === "free"
         ? this.rewriteSingleStage(text, tone, model)
         : this.rewriteThreeStage(text, tone, model);
     }
 
-    // Split into chunks and process in parallel
     const chunks = splitIntoChunks(text, chunkSize);
     console.log(
       `[humanizer] Chunking ${wordCount} words into ${chunks.length} chunks (tier=${tier})`,
     );
 
-    const chunkResults = await Promise.all(
-      chunks.map((chunk) =>
+    const chunkResults: HumanizerResult[] = [];
+    for (const chunk of chunks) {
+      chunkResults.push(
         tier === "free"
-          ? this.rewriteSingleStage(chunk, tone, model)
-          : this.rewriteThreeStage(chunk, tone, model),
-      ),
-    );
+          ? await this.rewriteSingleStage(chunk, tone, model)
+          : await this.rewriteThreeStage(chunk, tone, model),
+      );
+    }
 
-    // Merge results
-    const humanizedText = chunkResults.map((r) => r.humanizedText).join("\n\n");
-    const allChanges = [
-      ...new Set(chunkResults.flatMap((r) => r.changes)),
-    ].slice(0, 5);
+    const humanizedText = chunkResults.map((result) => result.humanizedText).join("\n\n");
+    const changes = [...new Set(chunkResults.flatMap((result) => result.changes))].slice(0, 5);
 
-    return { humanizedText, changes: allChanges };
+    return {
+      humanizedText,
+      changes,
+      fallback: chunkResults.some((result) => result.fallback),
+    };
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // 1-stage pipeline (free tier — Flash model, single prompt)
-  // ─────────────────────────────────────────────────────────────────────────
   private static async rewriteSingleStage(
     text: string,
     tone: Tone,
@@ -107,44 +239,48 @@ export class HumanizerService {
 Target tone: ${tone === "default" ? "natural and conversational" : tone}.
 
 Rules:
-- Vary sentence length (mix short punchy sentences with longer ones)
-- Use contractions (don't, it's, we're)
-- Remove overly formal transitions (Moreover, Furthermore, In conclusion)
-- 6, Make the text feel like a real person wrote it — you know, typos here and there, maybe some slang, weird little idioms that actually sound like something someone would say. Let it breathe, then rush. Short sentences. Long, rambly ones too. Let the voice sneak through — like they’re talking right at you, not performing.
-- Keep the original meaning intact
-- Return ONLY valid JSON
+- Vary sentence length.
+- Use contractions where they sound natural.
+- Remove overly formal transitions such as Moreover, Furthermore, and In conclusion.
+- Keep the original meaning intact.
+- Return only valid JSON.
 
 Text:
 """${text}"""
 
 Return JSON: { "humanizedText": "...", "changes": ["change1", "change2", "change3"] }`;
 
-    const response = await client.models.generateContent({
-      model,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: humanizerSchema,
-        temperature: 0.75,
-      },
-    });
+    try {
+      const response = await generateContentWithRetry(
+        {
+          model,
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: humanizerSchema,
+            temperature: 0.75,
+          },
+        },
+        "single-stage rewrite",
+      );
 
-    if (!response.text) throw new Error("Empty response from AI model.");
-    return JSON.parse(response.text) as HumanizerResult;
+      return parseHumanizerResult(response.text, "single-stage rewrite");
+    } catch (error) {
+      console.error("[humanizer] Falling back to local rewrite:", errorMessage(error));
+      return applyLocalHumanization(text, tone);
+    }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // 3-stage pipeline (basic = Flash, pro+ = Pro model)
-  // ─────────────────────────────────────────────────────────────────────────
   private static async rewriteThreeStage(
     text: string,
     tone: Tone,
     model: string,
   ): Promise<HumanizerResult> {
-    // Stage 1: Analysis
-    const analysisResponse = await client.models.generateContent({
-      model,
-      contents: `Analyze the following text and identify:
+    try {
+      const analysisResponse = await generateContentWithRetry(
+        {
+          model,
+          contents: `Analyze the following text and identify:
 - AI-like patterns
 - unnatural phrasing
 - repetitive structure
@@ -152,67 +288,68 @@ Return JSON: { "humanizedText": "...", "changes": ["change1", "change2", "change
 
 Text:
 """${text}"""`,
-      config: { temperature: 0.2 },
-    });
+          config: { temperature: 0.2 },
+        },
+        "analysis",
+      );
 
-    const analysis =
-      analysisResponse.text || "No specific weaknesses identified.";
+      const analysis =
+        analysisResponse.text || "No specific weaknesses identified.";
 
-    // Stage 2: Rewrite
-    const rewriteResponse = await client.models.generateContent({
-      model,
-      contents: `Rewrite the following text to sound natural and human-like.
-Target Tone: ${tone === "default" ? "NATURAL AND CONVERSATIONAL" : tone.toUpperCase()}
+      const rewriteResponse = await generateContentWithRetry(
+        {
+          model,
+          contents: `Rewrite the following text to sound natural and human-like.
+Target tone: ${tone === "default" ? "natural and conversational" : tone}.
 
-Address these specific weaknesses:
+Address these weaknesses:
 ${analysis}
 
 Rules:
 - vary sentence length
-- add slight imperfections
-- use conversational tone
+- add natural, conversational rhythm
 - avoid robotic phrasing
 - keep original meaning
 
 Text:
 """${text}"""`,
-      config: { temperature: 0.7 },
-    });
+          config: { temperature: 0.7 },
+        },
+        "rewrite",
+      );
 
-    const rewrittenText = rewriteResponse.text || text;
+      const rewrittenText = rewriteResponse.text || text;
 
-    // Stage 3: Polish
-    const finalResponse = await client.models.generateContent({
-      model,
-      contents: `Final Mission: Destroy the AI Fingerprint.
-Target Tone: ${tone === "default" ? "natural and conversational" : tone}
+      const finalResponse = await generateContentWithRetry(
+        {
+          model,
+          contents: `Polish this text into natural human writing.
+Target tone: ${tone === "default" ? "natural and conversational" : tone}.
 
-Apply these humanization rules:
-1. MAXIMIZE BURSTINESS: Mix short 3-word sentences with long 25+ word thoughts.
-2. HUMAN PERPLEXITY: Start sentences with 'And', 'But', or 'So'. Use contractions.
-3. KILL THE "AI LOOK": Use dashes (—) and semicolons instead of linear transitions.
-4. SPECIFIC VERBS: Replace generic verbs with vivid, specific ones.
-5. ACTIVE VOICE: Force the subject to act.
-6. SKEPTICAL ACADEMIC VOICE: Use neutral, almost bored language.
-7. BREAK THE GRAMMAR: Use one sentence fragment.
-8. REMOVE ADVERBS: Kill "significantly," "extremely," "perfectly."
-9. NON-LINEAR THOUGHT: Add a parenthetical aside—(like this one).
-10. NO CHEERLEADING: Remove "In conclusion," "Overall," "It's clear that."
-11, Make the text feel like a real person wrote it — you know, typos here and there, maybe some slang, weird little idioms that actually sound like something someone would say. Let it breathe, then rush. Short sentences. Long, rambly ones too. Let the voice sneak through — like they’re talking right at you, not performing.
+Rules:
+1. Mix short and longer sentences.
+2. Use contractions where natural.
+3. Remove stiff transitions.
+4. Keep the original meaning.
+5. Return only valid JSON.
 
-Text to Polish:
+Text to polish:
 """${rewrittenText}"""
 
-JSON OUTPUT: { "humanizedText": "final polished version", "changes": ["3 specific adjustments made"] }`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: humanizerSchema,
-        temperature: 0.9,
-      },
-    });
+JSON output: { "humanizedText": "final polished version", "changes": ["3 specific adjustments made"] }`,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: humanizerSchema,
+            temperature: 0.9,
+          },
+        },
+        "final polish",
+      );
 
-    if (!finalResponse.text)
-      throw new Error("Empty response from AI model during final polish.");
-    return JSON.parse(finalResponse.text) as HumanizerResult;
+      return parseHumanizerResult(finalResponse.text, "final polish");
+    } catch (error) {
+      console.error("[humanizer] Falling back to local rewrite:", errorMessage(error));
+      return applyLocalHumanization(text, tone);
+    }
   }
 }
