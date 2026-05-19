@@ -57,7 +57,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     features: [
       "1,000 words/month",
       "Basic detection (Flash model)",
-      "Basic humanization (Default tone only)",
+      "Basic humanization (Casual tone only)",
       "Last 3 documents history + Comparizon mode",
       "Email support",
     ],
@@ -72,7 +72,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
   basic: {
     tier: "basic",
     name: "Basic",
-    description: "4,000 words/month with full history, all 8 tones, and PDF export. Best for light users who need more than the free plan without a big commitment.",
+    description: "4,000 words/month with full history, all tones, and PDF export. Best for light users who need more than the free plan without a big commitment.",
     cta: "Subscribe",
     href: "/signup",
     supportedCadences: ["monthly", "yearly"],
@@ -81,7 +81,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     wordQuota: 4000,
     quotaPeriod: "month",
     features: [
-      "Bypass all AI detectors including GPTZero",
+      "Natural rewriting for everyday drafts",
       "500 words max per input",
       "4000 words per month",
       "Basic AI detection",
@@ -105,7 +105,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
   pro: {
     tier: "pro",
     name: "Pro",
-    description: "20,000 words/month with the full 3-stage Pro pipeline. Built for students and writers who submit regularly and need reliable bypass results.",
+    description: "20,000 words/month with the Pro rewrite pipeline. Built for students and writers who submit regularly and need polished, natural results.",
     cta: "Subscribe",
     href: "/signup",
     featured: true,
@@ -115,7 +115,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     wordQuota: 20000,
     quotaPeriod: "month",
     features: [
-      "Bypass all AI detectors including GPTZero",
+      "Natural rewriting for longer drafts",
       "1500 max per input",
       "20,000 words/month",
       "All tones (casual, academic, professional,...)",
@@ -147,7 +147,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     wordQuota: null,
     quotaPeriod: "none",
     features: [
-      "Bypass all AI detectors including GPTZero",
+      "Natural rewriting for long-form work",
       "2500 words max per input",
       "Unlimited words/month",
       "Team dashboard",
@@ -179,7 +179,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     wordQuota: null,
     quotaPeriod: "none",
     features: [
-      "Bypass all AI detectors including GPTZero",
+      "Natural rewriting for team workflows",
       "2500 words max per input",
       "No daily rate limit",
       "Team access (multi-user)",
@@ -213,7 +213,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     wordQuota: 5000,
     quotaPeriod: "week",
     features: [
-      "Bypass all AI detectors including GPTZero",
+      "Natural rewriting for deadline-driven drafts",
       "1000 max per input",
       "5,000 words/week",
       "All tones (casual, academic, professional,...)",
