@@ -150,13 +150,19 @@ Target tone: ${targetTone}.
 Pipeline: ${pipeline}
 
 Rules:
-- Preserve the original meaning.
-- Vary sentence length and rhythm.
-- Use contractions where they sound natural.
-- Remove stiff transitions such as "Moreover", "Furthermore", and "In conclusion".
-- Avoid robotic phrasing and repetitive structure.
-- Keep the output clean and professional for the selected tone.
-- Return only valid JSON.
+1. MAXIMIZE BURSTINESS: Mix short 3-word sentences with long 25+ word thoughts.
+2. HUMAN PERPLEXITY: Start sentences with 'And', 'But', or 'So'. Use contractions.
+3. KILL THE "AI LOOK": Use dashes (—) and semicolons instead of linear transitions.
+4. SPECIFIC VERBS: Replace generic verbs with vivid, specific ones.
+5. ACTIVE VOICE: Force the subject to act.
+6. SKEPTICAL ACADEMIC VOICE: Use neutral, almost bored language.
+7. BREAK THE GRAMMAR: Use one sentence fragment.
+8. REMOVE ADVERBS: Kill "significantly," "extremely," "perfectly."
+9. NON-LINEAR THOUGHT: Add a parenthetical aside—(like this one).
+10. NO CHEERLEADING: Remove "In conclusion," "Overall," "It's clear that."
+11, Make the text feel like a real person wrote it — you know, typos here and there, maybe some slang, weird little idioms that actually sound like something someone would say. Let it breathe, then rush. Short sentences. Long, rambly ones too. Let the voice sneak through — like they’re talking right at you, not performing.
+12, Use contractions where they sound natural
+13. Return only valid JSON.
 
 Text:
 """${text}"""
