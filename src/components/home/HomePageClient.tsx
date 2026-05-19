@@ -109,11 +109,13 @@ function HumanizerSimulation() {
   return (
     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg shadow-slate-100">
       {/* Header */}
-      <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-600 to-sky-500 px-6 py-4">
+      <div className="border-b border-slate-100 bg-linear-to-r from-indigo-600 to-sky-500 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-white" />
-            <span className="text-sm font-bold text-white">Live Humanizer Demo</span>
+            <span className="text-sm font-bold text-white">
+              Live Humanizer Demo
+            </span>
           </div>
           <div className="flex gap-1.5">
             {SIMULATION_PAIRS.map((p, i) => (
@@ -121,7 +123,9 @@ function HumanizerSimulation() {
                 key={p.label}
                 onClick={() => handleSwitch(i)}
                 className={`rounded-full px-3 py-1 text-[11px] font-bold transition hover:cursor-pointer ${
-                  i === activeIdx ? "bg-white text-indigo-700" : "bg-white/20 text-white hover:bg-white/30"
+                  i === activeIdx
+                    ? "bg-white text-indigo-700"
+                    : "bg-white/20 text-white hover:bg-white/30"
                 }`}
               >
                 {p.label}
@@ -136,8 +140,12 @@ function HumanizerSimulation() {
         {/* AI text */}
         <div className="p-5">
           <div className="mb-3 flex items-center gap-2">
-            <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-600">AI-Generated</span>
-            <span className="text-[11px] text-slate-400">~87% AI probability</span>
+            <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-600">
+              AI-Generated
+            </span>
+            <span className="text-[11px] text-slate-400">
+              ~87% AI probability
+            </span>
           </div>
           <p className="text-sm leading-7 text-slate-600">{pair.ai}</p>
         </div>
@@ -145,8 +153,12 @@ function HumanizerSimulation() {
         {/* Humanized text */}
         <div className="relative p-5">
           <div className="mb-3 flex items-center gap-2">
-            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">Humanized</span>
-            <span className="text-[11px] text-slate-400">~4% AI probability</span>
+            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
+              Humanized
+            </span>
+            <span className="text-[11px] text-slate-400">
+              ~4% AI probability
+            </span>
           </div>
 
           {showHuman ? (
@@ -165,7 +177,10 @@ function HumanizerSimulation() {
             <div className="flex flex-col items-center justify-center gap-3 py-4">
               <div className="space-y-2 w-full">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className={`h-3 rounded-full bg-slate-100 ${i === 2 ? "w-2/3" : "w-full"}`} />
+                  <div
+                    key={i}
+                    className={`h-3 rounded-full bg-slate-100 ${i === 2 ? "w-2/3" : "w-full"}`}
+                  />
                 ))}
               </div>
               <button
@@ -183,8 +198,11 @@ function HumanizerSimulation() {
       <div className="border-t border-slate-100 bg-slate-50 px-6 py-3">
         <p className="text-center text-xs text-slate-400">
           This is a static preview.{" "}
-          <Link href="/humanize" className="font-semibold text-indigo-600 hover:underline">
-            Try the real humanizer 
+          <Link
+            href="/humanize"
+            className="font-semibold text-indigo-600 hover:underline"
+          >
+            Try the real humanizer
           </Link>
         </p>
       </div>
@@ -207,16 +225,18 @@ function TestimonialsSection() {
   const handleCategory = (cat: string) => { setActiveCategory(cat); setPage(0); };
 
   return (
-    <section className="py-20 bg-gradient-to-b from-slate-50 to-white">
+    <section className="py-20 bg-linear-to-b from-slate-50 to-white">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-10 text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">Testimonials</p>
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
+            Testimonials
+          </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
             Trusted by writers, students, and professionals
           </h2>
           <p className="mt-3 text-base text-slate-500">
-            From PhD candidates to content agencies  here is what our users say.
+            From PhD candidates to content agencies here is what our users say.
           </p>
         </div>
 
@@ -241,7 +261,9 @@ function TestimonialsSection() {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence mode="wait">
             {visible.map((t, i) => {
-              const catColor = CATEGORY_COLORS[(t as any).category] ?? "bg-slate-100 text-slate-600";
+              const catColor =
+                CATEGORY_COLORS[(t as any).category] ??
+                "bg-slate-100 text-slate-600";
               return (
                 <motion.article
                   key={t.name + activeCategory + page}
@@ -269,15 +291,23 @@ function TestimonialsSection() {
                   {/* Author */}
                   <div className="mt-5 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-emerald-100 text-sm font-bold text-slate-700">
-                        {t.name.split(" ").map((p) => p[0]).join("").slice(0, 2)}
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-indigo-100 to-emerald-100 text-sm font-bold text-slate-700">
+                        {t.name
+                          .split(" ")
+                          .map((p) => p[0])
+                          .join("")
+                          .slice(0, 2)}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">{t.name}</p>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {t.name}
+                        </p>
                         <p className="text-xs text-slate-500">{t.title}</p>
                       </div>
                     </div>
-                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${catColor}`}>
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${catColor}`}
+                    >
                       {(t as any).category}
                     </span>
                   </div>
@@ -346,8 +376,13 @@ export function HomePageClient() {
 
       {/* Announcement bar */}
       <div className="border-b border-indigo-100 bg-indigo-50 py-2.5 text-center text-xs font-medium text-indigo-700">
-        Now bypassing GPTZero, Originality.ai, Turnitin, and more {" "}
-        <Link href="/detectors" className="underline underline-offset-2 hover:text-indigo-900">see all supported detectors</Link>
+        Now bypassing GPTZero, Originality.ai, Turnitin, and more{" "}
+        <Link
+          href="/detectors"
+          className="underline underline-offset-2 hover:text-indigo-900"
+        >
+          see all supported detectors
+        </Link>
       </div>
 
       {/* Hero */}
@@ -357,45 +392,80 @@ export function HomePageClient() {
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
               <div className="flex -space-x-1.5">
                 {["MT", "DB", "LA"].map((initials) => (
-                  <div key={initials} className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[9px] font-bold text-white ring-2 ring-white">{initials}</div>
+                  <div
+                    key={initials}
+                    className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[9px] font-bold text-white ring-2 ring-white"
+                  >
+                    {initials}
+                  </div>
                 ))}
               </div>
               <span className="text-xs font-medium text-slate-600">
-                <strong className="text-slate-900">400k</strong> writers, students & professionals
+                <strong className="text-slate-900">400k</strong> writers,
+                students & professionals
               </span>
               <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />)}
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className="h-3 w-3 fill-amber-400 text-amber-400"
+                  />
+                ))}
               </div>
             </div>
 
             <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 md:text-[4.5rem] md:leading-[1.08]">
               Detect AI text.{" "}
               <span className="relative">
-                <span className="relative z-10 animate-pulse text-indigo-600">Rewrite it</span>
+                <span className="relative z-10 animate-pulse text-indigo-600">
+                  Rewrite it
+                </span>
                 <span className="absolute -bottom-1 left-0 right-0 h-3 -rotate-1 rounded bg-indigo-100" />
               </span>{" "}
               naturally.
             </h1>
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-              One workspace for students, researchers, SEO writers, and content teams who need to submit and publish with confidence.
+              One workspace for students, researchers, SEO writers, and content
+              teams who need to submit and publish with confidence.
             </p>
 
             <ul className="mt-6 space-y-2">
-              {["No credit card required to start", "Results in under 10 seconds", "Supports TXT, DOCX, PDF uploads"].map((item) => (
-                <li key={item} className="flex items-center gap-2 text-sm text-slate-600">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />{item}
+              {[
+                "No credit card required to start",
+                "Results in under 10 seconds",
+                "Supports TXT, DOCX, PDF uploads",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-center gap-2 text-sm text-slate-600"
+                >
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                  {item}
                 </li>
               ))}
             </ul>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/auth/signup"><Button size="lg" className="gap-2 hover:cursor-pointer">Start for free <ArrowRight className="h-4 w-4" /></Button></Link>
-              <Link href={siteConfig.links.pricing}><Button variant="secondary" size="lg" className="hover:cursor-pointer">View pricing</Button></Link>
+              <Link href="/auth/signup">
+                <Button size="lg" className="gap-2 hover:cursor-pointer">
+                  Start for free <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href={siteConfig.links.pricing}>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="hover:cursor-pointer"
+                >
+                  View pricing
+                </Button>
+              </Link>
             </div>
 
             <p className="mt-4 flex items-center gap-1.5 text-xs text-slate-400">
-              <Lock className="h-3.5 w-3.5" />Your text is private and never used to train AI models.
+              <Lock className="h-3.5 w-3.5" />
+              Your text is private and never used to train AI models.
             </p>
           </div>
 
@@ -403,28 +473,61 @@ export function HomePageClient() {
           <div className="rounded-4xl border border-white/70 bg-white/95 p-6 shadow-2xl shadow-indigo-100/60 backdrop-blur">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-slate-900">Try it now  free</p>
-                <p className="text-xs text-slate-500">Paste text or upload a file</p>
+                <p className="text-sm font-bold text-slate-900">
+                  Try it now free
+                </p>
+                <p className="text-xs text-slate-500">
+                  Paste text or upload a file
+                </p>
               </div>
               <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />Live
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                Live
               </div>
             </div>
-            <TextUploadField value={text} onChange={setText} placeholder="Paste or drop your text here..." minHeightClassName="min-h-[240px]" />
+            <TextUploadField
+              value={text}
+              onChange={setText}
+              placeholder="Paste or drop your text here..."
+              minHeightClassName="min-h-[240px]"
+            />
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <button onClick={goToDetector} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 hover:cursor-pointer">
-                <ScanText className="h-4 w-4" />AI Detector
+              <button
+                onClick={goToDetector}
+                className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 hover:cursor-pointer"
+              >
+                <ScanText className="h-4 w-4" />
+                AI Detector
               </button>
-              <button onClick={goToHumanizer} className="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3.5 text-sm font-semibold text-white shadow-md shadow-indigo-100 transition hover:bg-indigo-700 hover:cursor-pointer">
-                <Sparkles className="h-4 w-4" />Humanizer
+              <button
+                onClick={goToHumanizer}
+                className="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3.5 text-sm font-semibold text-white shadow-md shadow-indigo-100 transition hover:bg-indigo-700 hover:cursor-pointer"
+              >
+                <Sparkles className="h-4 w-4" />
+                Humanizer
               </button>
             </div>
-            <p className="mt-3 text-center text-xs text-slate-400">Text is optional  paste it on the next page too.</p>
+            <p className="mt-3 text-center text-xs text-slate-400">
+              Text is optional paste it on the next page too.
+            </p>
             <div className="mt-5 border-t border-slate-100 pt-4">
-              <p className="mb-2.5 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Bypasses</p>
+              <p className="mb-2.5 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Bypasses
+              </p>
               <div className="flex flex-wrap items-center justify-center gap-2">
-                {["GPTZero","Turnitin","Originality.ai","Copyleaks","Winston AI"].map((d) => (
-                  <span key={d} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-500">{d}</span>
+                {[
+                  "GPTZero",
+                  "Turnitin",
+                  "Originality.ai",
+                  "Copyleaks",
+                  "Winston AI",
+                ].map((d) => (
+                  <span
+                    key={d}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-500"
+                  >
+                    {d}
+                  </span>
                 ))}
               </div>
             </div>
@@ -437,10 +540,19 @@ export function HomePageClient() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center gap-1 text-center">
-                <div className="flex items-center gap-1.5 text-indigo-500">{stat.icon}</div>
-                <p className="text-2xl font-black text-slate-900">{stat.value}</p>
-                <p className="text-xs font-medium text-slate-500">{stat.label}</p>
+              <div
+                key={stat.label}
+                className="flex flex-col items-center gap-1 text-center"
+              >
+                <div className="flex items-center gap-1.5 text-indigo-500">
+                  {stat.icon}
+                </div>
+                <p className="text-2xl font-black text-slate-900">
+                  {stat.value}
+                </p>
+                <p className="text-xs font-medium text-slate-500">
+                  {stat.label}
+                </p>
               </div>
             ))}
           </div>
@@ -451,16 +563,35 @@ export function HomePageClient() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">How it works</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">From draft to submission-ready in 3 steps</h2>
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
+              How it works
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+              From draft to submission-ready in 3 steps
+            </h2>
           </div>
           <div className="mt-14 grid gap-8 sm:grid-cols-3">
             {steps.map((step, i) => (
-              <motion.article key={step.n} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.05 }} transition={{ delay: i * 0.12, duration: 0.5, ease: "easeOut" }} className="relative rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white shadow-md shadow-indigo-200">{step.n}</span>
-                <h3 className="mt-5 text-lg font-bold text-slate-900">{step.title}</h3>
-                <p className="mt-2 text-sm leading-7 text-slate-600">{step.desc}</p>
-                {i < steps.length - 1 && <ArrowRight className="absolute -right-4 top-1/2 hidden h-5 w-5 -translate-y-1/2 text-slate-300 sm:block" />}
+              <motion.article
+                key={step.n}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.05 }}
+                transition={{ delay: i * 0.12, duration: 0.5, ease: "easeOut" }}
+                className="relative rounded-3xl border border-slate-200 bg-white p-7 shadow-sm"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white shadow-md shadow-indigo-200">
+                  {step.n}
+                </span>
+                <h3 className="mt-5 text-lg font-bold text-slate-900">
+                  {step.title}
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  {step.desc}
+                </p>
+                {i < steps.length - 1 && (
+                  <ArrowRight className="absolute -right-4 top-1/2 hidden h-5 w-5 -translate-y-1/2 text-slate-300 sm:block" />
+                )}
               </motion.article>
             ))}
           </div>
@@ -468,12 +599,19 @@ export function HomePageClient() {
       </section>
 
       {/* Humanizer Simulation */}
-      <section className="bg-gradient-to-b from-indigo-50/50 to-white py-20">
+      <section className="bg-linear-to-b from-indigo-50/50 to-white py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-10 max-w-2xl text-center">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">See it in action</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">AI text vs humanized text</h2>
-            <p className="mt-3 text-base text-slate-500">Click the button to see exactly what our humanizer does to AI-generated content.</p>
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
+              See it in action
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+              AI text vs humanized text
+            </h2>
+            <p className="mt-3 text-base text-slate-500">
+              Click the button to see exactly what our humanizer does to
+              AI-generated content.
+            </p>
           </div>
           <div className="mx-auto max-w-4xl">
             <HumanizerSimulation />
@@ -485,19 +623,57 @@ export function HomePageClient() {
       <section className="bg-slate-50 py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-14 max-w-2xl text-center">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">Features</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">Everything you need in one place</h2>
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
+              Features
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+              Everything you need in one place
+            </h2>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {[
-              { icon: <ShieldCheck className="text-indigo-600" />, title: "Advanced Detection", desc: "Multi-layer forensic analysis surfaces AI patterns, suspicious phrasing, and sentence-level flags with a probability score." },
-              { icon: <Sparkles className="text-emerald-600" />, title: "3-Stage Humanizer", desc: "Analysis  Rewrite  Polish pipeline destroys the AI fingerprint by maximizing burstiness and perplexity." },
-              { icon: <FileText className="text-amber-600" />, title: "File Upload Support", desc: "Drag and drop TXT, DOCX, PDF, MD, and RTF files up to 10MB. Text is extracted and pre-filled instantly." },
-              { icon: <Zap className="text-rose-600" />, title: "Priority Processing", desc: "Paid plans jump the queue. Your requests are processed with high priority so you never wait behind free users." },
-              { icon: <CheckCircle2 className="text-sky-600" />, title: "Export-Ready", desc: "Copy directly to Google Docs format or download a formatted PDF. Your work, your format." },
-              { icon: <Upload className="text-violet-600" />, title: "Full History", desc: "Every scan and rewrite is saved. Compare original vs humanized side-by-side and re-humanize any document." },
+              {
+                icon: <ShieldCheck className="text-indigo-600" />,
+                title: "Advanced Detection",
+                desc: "Multi-layer forensic analysis surfaces AI patterns, suspicious phrasing, and sentence-level flags with a probability score.",
+              },
+              {
+                icon: <Sparkles className="text-emerald-600" />,
+                title: "3-Stage Humanizer",
+                desc: "Analysis  Rewrite  Polish pipeline destroys the AI fingerprint by maximizing burstiness and perplexity.",
+              },
+              {
+                icon: <FileText className="text-amber-600" />,
+                title: "File Upload Support",
+                desc: "Drag and drop TXT, DOCX, PDF, MD, and RTF files up to 10MB. Text is extracted and pre-filled instantly.",
+              },
+              {
+                icon: <Zap className="text-rose-600" />,
+                title: "Priority Processing",
+                desc: "Paid plans jump the queue. Your requests are processed with high priority so you never wait behind free users.",
+              },
+              {
+                icon: <CheckCircle2 className="text-sky-600" />,
+                title: "Export-Ready",
+                desc: "Copy directly to Google Docs format or download a formatted PDF. Your work, your format.",
+              },
+              {
+                icon: <Upload className="text-violet-600" />,
+                title: "Full History",
+                desc: "Every scan and rewrite is saved. Compare original vs humanized side-by-side and re-humanize any document.",
+              },
             ].map((f, i) => (
-              <motion.div key={f.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.05 }} transition={{ delay: i * 0.08, duration: 0.45, ease: "easeOut" }}>
+              <motion.div
+                key={f.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.05 }}
+                transition={{
+                  delay: i * 0.08,
+                  duration: 0.45,
+                  ease: "easeOut",
+                }}
+              >
                 <FeatureCard icon={f.icon} title={f.title} desc={f.desc} />
               </motion.div>
             ))}
@@ -508,14 +684,27 @@ export function HomePageClient() {
       {/* Trusted By */}
       <section className="overflow-hidden border-y border-slate-200 bg-white py-14">
         <div className="container mx-auto px-4">
-          <p className="mb-8 text-center text-sm font-bold uppercase tracking-[0.2em] text-slate-400">Trusted by students and researchers from</p>
+          <p className="mb-8 text-center text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
+            Trusted by students and researchers from
+          </p>
           <div className="group relative overflow-hidden">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-linear-to-r from-white to-transparent" />
             <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-linear-to-l from-white to-transparent" />
             <div className="marquee flex items-center gap-10 py-3 group-hover:[animation-play-state:paused]">
               {[...trustedByLogos, ...trustedByLogos].map((logo, index) => (
-                <div key={`${logo.name}-${index}`} className="flex shrink-0 items-center justify-center opacity-50 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0" style={{ minWidth: "120px" }}>
-                  <Image src={logo.src} alt={logo.name} width={120} height={48} className="h-10 w-auto object-contain" unoptimized />
+                <div
+                  key={`${logo.name}-${index}`}
+                  className="flex shrink-0 items-center justify-center opacity-50 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
+                  style={{ minWidth: "120px" }}
+                >
+                  <Image
+                    src={logo.src}
+                    alt={logo.name}
+                    width={120}
+                    height={48}
+                    className="h-10 w-auto object-contain"
+                    unoptimized
+                  />
                 </div>
               ))}
             </div>
@@ -531,18 +720,37 @@ export function HomePageClient() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl">
             <div className="mb-10 text-center">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">FAQ</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">Common questions</h2>
-              <p className="mt-3 text-base text-slate-500">Everything you need to know before you start.</p>
+              <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
+                FAQ
+              </p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+                Common questions
+              </h2>
+              <p className="mt-3 text-base text-slate-500">
+                Everything you need to know before you start.
+              </p>
             </div>
             <div className="rounded-3xl border border-slate-200 bg-white px-8 shadow-sm">
-              {homeFaqEntries.map((entry) => <HomeFaqItem key={entry.question} {...entry} />)}
+              {homeFaqEntries.map((entry) => (
+                <HomeFaqItem key={entry.question} {...entry} />
+              ))}
             </div>
             <p className="mt-6 text-center text-sm text-slate-500">
               More questions?{" "}
-              <Link href="/faq" className="font-semibold text-indigo-600 hover:underline">See the full FAQ</Link>{" "}
+              <Link
+                href="/faq"
+                className="font-semibold text-indigo-600 hover:underline"
+              >
+                See the full FAQ
+              </Link>{" "}
               or{" "}
-              <Link href="/contact" className="font-semibold text-indigo-600 hover:underline">contact us</Link>.
+              <Link
+                href="/contact"
+                className="font-semibold text-indigo-600 hover:underline"
+              >
+                contact us
+              </Link>
+              .
             </p>
           </div>
         </div>
@@ -553,20 +761,34 @@ export function HomePageClient() {
         <div className="container mx-auto px-4">
           <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-indigo-600 via-indigo-500 to-sky-500 px-8 py-16 text-center shadow-2xl shadow-indigo-200">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-200">Get started today</p>
-            <h2 className="mt-3 text-3xl font-extrabold text-white md:text-4xl">Submit with confidence.</h2>
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-200">
+              Get started today
+            </p>
+            <h2 className="mt-3 text-3xl font-extrabold text-white md:text-4xl">
+              Submit with confidence.
+            </h2>
             <p className="mx-auto mt-4 max-w-xl text-base text-indigo-100">
-              Join 400k students, researchers, writers, and content teams who use Text Humanica to detect, rewrite, and publish without second-guessing their work.
+              Join 400k students, researchers, writers, and content teams who
+              use Text Humanica to detect, rewrite, and publish without
+              second-guessing their work.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link href="/auth/signup" className="inline-flex items-center gap-2 rounded-2xl bg-white px-7 py-3.5 text-sm font-bold text-indigo-700 shadow-lg transition hover:bg-indigo-50">
+              <Link
+                href="/auth/signup"
+                className="inline-flex items-center gap-2 rounded-2xl bg-white px-7 py-3.5 text-sm font-bold text-indigo-700 shadow-lg transition hover:bg-indigo-50"
+              >
                 Start for free <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href={siteConfig.links.pricing} className="inline-flex items-center gap-2 rounded-2xl border border-white/30 px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10">
+              <Link
+                href={siteConfig.links.pricing}
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/30 px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
                 View pricing
               </Link>
             </div>
-            <p className="mt-5 text-xs text-indigo-200">Free plan available  No credit card required  Cancel anytime</p>
+            <p className="mt-5 text-xs text-indigo-200">
+              Free plan available No credit card required Cancel anytime
+            </p>
           </div>
         </div>
       </section>
