@@ -7,8 +7,7 @@ export type Tone =
   | "formal"
   | "creative"
   | "friendly"
-  | "storytelling"
-  | "default";
+  | "storytelling";
 
 export type HumanizerTier = "free" | "basic" | "pro";
 
@@ -139,28 +138,25 @@ function splitIntoChunks(text: string, chunkSize: number): string[] {
 }
 
 function buildPrompt(text: string, tone: Tone, tier: HumanizerTier) {
-  const targetTone = tone === "default" ? "natural and conversational" : tone;
   const pipeline =
     tier === "free"
       ? "Use a concise single-pass rewrite."
-      : "Internally do three steps in one response: identify AI-like patterns, rewrite for natural rhythm, then polish. Return only the final polished result.";
+      : "Internally do three steps in one response: identify stiff or generic phrasing, rewrite for natural rhythm, then polish. Return only the final polished result.";
 
-  return `You are a text humanizer. Rewrite the following text to sound natural and human-like.
-Target tone: ${targetTone}.
+  return `You are a careful writing editor. Rewrite the following text so it reads naturally, clearly, and credibly.
+Target tone: ${tone}.
 Pipeline: ${pipeline}
 
 Rules:
 - Preserve the original meaning.
-- Vary sentence length and rhythm.
-- MAXIMIZE BURSTINESS: Mix short 3-word sentences with long 25+ word thoughts.
-- Use contractions where they sound natural.
-- HUMAN PERPLEXITY: Start sentences with 'And', 'But', or 'So'. Use contractions.
-- Remove stiff transitions such as "Moreover", "Furthermore", and "In conclusion".
-- Avoid robotic phrasing and repetitive structure.
-- KILL THE "AI LOOK": Use dashes (—) and semicolons instead of linear transitions.
-- ACTIVE VOICE: Force the subject to act.
-- Keep the output clean and professional for the selected tone.
-- Make the text feel like a real person wrote it — you know, weird little idioms    that actually sound like something someone would say.
+- Keep facts, names, numbers, ordered lists, and technical terms accurate.
+- Keep the output useful, truthful, and specific.
+- Prefer concrete verbs and active voice when they improve clarity.
+- Vary sentence length and paragraph rhythm without making the text messy.
+- Use contractions only where they fit the selected tone.
+- Replace stiff transitions such as "Moreover", "Furthermore", and "In conclusion" with smoother wording.
+- Remove repetitive structure, filler, and generic phrasing.
+- Keep the output polished and appropriate for the selected tone.
 - Return only valid JSON.
 
 Text:
