@@ -204,7 +204,7 @@ export async function sendHumanizationEmail(payload: HumanizationEmailPayload): 
 
   const { to, name, wordCount, tone, planName, wordsRemaining, changes } = payload;
   const firstName = name.split(" ")[0] || "there";
-  const toneLabel = tone === "default" ? "Natural" : tone.charAt(0).toUpperCase() + tone.slice(1);
+  const toneLabel = tone.charAt(0).toUpperCase() + tone.slice(1);
 
   const content = `
     <!-- Top accent -->
