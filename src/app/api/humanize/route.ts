@@ -15,7 +15,6 @@ type HumanizeRequestBody = {
 };
 
 const VALID_TONES = new Set<Tone>([
-  "default",
   "casual",
   "professional",
   "academic",
@@ -75,7 +74,7 @@ export async function POST(req: Request) {
     const tone: Tone =
       typeof body.tone === "string" && VALID_TONES.has(body.tone as Tone)
         ? (body.tone as Tone)
-        : "default";
+        : "casual";
     const documentId =
       typeof body.documentId === "string" && body.documentId.trim()
         ? body.documentId
