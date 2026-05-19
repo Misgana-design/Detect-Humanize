@@ -67,7 +67,7 @@ export const faqEntries = [
   {
     question: "What is the difference between the Free and Pro plans?",
     answer:
-      "The Free plan gives you 1,000 words per month with basic detection (Flash model) and single-stage humanization (Default tone only). The Pro plan gives you 20,000 words per month, the full 3-stage Pro model pipeline, all 8 tones, re-humanization, PDF export, Copy for Google Docs, and full document history with comparison mode.",
+      "The Free plan gives you 1,000 words per month with basic detection (Flash model) and single-stage humanization (Casual tone only). The Pro plan gives you 20,000 words per month, the full Pro model pipeline, all tones, re-humanization, PDF export, Copy for Google Docs, and full document history with comparison mode.",
   },
   {
     question: "Can I cancel my subscription at any time?",
