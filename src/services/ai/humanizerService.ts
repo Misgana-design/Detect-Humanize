@@ -155,6 +155,7 @@ Rules:
 - Use contractions where they sound natural.
 - Remove stiff transitions such as "Moreover", "Furthermore", and "In conclusion".
 - Avoid robotic phrasing and repetitive structure.
+- KILL THE "AI LOOK": Use dashes (—) and semicolons instead of linear transitions.
 - Keep the output clean and professional for the selected tone.
 - Return only valid JSON.
 
