@@ -1,6 +1,7 @@
 // src/hooks/useDetection.ts
 import { useMutation } from "@tanstack/react-query";
 import type { DetectionResult } from "@/services/ai/detectionService";
+import { readJsonResponse } from "@/lib/http/apiClient";
 
 export function useDetection() {
   return useMutation({
@@ -13,15 +14,15 @@ export function useDetection() {
         body: JSON.stringify({ text }),
       });
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          window.location.assign("/auth/signup");
-          throw new Error("Redirecting to signup...");
-        }
-        const err = await res.json();
-        throw new Error(err.error || "Detection failed");
+      if (res.status === 401) {
+        window.location.assign("/auth/signup");
+        throw new Error("Please sign in to use detector.");
       }
-      return res.json();
+
+      return readJsonResponse<DetectionResult & { cached: boolean }>(
+        res,
+        "Detection failed. Please try again.",
+      );
     },
   });
 }
