@@ -194,8 +194,21 @@ async function generateContentWithRetry(
 
 function parseHumanizerResult(raw: string | undefined, label: string): HumanizerResult {
   if (!raw) throw new Error(`Empty response from AI model during ${label}.`);
+
+  // Strip markdown code fences if present (Gemini sometimes wraps JSON in ```json)
+  let cleaned = raw.trim();
+  if (cleaned.startsWith("```json")) {
+    cleaned = cleaned.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+  } else if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```\s*/, "").replace(/\s*```$/, "");
+  }
+
+  // Extract JSON object via regex as final fallback
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (match) cleaned = match[0];
+
   try {
-    const parsed = JSON.parse(raw) as Partial<HumanizerResult>;
+    const parsed = JSON.parse(cleaned) as Partial<HumanizerResult>;
     if (typeof parsed.humanizedText !== "string" || !Array.isArray(parsed.changes)) {
       throw new Error("Response did not match the expected shape.");
     }
@@ -312,8 +325,6 @@ export class HumanizerService {
           contents: buildFreePrompt(text, tone),
           config: {
             systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
-            responseMimeType: "application/json",
-            responseSchema: humanizerSchema,
             temperature: 0.8,
           },
         },
@@ -344,8 +355,6 @@ export class HumanizerService {
           contents: buildPaidPrompt(text, tone),
           config: {
             systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
-            responseMimeType: "application/json",
-            responseSchema: humanizerSchema,
             temperature: 0.92,
           },
         },
