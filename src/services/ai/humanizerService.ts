@@ -26,15 +26,16 @@ const CHUNK_SIZES: Record<HumanizerTier, number> = {
   pro:   500,
 };
 
-// ── Per-stage timeouts (ms) — must sum well under maxDuration ─────────────────
-// Free (1 call):  25s
-// Paid (3 calls): 18s + 22s + 22s = 62s — fits inside 120s maxDuration
-const TIMEOUT_FREE_MS    = 25_000;
-const TIMEOUT_ANALYSIS_MS = 18_000;
-const TIMEOUT_REWRITE_MS  = 22_000;
-const TIMEOUT_POLISH_MS   = 22_000;
+// ── Per-stage timeouts (ms) ───────────────────────────────────────────────────
+// Pro model is slower than Flash — give it generous headroom.
+// Free (1 call):  35s
+// Paid (3 calls): 30s + 30s + 30s = 90s — fits inside 120s maxDuration
+const TIMEOUT_FREE_MS     = 35_000;
+const TIMEOUT_ANALYSIS_MS = 30_000;
+const TIMEOUT_REWRITE_MS  = 30_000;
+const TIMEOUT_POLISH_MS   = 30_000;
 
-const AI_RETRY_ATTEMPTS = 2;
+const AI_RETRY_ATTEMPTS = 3;
 
 // ── Tone-specific instruction blocks ─────────────────────────────────────────
 const TONE_RULES: Record<Tone, string> = {
@@ -142,29 +143,26 @@ The "changes" array must describe exactly what you changed and why it reduces AI
 }
 
 function buildAnalysisPrompt(text: string): string {
-  return `You are an AI detection expert who knows exactly how GPTZero, Turnitin, Originality.ai, Copyleaks, and Winston AI work internally.
+  return `You are an AI detection expert. Analyze this text and list ONLY the specific phrases and patterns that would cause GPTZero, Turnitin, or Originality.ai to flag it as AI-generated.
 
-Analyze the following text and identify every pattern that would cause an AI detector to flag it. Be specific and technical.
+Be brief and specific. Output a numbered list of issues only — no explanations, no headers, no preamble.
 
 Focus on:
-1. LOW BURSTINESS: Sentences that are too similar in length or complexity
-2. LOW PERPLEXITY: Word choices that are too predictable given the context
-3. FORBIDDEN PHRASES: Any of these: Furthermore, Moreover, Additionally, In conclusion, It is worth noting, This demonstrates, delve into, crucial, pivotal, multifaceted, leverage, utilize, robust, comprehensive
-4. UNIFORM RHYTHM: Paragraphs where every sentence follows the same subject-verb-object pattern
-5. MISSING HUMAN MARKERS: Lack of fragments, conjunctions at sentence starts, parentheticals, or length variation
-6. ABSTRACT LANGUAGE: Generic nouns where specific concrete ones would be more natural
-
-For each issue found, state:
-- The exact phrase or pattern
-- Why it triggers AI detectors
-- What type of fix is needed
+- Forbidden transition phrases (Furthermore, Moreover, Additionally, In conclusion, etc.)
+- Sentences with identical length/structure to adjacent sentences (low burstiness)
+- Predictable word choices that a human would vary (low perplexity)
+- Overly formal or generic vocabulary (utilize, facilitate, demonstrate, crucial, pivotal, robust)
+- Missing human markers (no fragments, no conjunction-started sentences, no parentheticals)
 
 Text:
 """
 ${text}
 """
 
-Be exhaustive. List every single issue. This analysis will be used to guide a complete rewrite.`;
+Output format — numbered list only, max 10 items:
+1. [issue]
+2. [issue]
+...`;
 }
 
 function buildRewritePrompt(text: string, tone: Tone, analysis: string): string {
