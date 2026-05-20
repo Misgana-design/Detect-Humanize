@@ -7,8 +7,7 @@ export type Tone =
   | "formal"
   | "creative"
   | "friendly"
-  | "storytelling"
-  | "default";
+  | "storytelling";
 
 export type HumanizerTier = "free" | "basic" | "pro";
 
@@ -39,11 +38,9 @@ const AI_RETRY_ATTEMPTS = 2;
 
 // ── Tone-specific instruction blocks ─────────────────────────────────────────
 const TONE_RULES: Record<Tone, string> = {
-  default:
-    "Write in a clear, natural, conversational register. Use contractions freely. " +
-    "Avoid overly formal vocabulary.",
-
   casual:
+    "Write the way a smart person texts a friend — relaxed, direct, occasionally " +
+    "colloquial. Contractions everywhere. Short punchy sentences are fine.",
     "Write the way a smart person texts a friend — relaxed, direct, occasionally " +
     "colloquial. Contractions everywhere. Short punchy sentences are fine.",
 
