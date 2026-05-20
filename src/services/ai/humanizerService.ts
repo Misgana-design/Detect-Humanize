@@ -1,4 +1,4 @@
-import { client, humanizerSchema, MODELS } from "./geminiClient";
+import { client, MODELS } from "./geminiClient";
 
 export type Tone =
   | "casual"
@@ -91,43 +91,67 @@ const TONE_RULES: Record<Tone, string> = {
     "The reader should feel pulled forward.",
 };
 
-// ── Universal bypass rules — compact reference used in prompts ────────────────
-// Full instructions live in HUMANIZER_SYSTEM_INSTRUCTION above.
-// This is a short reminder injected into the user turn only.
-const BYPASS_REMINDER = `Key targets: maximize burstiness (wildly mixed sentence lengths) and perplexity (unexpected word choices). Ban all forbidden transitions and vocabulary listed in your instructions. Include required human markers (fragment, conjunction-start, parenthetical, single-sentence paragraph, dash).`;
+// ── Universal bypass rules — injected into every user prompt ─────────────────
+// The system instruction covers the "what" — this covers the "how" with
+// concrete targets the model can act on immediately.
+const UNIVERSAL_BYPASS_RULES = `
+BURSTINESS TARGETS (non-negotiable):
+- At least 25% of sentences must be under 8 words.
+- At least 20% of sentences must exceed 25 words.
+- Never two sentences of similar length back-to-back. Alternate: short. Then a longer, more complex one that develops the idea. Short again. Then sprawling.
+
+PERPLEXITY TARGETS (non-negotiable):
+- Replace predictable word choices with less expected but equally correct alternatives.
+  Bad: "It is important to consider" → Good: "Worth pausing on"
+  Bad: "This demonstrates that"     → Good: "Which tells you something"
+  Bad: "In order to achieve"        → Good: "To actually get there"
+- Use specific concrete nouns instead of abstract ones wherever possible.
+- At least one mid-sentence dash — like this — to break predictable syntax.
+
+SENTENCE STRUCTURE (required):
+- At least one sentence fragment. Like this.
+- At least two sentences starting with: And, But, So, Because, Yet, or Or.
+- At least one parenthetical aside (something that feels genuinely incidental).
+- At least one paragraph that is a single sentence.
+
+MEANING PRESERVATION (absolute):
+- Every fact, statistic, named entity, and argument from the original must be preserved exactly.
+- Do not add information not in the original. Do not remove key arguments.
+`;
 
 // ── Prompt builders ───────────────────────────────────────────────────────────
 
 function buildFreePrompt(text: string, tone: Tone): string {
-  return `Rewrite the text below as genuinely human-written. Preserve all original meaning exactly.
+  return `You are an expert writing editor. Rewrite the text below so it reads as genuinely human-written while preserving all original meaning.
 
-Tone: ${TONE_RULES[tone]}
-
-${BYPASS_REMINDER}
-
+TONE: ${TONE_RULES[tone]}
+${UNIVERSAL_BYPASS_RULES}
 Text:
 """
 ${text}
 """
 
-Return ONLY valid JSON: { "humanizedText": "...", "changes": ["change 1", "change 2", "change 3"] }`;
+Return ONLY valid JSON: { "humanizedText": "...", "changes": ["change 1", "change 2", "change 3"] }
+The changes array must describe what you changed and why it reduces AI detection probability.`;
 }
 
 function buildPaidPrompt(text: string, tone: Tone): string {
-  return `Rewrite the text below as genuinely human-written. Preserve all original meaning exactly.
+  return `You are an expert writing editor and AI detection specialist. Rewrite the text below so it is completely undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
 
-Tone: ${TONE_RULES[tone]}
-
-${BYPASS_REMINDER}
-
-Before writing your output, mentally: (1) identify every AI signal in the text, (2) plan fixes for each, (3) write the rewrite, (4) check it still sounds natural. Then output the final result only.
+TONE: ${TONE_RULES[tone]}
+${UNIVERSAL_BYPASS_RULES}
+Work through three mental passes before writing your output:
+PASS 1 — DIAGNOSE: Identify every AI signal: forbidden transitions, uniform sentence length, predictable word choices, missing human markers.
+PASS 2 — REWRITE: Fix every issue. Apply all bypass targets above.
+PASS 3 — POLISH: Find anything still too smooth or balanced. Roughen it. Make it feel like a specific person wrote it, not a system trying to sound human.
 
 Text:
 """
 ${text}
 """
 
-Return ONLY valid JSON: { "humanizedText": "...", "changes": ["3 most impactful changes made"] }`;
+Return ONLY valid JSON: { "humanizedText": "...", "changes": ["3 most impactful changes made"] }
+The changes array must describe the 3 changes that most reduce AI detection probability.`;
 }
 
 // ── Utility functions ─────────────────────────────────────────────────────────
@@ -304,11 +328,32 @@ export class HumanizerService {
     tier: HumanizerTier = "free",
   ): Promise<HumanizerResult> {
     const model = tier === "free" || tier === "basic" ? MODELS.FREE : MODELS.PRO;
+    const chunkSize = CHUNK_SIZES[tier];
+    const wordCount = text.trim().split(/\s+/).length;
 
-    // Chunking disabled for testing — all text processed as a single call
-    return tier === "free"
-      ? this.rewriteFree(text, tone, model)
-      : this.rewritePaid(text, tone, model);
+    if (wordCount <= chunkSize) {
+      return tier === "free"
+        ? this.rewriteFree(text, tone, model)
+        : this.rewritePaid(text, tone, model);
+    }
+
+    // Long text: chunk and process sequentially
+    const chunks = splitIntoChunks(text, chunkSize);
+    console.log(`[humanizer] Chunking ${wordCount} words into ${chunks.length} chunks (tier=${tier})`);
+
+    const results: HumanizerResult[] = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const result = await (tier === "free"
+        ? this.rewriteFree(chunks[i], tone, model)
+        : this.rewritePaid(chunks[i], tone, model));
+      results.push(result);
+    }
+
+    return {
+      humanizedText: results.map((r) => r.humanizedText).join("\n\n"),
+      changes: [...new Set(results.flatMap((r) => r.changes))].slice(0, 5),
+      fallback: results.some((r) => r.fallback),
+    };
   }
 
   // ── Free tier: single AI call ─────────────────────────────────────────────
