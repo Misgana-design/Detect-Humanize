@@ -41,8 +41,6 @@ const TONE_RULES: Record<Tone, string> = {
   casual:
     "Write the way a smart person texts a friend — relaxed, direct, occasionally " +
     "colloquial. Contractions everywhere. Short punchy sentences are fine.",
-    "Write the way a smart person texts a friend — relaxed, direct, occasionally " +
-    "colloquial. Contractions everywhere. Short punchy sentences are fine.",
 
   professional:
     "Maintain a polished, confident register suitable for business communication. " +
