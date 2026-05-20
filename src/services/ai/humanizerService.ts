@@ -35,6 +35,27 @@ const TIMEOUT_PAID_MS  = 55_000;
 
 const AI_RETRY_ATTEMPTS = 3;
 
+// ── System instruction (processed once, not repeated per request) ────────────
+// Kept separate from the user prompt to reduce per-request token count.
+const HUMANIZER_SYSTEM_INSTRUCTION = `You are an expert writing editor who makes AI-generated text undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
+
+You know these detectors measure two statistics:
+BURSTINESS: variance in sentence length and complexity. AI text scores low — sentences are uniformly similar. Fix: mix 3-word sentences with 30-word ones. Never two similar-length sentences back-to-back.
+PERPLEXITY: unpredictability of word choices. AI text scores low — every word is the obvious choice. Fix: use less expected but equally correct alternatives. Specific concrete nouns over abstractions.
+
+FORBIDDEN — never use these (strongest AI signals):
+Transitions: Furthermore, Moreover, Additionally, In conclusion, It is worth noting, This demonstrates, This highlights, Notably, Significantly, Overall, In summary
+Vocabulary: delve into, it's worth noting, in the realm of, crucial, pivotal, multifaceted, comprehensive, robust, leverage (as verb), utilize
+Patterns: rhetorical questions you answer yourself, backtracking phrases ("Actually let me rephrase"), uniform paragraph length
+
+REQUIRED — always include:
+- At least one sentence fragment. Like this.
+- At least two sentences starting with: And, But, So, Because, Yet, or Or
+- At least one parenthetical aside (like this one)
+- At least one paragraph that is a single sentence
+- Mid-sentence dash — used to break predictable syntax
+- Preserve every fact, statistic, name, and argument from the original exactly`;
+
 // ── Tone-specific instruction blocks ─────────────────────────────────────────
 const TONE_RULES: Record<Tone, string> = {
   casual:
@@ -70,109 +91,43 @@ const TONE_RULES: Record<Tone, string> = {
     "The reader should feel pulled forward.",
 };
 
-// ── Universal bypass rules (applied to every tier and tone) ──────────────────
-// These target the statistical signals that GPTZero, Turnitin, Originality.ai,
-// Copyleaks, Winston AI, and ZeroGPT all rely on: burstiness and perplexity.
-const UNIVERSAL_BYPASS_RULES = `
-STATISTICAL BYPASS RULES — these are non-negotiable regardless of tone:
-
-BURSTINESS (most important signal):
-- At least 25% of sentences must be under 8 words.
-- At least 20% of sentences must exceed 25 words.
-- Never place two sentences of similar length back-to-back.
-- Deliberately alternate: short. Then a longer, more complex sentence that develops the idea further. Short again. Then sprawling.
-
-PERPLEXITY (second most important signal):
-- Replace predictable word choices with less expected but equally correct alternatives.
-  Bad: "It is important to consider" → Good: "Worth pausing on"
-  Bad: "This demonstrates that"     → Good: "Which tells you something"
-  Bad: "In order to achieve"        → Good: "To actually get there"
-- Use specific concrete nouns instead of abstract ones wherever possible.
-- Introduce at least one mid-sentence pivot using a dash — like this — to break predictable syntax.
-- Use at least one semicolons or colon in a non-standard way; not just to list things.
-
-FORBIDDEN PATTERNS (these are the strongest AI signals — never use them):
-- Never start a sentence with: Furthermore, Moreover, Additionally, In conclusion,
-  It is worth noting, It is important to note, This demonstrates, This shows,
-  This highlights, Overall, In summary, To summarize, Notably, Significantly.
-- Never use: "delve into", "it's worth noting", "in the realm of", "as an AI",
-  "I cannot", "I must emphasize", "crucial", "pivotal", "multifaceted",
-  "comprehensive", "robust", "leverage" (as a verb), "utilize" (use "use").
-- No rhetorical questions followed by self-answers — detectors flag this pattern.
-- No backtracking phrases like "Actually, let me rephrase" — this is a known AI tell.
-- No first-person unless the original text was first-person.
-
-SENTENCE STRUCTURE VARIATION:
-- Use at least one sentence fragment for emphasis. Like this.
-- Start at least two sentences with a conjunction: And, But, So, Because, Yet, Or.
-- Use at least one parenthetical aside (something that feels like a genuine aside).
-- Vary paragraph length: at least one paragraph should be a single sentence.
-
-MEANING PRESERVATION:
-- Every factual claim, statistic, and named entity from the original must be preserved exactly.
-- Do not add information that was not in the original text.
-- Do not remove key arguments or evidence.
-`;
+// ── Universal bypass rules — compact reference used in prompts ────────────────
+// Full instructions live in HUMANIZER_SYSTEM_INSTRUCTION above.
+// This is a short reminder injected into the user turn only.
+const BYPASS_REMINDER = `Key targets: maximize burstiness (wildly mixed sentence lengths) and perplexity (unexpected word choices). Ban all forbidden transitions and vocabulary listed in your instructions. Include required human markers (fragment, conjunction-start, parenthetical, single-sentence paragraph, dash).`;
 
 // ── Prompt builders ───────────────────────────────────────────────────────────
 
 function buildFreePrompt(text: string, tone: Tone): string {
-  return `You are an expert writing editor specializing in making AI-generated text undetectable by AI detection systems including GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
+  return `Rewrite the text below as genuinely human-written. Preserve all original meaning exactly.
 
-Your task: Rewrite the text below so it reads as genuinely human-written while preserving all original meaning.
+Tone: ${TONE_RULES[tone]}
 
-TONE REQUIREMENT:
-${TONE_RULES[tone]}
+${BYPASS_REMINDER}
 
-${UNIVERSAL_BYPASS_RULES}
-
-Text to rewrite:
+Text:
 """
 ${text}
 """
 
-Return ONLY valid JSON in this exact format:
-{
-  "humanizedText": "your complete rewritten text here",
-  "changes": ["specific change 1", "specific change 2", "specific change 3"]
-}
-
-The "changes" array must describe exactly what you changed and why it reduces AI detection probability.`;
+Return ONLY valid JSON: { "humanizedText": "...", "changes": ["change 1", "change 2", "change 3"] }`;
 }
 
 function buildPaidPrompt(text: string, tone: Tone): string {
-  return `You are an expert writing editor and AI detection specialist. Your task is to rewrite the text below so it is completely undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
+  return `Rewrite the text below as genuinely human-written. Preserve all original meaning exactly.
 
-Work through this in three mental passes before writing your final output:
+Tone: ${TONE_RULES[tone]}
 
-PASS 1 — DIAGNOSE: Identify every AI signal in the text:
-- Forbidden transition phrases (Furthermore, Moreover, Additionally, In conclusion, etc.)
-- Sentences with identical length/structure (low burstiness)
-- Predictable word choices (low perplexity)
-- Overly formal vocabulary (utilize, facilitate, demonstrate, crucial, pivotal, robust)
-- Missing human markers (no fragments, no conjunction-started sentences)
+${BYPASS_REMINDER}
 
-PASS 2 — REWRITE: Fix every issue identified. Apply the bypass rules below.
+Before writing your output, mentally: (1) identify every AI signal in the text, (2) plan fixes for each, (3) write the rewrite, (4) check it still sounds natural. Then output the final result only.
 
-PASS 3 — POLISH: Read the rewrite and find anything still too smooth or balanced. Roughen it. Make it feel like a specific person wrote it.
-
-TONE REQUIREMENT:
-${TONE_RULES[tone]}
-
-${UNIVERSAL_BYPASS_RULES}
-
-Text to rewrite:
+Text:
 """
 ${text}
 """
 
-Return ONLY valid JSON in this exact format:
-{
-  "humanizedText": "your final polished text here",
-  "changes": ["most impactful change 1", "most impactful change 2", "most impactful change 3"]
-}
-
-The "changes" array must describe the 3 changes that most reduce AI detection probability.`;
+Return ONLY valid JSON: { "humanizedText": "...", "changes": ["3 most impactful changes made"] }`;
 }
 
 // ── Utility functions ─────────────────────────────────────────────────────────
@@ -356,6 +311,7 @@ export class HumanizerService {
           model,
           contents: buildFreePrompt(text, tone),
           config: {
+            systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
             responseMimeType: "application/json",
             responseSchema: humanizerSchema,
             temperature: 0.8,
@@ -387,6 +343,7 @@ export class HumanizerService {
           model,
           contents: buildPaidPrompt(text, tone),
           config: {
+            systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
             responseMimeType: "application/json",
             responseSchema: humanizerSchema,
             temperature: 0.92,
