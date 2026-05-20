@@ -336,32 +336,11 @@ export class HumanizerService {
     tier: HumanizerTier = "free",
   ): Promise<HumanizerResult> {
     const model = tier === "free" || tier === "basic" ? MODELS.FREE : MODELS.PRO;
-    const chunkSize = CHUNK_SIZES[tier];
-    const wordCount = text.trim().split(/\s+/).length;
 
-    if (wordCount <= chunkSize) {
-      return tier === "free"
-        ? this.rewriteFree(text, tone, model)
-        : this.rewritePaid(text, tone, model);
-    }
-
-    // Long text: chunk and process sequentially
-    const chunks = splitIntoChunks(text, chunkSize);
-    console.log(`[humanizer] Chunking ${wordCount} words into ${chunks.length} chunks (tier=${tier})`);
-
-    const results: HumanizerResult[] = [];
-    for (let i = 0; i < chunks.length; i++) {
-      const result = await (tier === "free"
-        ? this.rewriteFree(chunks[i], tone, model)
-        : this.rewritePaid(chunks[i], tone, model));
-      results.push(result);
-    }
-
-    return {
-      humanizedText: results.map((r) => r.humanizedText).join("\n\n"),
-      changes: [...new Set(results.flatMap((r) => r.changes))].slice(0, 5),
-      fallback: results.some((r) => r.fallback),
-    };
+    // Chunking disabled for testing — all text processed as a single call
+    return tier === "free"
+      ? this.rewriteFree(text, tone, model)
+      : this.rewritePaid(text, tone, model);
   }
 
   // ── Free tier: single AI call ─────────────────────────────────────────────
