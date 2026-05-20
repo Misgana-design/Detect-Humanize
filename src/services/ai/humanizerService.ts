@@ -27,13 +27,11 @@ const CHUNK_SIZES: Record<HumanizerTier, number> = {
 };
 
 // ── Per-stage timeouts (ms) ───────────────────────────────────────────────────
-// Pro model is slower than Flash — give it generous headroom.
-// Free (1 call):  35s
-// Paid (3 calls): 30s + 30s + 30s = 90s — fits inside 120s maxDuration
-const TIMEOUT_FREE_MS     = 35_000;
-const TIMEOUT_ANALYSIS_MS = 30_000;
-const TIMEOUT_REWRITE_MS  = 30_000;
-const TIMEOUT_POLISH_MS   = 30_000;
+// Single-call approach for both free and paid — avoids sequential timeout risk.
+// Free:  35s (Flash model, single call)
+// Paid:  55s (Pro model, single call with internal 3-stage instruction)
+const TIMEOUT_FREE_MS  = 35_000;
+const TIMEOUT_PAID_MS  = 55_000;
 
 const AI_RETRY_ATTEMPTS = 3;
 
@@ -142,76 +140,39 @@ Return ONLY valid JSON in this exact format:
 The "changes" array must describe exactly what you changed and why it reduces AI detection probability.`;
 }
 
-function buildAnalysisPrompt(text: string): string {
-  return `You are an AI detection expert. Analyze this text and list ONLY the specific phrases and patterns that would cause GPTZero, Turnitin, or Originality.ai to flag it as AI-generated.
+function buildPaidPrompt(text: string, tone: Tone): string {
+  return `You are an expert writing editor and AI detection specialist. Your task is to rewrite the text below so it is completely undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
 
-Be brief and specific. Output a numbered list of issues only — no explanations, no headers, no preamble.
+Work through this in three mental passes before writing your final output:
 
-Focus on:
+PASS 1 — DIAGNOSE: Identify every AI signal in the text:
 - Forbidden transition phrases (Furthermore, Moreover, Additionally, In conclusion, etc.)
-- Sentences with identical length/structure to adjacent sentences (low burstiness)
-- Predictable word choices that a human would vary (low perplexity)
-- Overly formal or generic vocabulary (utilize, facilitate, demonstrate, crucial, pivotal, robust)
-- Missing human markers (no fragments, no conjunction-started sentences, no parentheticals)
+- Sentences with identical length/structure (low burstiness)
+- Predictable word choices (low perplexity)
+- Overly formal vocabulary (utilize, facilitate, demonstrate, crucial, pivotal, robust)
+- Missing human markers (no fragments, no conjunction-started sentences)
 
-Text:
-"""
-${text}
-"""
+PASS 2 — REWRITE: Fix every issue identified. Apply the bypass rules below.
 
-Output format — numbered list only, max 10 items:
-1. [issue]
-2. [issue]
-...`;
-}
-
-function buildRewritePrompt(text: string, tone: Tone, analysis: string): string {
-  return `You are an expert ghostwriter. Using the analysis below as your guide, rewrite the text to eliminate every AI detection signal identified.
-
-TONE REQUIREMENT:
-${TONE_RULES[tone]}
-
-ISSUES TO FIX (from analysis):
-${analysis}
-
-${UNIVERSAL_BYPASS_RULES}
-
-Original text:
-"""
-${text}
-"""
-
-Produce a complete rewrite that addresses every issue in the analysis. Do not return JSON yet — return only the rewritten text as plain prose. This will be polished in a final pass.`;
-}
-
-function buildPolishPrompt(rewrittenText: string, tone: Tone): string {
-  return `You are a master editor doing a final pass on a text that has already been rewritten for human authenticity. Your job is to push it further — make it genuinely unpredictable and natural.
+PASS 3 — POLISH: Read the rewrite and find anything still too smooth or balanced. Roughen it. Make it feel like a specific person wrote it.
 
 TONE REQUIREMENT:
 ${TONE_RULES[tone]}
 
 ${UNIVERSAL_BYPASS_RULES}
 
-ADDITIONAL POLISH DIRECTIVES (apply these on top of the bypass rules):
-- Read the text as if you are a tired but sharp human writer at the end of a long day.
-- Find any remaining sentences that feel "generated" — too smooth, too balanced, too complete — and roughen them.
-- Introduce at least one unexpected but correct word choice that a human writer might use but an AI would not predict.
-- If any paragraph still has uniform sentence length, break it.
-- The final text should feel like it was written by a specific person with a specific voice, not by a system trying to sound human.
-- Preserve all facts, names, statistics, and arguments from the input exactly.
-
-Text to polish:
+Text to rewrite:
 """
-${rewrittenText}
+${text}
 """
 
 Return ONLY valid JSON in this exact format:
 {
   "humanizedText": "your final polished text here",
-  "changes": ["specific change 1", "specific change 2", "specific change 3"]
+  "changes": ["most impactful change 1", "most impactful change 2", "most impactful change 3"]
 }
 
-The "changes" array must describe the 3 most impactful changes you made to reduce AI detection probability.`;
+The "changes" array must describe the 3 changes that most reduce AI detection probability.`;
 }
 
 // ── Utility functions ─────────────────────────────────────────────────────────
@@ -431,11 +392,10 @@ export class HumanizerService {
     }
   }
 
-  // ── Paid tier: true 3-stage pipeline ─────────────────────────────────────
-  // Stage 1 (18s): Analysis — identifies every AI signal in the text
-  // Stage 2 (22s): Rewrite — fixes all identified issues, returns plain text
-  // Stage 3 (22s): Polish — final pass for unpredictability, returns JSON
-  // Total budget: ~62s, well within 120s maxDuration
+  // ── Paid tier: single call with internal 3-pass instruction ───────────────
+  // Using one call avoids sequential timeout risk from 3 separate API calls.
+  // The Pro model is instructed to do all three passes internally before
+  // producing the final JSON output. Temperature 0.92 maximises perplexity.
 
   private static async rewritePaid(
     text: string,
@@ -443,55 +403,22 @@ export class HumanizerService {
     model: string,
   ): Promise<HumanizerResult> {
     try {
-      // ── Stage 1: Analysis ──────────────────────────────────────────────────
-      const analysisResponse = await generateContentWithRetry(
+      const response = await generateContentWithRetry(
         {
           model,
-          contents: buildAnalysisPrompt(text),
-          config: { temperature: 0.15 },
-        },
-        "stage-1 analysis",
-        TIMEOUT_ANALYSIS_MS,
-      );
-
-      const analysis = analysisResponse.text?.trim() || "No specific issues identified.";
-      console.log(`[humanizer] Stage 1 complete (${analysis.length} chars of analysis)`);
-
-      // ── Stage 2: Rewrite ───────────────────────────────────────────────────
-      const rewriteResponse = await generateContentWithRetry(
-        {
-          model,
-          contents: buildRewritePrompt(text, tone, analysis),
-          config: { temperature: 0.75 },
-        },
-        "stage-2 rewrite",
-        TIMEOUT_REWRITE_MS,
-      );
-
-      const rewrittenText = rewriteResponse.text?.trim() || text;
-      console.log(`[humanizer] Stage 2 complete (${rewrittenText.split(/\s+/).length} words)`);
-
-      // ── Stage 3: Polish ────────────────────────────────────────────────────
-      const polishResponse = await generateContentWithRetry(
-        {
-          model,
-          contents: buildPolishPrompt(rewrittenText, tone),
+          contents: buildPaidPrompt(text, tone),
           config: {
             responseMimeType: "application/json",
             responseSchema: humanizerSchema,
             temperature: 0.92,
           },
         },
-        "stage-3 polish",
-        TIMEOUT_POLISH_MS,
+        "paid-tier rewrite",
+        TIMEOUT_PAID_MS,
       );
-
-      const result = parseHumanizerResult(polishResponse.text, "stage-3 polish");
-      console.log(`[humanizer] Stage 3 complete — final output ready`);
-      return result;
-
+      return parseHumanizerResult(response.text, "paid-tier rewrite");
     } catch (error) {
-      console.error("[humanizer] Paid tier pipeline failed, using local fallback:", errorMessage(error));
+      console.error("[humanizer] Paid tier failed, using local fallback:", errorMessage(error));
       return applyLocalFallback(text, tone);
     }
   }
