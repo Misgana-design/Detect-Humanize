@@ -370,10 +370,9 @@ export class HumanizerService {
     tone: Tone,
     model: string,
   ): Promise<HumanizerResult> {
-    // Academic and formal tones generate longer, denser output.
-    // Lower temperature = fewer exploratory tokens = faster response.
-    const temperature =
-      tone === "academic" || tone === "formal" ? 0.75 : 0.92;
+    // All tones use 0.92 — high temperature maximises perplexity and burstiness
+    // which are the two core metrics AI detectors measure.
+    const temperature = 0.92;
 
     try {
       const response = await generateContentWithRetry(
