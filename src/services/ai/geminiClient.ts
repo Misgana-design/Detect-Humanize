@@ -49,7 +49,7 @@ export const detectionSchema = {
     aiProbability: {
       type: "NUMBER",
       description:
-        "0-100 score. Be aggressive: if the text is overly polished or lacks 'burstiness', it is likely AI.",
+        "0-100 calibrated AI probability. Raise the score when strong AI markers dominate, but lower it when measurable humanized traits such as burstiness, perplexity, varied rhythm, fragments, parenthetical asides, dashes, and concrete wording are genuinely present.",
     },
   },
   required: ["analysis", "flaggedSentences", "confidence", "aiProbability"],
