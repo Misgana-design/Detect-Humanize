@@ -13,11 +13,48 @@ export interface DetectionResult {
 export class DetectionService {
   private static readonly CHUNK_SIZE = 200;
 
+  private static readonly DETECTOR_SYSTEM_INSTRUCTION = `You are a Linguistic Forensic Expert and AI detection specialist.
+Your goal is to distinguish between genuine human writing, raw AI-generated text, and AI text that has been substantially humanized.
+
+You must evaluate the same measurable traits used by this app's humanizer. Treat those traits as evidence of natural human variance, not as an automatic pass.
+
+AI DETECTION SIGNALS:
+BURSTINESS: variance in sentence length and complexity. Raw AI text scores low because sentences are uniformly similar. Humanized or human text mixes very short sentences with longer, more complex ones, and avoids similar-length sentences back-to-back.
+PERPLEXITY: unpredictability of word choices. Raw AI text uses obvious, safe wording. Humanized or human text uses less expected but still correct alternatives, concrete nouns, and less template-like phrasing.
+
+STRONG AI SIGNALS:
+Transitions: Furthermore, Moreover, Additionally, In conclusion, It is worth noting, This demonstrates, This highlights, Notably, Significantly, Overall, In summary
+Vocabulary: delve into, it's worth noting, in the realm of, crucial, pivotal, multifaceted, comprehensive, robust, leverage as a verb, utilize
+Patterns: rhetorical questions answered immediately, backtracking phrases such as "Actually let me rephrase", uniform paragraph length, overly balanced syntax, generic polish without personal or contextual texture
+
+HUMANIZED / HUMAN VARIANCE SIGNALS:
+- At least 25% of sentences are under 8 words.
+- At least 20% of sentences exceed 25 words.
+- Sentence lengths vary naturally instead of repeating the same rhythm.
+- At least one sentence fragment appears.
+- At least two sentences start with And, But, So, Because, Yet, or Or.
+- At least one parenthetical aside appears.
+- At least one paragraph is a single sentence.
+- At least one mid-sentence dash breaks predictable syntax.
+- Predictable phrases are replaced with less expected but equally correct wording.
+- Specific concrete nouns appear instead of only abstract claims.
+
+SCORING RUBRIC (0-100% AI probability):
+- 0-25%: Strong human or well-humanized traits. High burstiness, varied rhythm, natural imperfections, concrete wording, and few or no strong AI signals.
+- 25-60%: Mixed signal text. Some human variance is present, but parts remain polished, repetitive, generic, or template-like.
+- 60-100%: Raw or lightly edited AI traits dominate. Low burstiness, low perplexity, repeated transitions, uniform sentence/paragraph rhythm, and little evidence of humanized variance.
+
+IMPORTANT GUIDANCE:
+- If the text satisfies several humanized / human variance signals, lower the AI probability even if the topic is formal or polished.
+- If the text lacks those measurable variance signals, raise the AI probability, especially when strong AI signals appear.
+- Only give >80% when the text is suspiciously uniform, generic, and missing most humanized / human variance signals.
+- Flag only the sentences that still show strong AI markers. Do not flag sentences just because they are grammatical.
+- Be accurate, calibrated, and internally consistent with the measurable checklist.`;
+
   static async analyzeText(
     text: string,
     userTier: string = "free",
   ): Promise<DetectionResult> {
-    // === 3B: Empty text guard ===
     if (!text?.trim()) {
       return {
         aiProbability: 0,
@@ -39,13 +76,28 @@ export class DetectionService {
       this.analyzeChunk(chunk, userTier),
     );
     const chunkResults = await Promise.all(chunkPromises);
-
     const aggregated = this.aggregateResults(chunkResults);
 
     return {
       ...aggregated,
       modelUsed: userTier === "pro" ? MODELS.PRO : MODELS.FREE,
     };
+  }
+
+  private static buildDetectionPrompt(chunk: string): string {
+    return `Analyze the text below for AI markers using the same measurable traits and three-pass structure as the humanizer.
+
+Work through three mental passes before writing your output:
+PASS 1 - DIAGNOSE: Identify every AI signal: forbidden transitions, uniform sentence length, predictable word choices, missing human markers.
+PASS 2 - CHECK HUMANIZED TRAITS: Look for burstiness, perplexity, sentence fragments, varied sentence starts, parenthetical asides, single-sentence paragraphs, mid-sentence dashes, and concrete wording.
+PASS 3 - SCORE: Calibrate the AI probability. Lower the score when humanized / human variance is genuinely present. Raise it when the text has not been humanized enough and still reads smooth, uniform, generic, or template-like.
+
+Text:
+"""
+${chunk}
+"""
+
+Return ONLY valid JSON matching the response schema. The analysis must briefly state which measurable traits were present, which were missing, and why the final score was chosen.`;
   }
 
   private static async analyzeChunk(
@@ -61,28 +113,14 @@ export class DetectionService {
         contents: [
           {
             role: "user",
-            parts: [{ text: `Analyze this text for AI markers: "${chunk}"` }],
+            parts: [{ text: this.buildDetectionPrompt(chunk) }],
           },
         ],
         config: {
-          systemInstruction: `You are a Linguistic Forensic Expert.
-          Your goal is to distinguish between genuine human writing and AI-generated text.
-
-          SCORING RUBRIC (0-100% AI probability):
-          - 0-25%: Clear human traits — typos, slang, unique idioms, natural burstiness, varying sentence rhythm, personal voice.
-          - 25-60%: Heavily edited or formal human text, but still shows some human variance.
-          - 60-100%: Overly polished, repetitive rhythm, excessive transitional phrases (Moreover, Furthermore, In conclusion), lacks personal perspective or emotional tone.
-
-          IMPORTANT GUIDANCE:
-          - If the text appears deliberately humanized (intentional minor imperfections, manually added variance, or edited to sound more natural), be more lenient — lower the score.
-          - Only give >80% if the text is suspiciously perfect AND lacks any human markers.
-          - Be accurate, not overly punitive.`,
-
+          systemInstruction: this.DETECTOR_SYSTEM_INSTRUCTION,
           responseMimeType: "application/json",
           responseJsonSchema: detectionSchema,
           temperature: 0.1,
-
-          // FEATURE: Enable 'Thinking' for Gemini 3 to improve detection depth
           ...(modelName.includes("gemini-3") && {
             thinkingConfig: { includeThoughts: true },
           }),
@@ -93,10 +131,8 @@ export class DetectionService {
         response.text ?? response.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawText) throw new Error("No text returned");
 
-      // === 3A: Safer JSON extraction (handles thinking + markdown fences) ===
       let cleanedJson = rawText.trim();
 
-      // Remove possible markdown code fences that Gemini sometimes adds
       if (cleanedJson.startsWith("```json")) {
         cleanedJson = cleanedJson
           .replace(/^```json\s*/, "")
@@ -105,7 +141,6 @@ export class DetectionService {
         cleanedJson = cleanedJson.replace(/^```\s*/, "").replace(/\s*```$/, "");
       }
 
-      // Fallback regex (still useful in rare cases)
       const match = cleanedJson.match(/\{[\s\S]*\}/);
       if (match) cleanedJson = match[0];
 
@@ -134,7 +169,7 @@ export class DetectionService {
       }
 
       if (userTier === "pro" && attempt === 3) {
-        console.warn(`Pro model failed 3 times. Falling back to Flash...`);
+        console.warn("Pro model failed 3 times. Falling back to Flash...");
         return this.analyzeChunk(chunk, "free", 4);
       }
 
@@ -146,7 +181,6 @@ export class DetectionService {
     if (results.length === 0) throw new Error("No results to aggregate");
     if (results.length === 1) return results[0];
 
-    // Find the chunk with the highest AI probability (most suspicious part)
     const maxIndex = results.reduce(
       (maxIdx, result, idx) =>
         result.aiProbability > results[maxIdx].aiProbability ? idx : maxIdx,
@@ -155,25 +189,34 @@ export class DetectionService {
 
     const maxResult = results[maxIndex];
     const maxProbability = maxResult.aiProbability;
+    const minProbability = Math.min(...results.map((r) => r.aiProbability));
+    const averageProbability =
+      results.reduce((sum, result) => sum + result.aiProbability, 0) /
+      results.length;
+    const overallProbability = Math.round(
+      averageProbability * 0.7 + maxProbability * 0.3,
+    );
 
     const allFlagged = results.flatMap((r) => r.flaggedSentences);
     const uniqueFlagged = [...new Set(allFlagged)];
-
-    const confidences = results.map((r) => r.confidence);
-    const confidence = confidences.includes("high")
-      ? "high"
-      : confidences.includes("medium")
+    const spread = maxProbability - minProbability;
+    const confidence =
+      spread >= 35
         ? "medium"
-        : "low";
+        : results.every((r) => r.confidence === "high")
+          ? "high"
+          : results.some((r) => r.confidence === "medium")
+            ? "medium"
+            : "low";
 
     return {
-      aiProbability: maxProbability,
+      aiProbability: Math.max(0, Math.min(100, overallProbability)),
       confidence,
       flaggedSentences: uniqueFlagged,
-      // === Keep the richest analysis from the most suspicious chunk ===
       analysis:
         `Analysis completed over ${results.length} chunks.\n\n` +
-        `Most suspicious chunk (score ${maxProbability}%):\n` +
+        `Overall score uses a weighted blend of the average chunk score (${Math.round(averageProbability)}%) and the most suspicious chunk (${maxProbability}%), so one uneven section does not dominate the entire document.\n\n` +
+        `Most suspicious chunk:\n` +
         maxResult.analysis,
     };
   }
