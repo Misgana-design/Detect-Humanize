@@ -29,9 +29,9 @@ const CHUNK_SIZES: Record<HumanizerTier, number> = {
 // ── Per-call timeouts (ms) ────────────────────────────────────────────────────
 // Both tiers use Flash model — fast and reliable on Vertex AI.
 // Free:  35s (single-pass prompt)
-// Paid:  55s (3-pass prompt, higher temperature, longer output)
+// Paid:  90s (3-pass prompt — academic/formal tones generate more tokens)
 const TIMEOUT_FREE_MS  = 35_000;
-const TIMEOUT_PAID_MS  = 55_000;
+const TIMEOUT_PAID_MS  = 90_000;
 
 const AI_RETRY_ATTEMPTS = 3;
 
@@ -372,6 +372,11 @@ export class HumanizerService {
     tone: Tone,
     model: string,
   ): Promise<HumanizerResult> {
+    // Academic and formal tones generate longer, denser output.
+    // Lower temperature = fewer exploratory tokens = faster response.
+    const temperature =
+      tone === "academic" || tone === "formal" ? 0.75 : 0.92;
+
     try {
       const response = await generateContentWithRetry(
         {
@@ -379,7 +384,7 @@ export class HumanizerService {
           contents: buildPaidPrompt(text, tone),
           config: {
             systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
-            temperature: 0.92,
+            temperature,
           },
         },
         "paid-tier rewrite",
