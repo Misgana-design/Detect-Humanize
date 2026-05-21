@@ -139,6 +139,19 @@ function ProgressRing({
   );
 }
 
+function scoreBand(p: number) {
+  if (p >= 75) return "High AI signal";
+  if (p >= 45) return "Mixed signal";
+  return "Low AI signal";
+}
+
+function formatAnalysis(analysis: string) {
+  return analysis
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function DetectorPageClient() {
@@ -211,6 +224,7 @@ export function DetectorPageClient() {
 
   const colors = data ? scoreColor(data.aiProbability) : null;
   const pct = data ? Math.round(data.aiProbability) : 0;
+  const analysisBlocks = data?.analysis ? formatAnalysis(data.analysis) : [];
 
   // Panel height matches the input area (textarea + action bar)
   const PANEL_HEIGHT = "h-[calc(380px+56px)]";
@@ -342,9 +356,30 @@ export function DetectorPageClient() {
 
                   {/* Right side */}
                   <div className="flex flex-1 flex-col gap-2.5">
-                    <div className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${colors.badge}`}>
-                      {scoreIcon(pct)}
-                      {scoreLabel(pct)}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${colors.badge}`}>
+                        {scoreIcon(pct)}
+                        {scoreLabel(pct)}
+                      </div>
+                      <span className="rounded-full border border-white/80 bg-white/75 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 shadow-sm">
+                        {scoreBand(pct)}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="h-2 overflow-hidden rounded-full bg-white/80 shadow-inner">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{
+                            width: `${pct}%`,
+                            background: `linear-gradient(90deg, ${colors.strokeLight}, ${colors.stroke})`,
+                          }}
+                        />
+                      </div>
+                      <div className="mt-1 flex justify-between text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                        <span>Human</span>
+                        <span>Mixed</span>
+                        <span>AI</span>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-1.5">
                       {[
@@ -386,18 +421,37 @@ export function DetectorPageClient() {
 
                 {/* Forensic analysis — eye-catching card */}
                 {data.analysis && (
-                  <div className={`mx-4 mb-4 rounded-xl border p-4 ${colors.analysisBg}`}>
-                    <div className="mb-2 flex items-center gap-2">
-                      <div className={`flex h-6 w-6 items-center justify-center rounded-full ${colors.badge}`}>
-                        <Brain size={12} />
+                  <div className={`mx-4 mb-4 overflow-hidden rounded-xl border ${colors.analysisBg}`}>
+                    <div className="flex items-center justify-between gap-3 border-b border-white/70 bg-white/45 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${colors.badge}`}>
+                          <Brain size={15} />
+                        </div>
+                        <div>
+                          <p className={`text-[10px] font-black uppercase tracking-widest ${colors.analysisLabel}`}>
+                            Forensic Analysis
+                          </p>
+                          <p className="text-[11px] font-medium text-slate-500">
+                            Burstiness, perplexity, rhythm, and humanized traits
+                          </p>
+                        </div>
                       </div>
-                      <p className={`text-[10px] font-black uppercase tracking-widest ${colors.analysisLabel}`}>
-                        Forensic Analysis
-                      </p>
+                      <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${colors.badge}`}>
+                        {data.confidence}
+                      </span>
                     </div>
-                    <p className={`text-xs leading-6 ${colors.analysisText}`}>
-                      {data.analysis}
-                    </p>
+                    <div className="space-y-3 p-4">
+                      {analysisBlocks.map((block, index) => (
+                        <div key={`${block.slice(0, 24)}-${index}`} className="flex gap-3">
+                          <div className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${colors.badge}`}>
+                            {index + 1}
+                          </div>
+                          <p className={`text-xs leading-6 ${colors.analysisText}`}>
+                            {block}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
