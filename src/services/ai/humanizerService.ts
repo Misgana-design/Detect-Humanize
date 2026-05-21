@@ -27,9 +27,8 @@ const CHUNK_SIZES: Record<HumanizerTier, number> = {
 };
 
 // ── Per-call timeouts (ms) ────────────────────────────────────────────────────
-// Both tiers use Flash model — fast and reliable on Vertex AI.
-// Free:  35s (single-pass prompt)
-// Paid:  90s (3-pass prompt — academic/formal tones generate more tokens)
+// Free:  35s  (Flash model, single-pass prompt)
+// Paid:  90s  (Pro model, 3-pass prompt — Vercel allows 300s on Pro plan)
 const TIMEOUT_FREE_MS  = 35_000;
 const TIMEOUT_PAID_MS  = 90_000;
 
@@ -327,7 +326,7 @@ export class HumanizerService {
     tone: Tone,
     tier: HumanizerTier = "free",
   ): Promise<HumanizerResult> {
-    const model = MODELS.FREE; // Flash model used for all tiers — Pro model exceeds latency budget on Vertex AI
+    const model = tier === "free" || tier === "basic" ? MODELS.FREE : MODELS.PRO;
 
     // Single call — no chunking. Chunking re-enabled once Pro model latency is resolved.
     return tier === "free"
@@ -362,10 +361,9 @@ export class HumanizerService {
     }
   }
 
-  // ── Paid tier: single call, Flash model, 3-pass prompt ──────────────────────
-  // Flash model used for reliability. Quality differentiation comes from the
-  // 3-pass prompt (Diagnose → Rewrite → Polish) and higher temperature (0.92)
-  // vs free tier's single-pass at 0.8.
+  // ── Paid tier: Pro model, 3-pass prompt, 90s timeout ────────────────────────
+  // Pro model (gemini-3.1-pro-preview) for maximum humanization quality.
+  // Academic/formal tones use lower temperature for faster, more precise output.
 
   private static async rewritePaid(
     text: string,

@@ -222,7 +222,7 @@ export async function sendHumanizationEmail(payload: HumanizationEmailPayload): 
           🎯 Your content is now engineered to bypass GPTZero, Turnitin, and Originality.ai.
         </p>
         <p style="margin:8px 0 0;font-size:14px;color:#047857;line-height:1.6;">
-          ${wordCount.toLocaleString()} words rewritten in <strong>${toneLabel}</strong> tone using our ${planName === "Free" ? "single-pass" : "3-pass"} pipeline. Submit with confidence.
+          ${wordCount.toLocaleString()} words rewritten in <strong>${toneLabel}</strong> tone using our ${planName === "Free" ? "single-pass Flash" : "3-pass Pro model"} pipeline. Submit with confidence.
         </p>
       </div>
 

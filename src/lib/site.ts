@@ -52,7 +52,7 @@ export const faqEntries = [
   {
     question: "Will the humanized text pass GPTZero and Turnitin?",
     answer:
-      "Our Pro and above plans use a 3-pass pipeline engineered to maximize burstiness and perplexity — the two core metrics AI detectors rely on. In our testing, Pro-humanized text consistently scores below detection thresholds on GPTZero, Turnitin, Originality.ai, and Copyleaks. Results vary by text length and original content. We recommend always reviewing the output before submission.",
+      "Our Pro and above plans use a 3-pass pipeline with the Gemini Pro model, engineered to maximize burstiness and perplexity — the two core metrics AI detectors rely on. In our testing, Pro-humanized text consistently scores below detection thresholds on GPTZero, Turnitin, Originality.ai, and Copyleaks. Results vary by text length and original content. We recommend always reviewing the output before submission.",
   },
   {
     question: "What file types can I upload?",
@@ -67,7 +67,7 @@ export const faqEntries = [
   {
     question: "What is the difference between the Free and Pro plans?",
     answer:
-      "The Free plan gives you 1,000 words per month with basic detection (Flash model) and single-pass humanization (Casual tone only). The Pro plan gives you 20,000 words per month, the full 3-pass pipeline, all tones, re-humanization, PDF export, Copy for Google Docs, and full document history with comparison mode.",
+      "The Free plan gives you 1,000 words per month with basic detection (Flash model) and single-pass humanization (Casual tone only). The Pro plan gives you 20,000 words per month, the full 3-pass Pro model pipeline, all tones, re-humanization, PDF export, Copy for Google Docs, and full document history with comparison mode.",
   },
   {
     question: "Can I cancel my subscription at any time?",
