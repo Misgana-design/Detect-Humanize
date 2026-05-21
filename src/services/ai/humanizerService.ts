@@ -19,13 +19,6 @@ export interface HumanizerResult {
 
 type GenerateContentParams = Parameters<typeof client.models.generateContent>[0];
 
-// ── Chunk sizes per tier ──────────────────────────────────────────────────────
-const CHUNK_SIZES: Record<HumanizerTier, number> = {
-  free:  300,
-  basic: 400,
-  pro:   500,
-};
-
 // ── Per-call timeouts (ms) ────────────────────────────────────────────────────
 // Free:  35s  (Flash model, single-pass prompt)
 // Paid:  175s (Pro model, 3-pass prompt — Vercel allows 300s on Pro plan)
@@ -242,28 +235,6 @@ function parseHumanizerResult(raw: string | undefined, label: string): Humanizer
   } catch (error) {
     throw new Error(`AI returned invalid JSON during ${label}: ${errorMessage(error)}`);
   }
-}
-
-function splitIntoChunks(text: string, chunkSize: number): string[] {
-  const sentences = text.match(/[^.!?]+[.!?]+[\s]*/g) ?? [text];
-  const chunks: string[] = [];
-  let current = "";
-  let wordCount = 0;
-
-  for (const sentence of sentences) {
-    const sentenceWords = sentence.trim().split(/\s+/).length;
-    if (wordCount + sentenceWords > chunkSize && current.trim()) {
-      chunks.push(current.trim());
-      current = sentence;
-      wordCount = sentenceWords;
-    } else {
-      current += sentence;
-      wordCount += sentenceWords;
-    }
-  }
-
-  if (current.trim()) chunks.push(current.trim());
-  return chunks.length > 0 ? chunks : [text];
 }
 
 function applyLocalFallback(text: string, tone: Tone): HumanizerResult {
