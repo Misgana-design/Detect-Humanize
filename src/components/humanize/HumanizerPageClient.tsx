@@ -304,7 +304,7 @@ export function HumanizerPageClient() {
                     </div>
                     <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${data.fallback ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
                       <Zap size={10} className="fill-current" />
-                      {data.fallback ? "Local fallback" : isFree ? "1-stage" : "3-stage Pro"}
+                      {data.fallback ? "Local fallback" : isFree ? "1-pass" : "3-pass Pro"}
                     </div>
                   </div>
                   {data.fallback && (

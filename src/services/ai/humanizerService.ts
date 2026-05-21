@@ -26,10 +26,10 @@ const CHUNK_SIZES: Record<HumanizerTier, number> = {
   pro:   500,
 };
 
-// ── Per-stage timeouts (ms) ───────────────────────────────────────────────────
-// Single-call approach for both free and paid — avoids sequential timeout risk.
-// Free:  35s (Flash model, single call)
-// Paid:  55s (Pro model, single call with internal 3-stage instruction)
+// ── Per-call timeouts (ms) ────────────────────────────────────────────────────
+// Both tiers use Flash model — fast and reliable on Vertex AI.
+// Free:  35s (single-pass prompt)
+// Paid:  55s (3-pass prompt, higher temperature, longer output)
 const TIMEOUT_FREE_MS  = 35_000;
 const TIMEOUT_PAID_MS  = 55_000;
 
@@ -327,7 +327,7 @@ export class HumanizerService {
     tone: Tone,
     tier: HumanizerTier = "free",
   ): Promise<HumanizerResult> {
-    const model = tier === "free" || tier === "basic" ? MODELS.FREE : MODELS.PRO;
+    const model = MODELS.FREE; // Flash model used for all tiers — Pro model exceeds latency budget on Vertex AI
 
     // Single call — no chunking. Chunking re-enabled once Pro model latency is resolved.
     return tier === "free"
@@ -362,10 +362,10 @@ export class HumanizerService {
     }
   }
 
-  // ── Paid tier: single call with internal 3-pass instruction ───────────────
-  // Using one call avoids sequential timeout risk from 3 separate API calls.
-  // The Pro model is instructed to do all three passes internally before
-  // producing the final JSON output. Temperature 0.92 maximises perplexity.
+  // ── Paid tier: single call, Flash model, 3-pass prompt ──────────────────────
+  // Flash model used for reliability. Quality differentiation comes from the
+  // 3-pass prompt (Diagnose → Rewrite → Polish) and higher temperature (0.92)
+  // vs free tier's single-pass at 0.8.
 
   private static async rewritePaid(
     text: string,
