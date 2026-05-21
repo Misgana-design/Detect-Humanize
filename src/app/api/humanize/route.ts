@@ -6,7 +6,7 @@ import { HumanizerService, Tone, HumanizerTier } from "@/services/ai/humanizerSe
 import { runWithPriority } from "@/lib/queue/humanizeQueue";
 import { sendHumanizationEmail } from "@/services/email/emailService";
 
-export const maxDuration = 120;
+export const maxDuration = 180;
 export const runtime = "nodejs";
 
 type HumanizeRequestBody = {
