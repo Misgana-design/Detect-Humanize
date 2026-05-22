@@ -11,8 +11,6 @@ export interface DetectionResult {
 }
 
 export class DetectionService {
-  private static readonly CHUNK_SIZE = 200;
-
   private static readonly DETECTOR_SYSTEM_INSTRUCTION = `You are a Linguistic Forensic Expert and AI detection specialist.
 Your goal is to distinguish between genuine human writing, raw AI-generated text, and AI text that has been substantially humanized.
 
@@ -65,26 +63,15 @@ IMPORTANT GUIDANCE:
       };
     }
 
-    const words = text.split(/\s+/);
-    const chunks: string[] = [];
-
-    for (let i = 0; i < words.length; i += this.CHUNK_SIZE) {
-      chunks.push(words.slice(i, i + this.CHUNK_SIZE).join(" "));
-    }
-
-    const chunkPromises = chunks.map((chunk) =>
-      this.analyzeChunk(chunk, userTier),
-    );
-    const chunkResults = await Promise.all(chunkPromises);
-    const aggregated = this.aggregateResults(chunkResults);
+    const result = await this.analyzeDocument(text.trim(), userTier);
 
     return {
-      ...aggregated,
+      ...result,
       modelUsed: userTier === "pro" ? MODELS.PRO : MODELS.FREE,
     };
   }
 
-  private static buildDetectionPrompt(chunk: string): string {
+  private static buildDetectionPrompt(text: string): string {
     return `Analyze the text below for AI markers using the same measurable traits and three-pass structure as the humanizer.
 
 Work through three mental passes before writing your output:
@@ -94,14 +81,14 @@ PASS 3 - SCORE: Calibrate the AI probability. Lower the score when humanized / h
 
 Text:
 """
-${chunk}
+${text}
 """
 
 Return ONLY valid JSON matching the response schema. The analysis must briefly state which measurable traits were present, which were missing, and why the final score was chosen.`;
   }
 
-  private static async analyzeChunk(
-    chunk: string,
+  private static async analyzeDocument(
+    text: string,
     userTier: string,
     attempt = 1,
   ): Promise<DetectionResult> {
@@ -113,7 +100,7 @@ Return ONLY valid JSON matching the response schema. The analysis must briefly s
         contents: [
           {
             role: "user",
-            parts: [{ text: this.buildDetectionPrompt(chunk) }],
+            parts: [{ text: this.buildDetectionPrompt(text) }],
           },
         ],
         config: {
@@ -162,62 +149,18 @@ Return ONLY valid JSON matching the response schema. The analysis must briefly s
 
       if (isOverloaded && attempt <= 2) {
         console.warn(
-          `Vertex ${modelName} busy, retrying chunk (Attempt ${attempt})...`,
+          `Vertex ${modelName} busy, retrying document (Attempt ${attempt})...`,
         );
         await new Promise((r) => setTimeout(r, attempt * 1000));
-        return this.analyzeChunk(chunk, userTier, attempt + 1);
+        return this.analyzeDocument(text, userTier, attempt + 1);
       }
 
       if (userTier === "pro" && attempt === 3) {
         console.warn("Pro model failed 3 times. Falling back to Flash...");
-        return this.analyzeChunk(chunk, "free", 4);
+        return this.analyzeDocument(text, "free", 4);
       }
 
       throw error;
     }
-  }
-
-  private static aggregateResults(results: DetectionResult[]): DetectionResult {
-    if (results.length === 0) throw new Error("No results to aggregate");
-    if (results.length === 1) return results[0];
-
-    const maxIndex = results.reduce(
-      (maxIdx, result, idx) =>
-        result.aiProbability > results[maxIdx].aiProbability ? idx : maxIdx,
-      0,
-    );
-
-    const maxResult = results[maxIndex];
-    const maxProbability = maxResult.aiProbability;
-    const minProbability = Math.min(...results.map((r) => r.aiProbability));
-    const averageProbability =
-      results.reduce((sum, result) => sum + result.aiProbability, 0) /
-      results.length;
-    const overallProbability = Math.round(
-      averageProbability * 0.7 + maxProbability * 0.3,
-    );
-
-    const allFlagged = results.flatMap((r) => r.flaggedSentences);
-    const uniqueFlagged = [...new Set(allFlagged)];
-    const spread = maxProbability - minProbability;
-    const confidence =
-      spread >= 35
-        ? "medium"
-        : results.every((r) => r.confidence === "high")
-          ? "high"
-          : results.some((r) => r.confidence === "medium")
-            ? "medium"
-            : "low";
-
-    return {
-      aiProbability: Math.max(0, Math.min(100, overallProbability)),
-      confidence,
-      flaggedSentences: uniqueFlagged,
-      analysis:
-        `Analysis completed over ${results.length} chunks.\n\n` +
-        `Overall score uses a weighted blend of the average chunk score (${Math.round(averageProbability)}%) and the most suspicious chunk (${maxProbability}%), so one uneven section does not dominate the entire document.\n\n` +
-        `Most suspicious chunk:\n` +
-        maxResult.analysis,
-    };
   }
 }
