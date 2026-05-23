@@ -208,7 +208,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     href: "/signup",
     isNew: true,
     supportedCadences: ["weekly"],
-    prices: { weekly: 19 },
+    prices: { weekly: 6.99 },
     maxWordsPerInput: 1000,
     wordQuota: 5000,
     quotaPeriod: "week",
