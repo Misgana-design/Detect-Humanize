@@ -8,8 +8,7 @@ Keep the real product IDs in `.env.local`, and keep this file updated for quick 
 - `free`
 - `basic`
 - `pro`
-- `unlimited`
-- `enterprise`
+- `ultra`
 - `pro_weekly`
 
 ## Mapping table
@@ -20,10 +19,8 @@ Keep the real product IDs in `.env.local`, and keep this file updated for quick 
 | Basic Yearly | `basic` | `yearly` | `POLAR_PRODUCT_BASIC_YEARLY_ID` |
 | Pro Monthly | `pro` | `monthly` | `POLAR_PRODUCT_PRO_MONTHLY_ID` |
 | Pro Yearly | `pro` | `yearly` | `POLAR_PRODUCT_PRO_YEARLY_ID` |
-| Unlimited Monthly | `unlimited` | `monthly` | `POLAR_PRODUCT_UNLIMITED_MONTHLY_ID` |
-| Unlimited Yearly | `unlimited` | `yearly` | `POLAR_PRODUCT_UNLIMITED_YEARLY_ID` |
-| Enterprise Monthly | `enterprise` | `monthly` | `POLAR_PRODUCT_ENTERPRISE_MONTHLY_ID` |
-| Enterprise Yearly | `enterprise` | `yearly` | `POLAR_PRODUCT_ENTERPRISE_YEARLY_ID` |
+| Ultra Monthly | `ultra` | `monthly` | `POLAR_PRODUCT_ULTRA_MONTHLY_ID` |
+| Ultra Yearly | `ultra` | `yearly` | `POLAR_PRODUCT_ULTRA_YEARLY_ID` |
 | Pro Weekly | `pro_weekly` | `weekly` | `POLAR_PRODUCT_PRO_WEEKLY_ID` |
 
 ## Suggested `.env.local` entries
@@ -37,10 +34,8 @@ POLAR_PRODUCT_BASIC_MONTHLY_ID=
 POLAR_PRODUCT_BASIC_YEARLY_ID=
 POLAR_PRODUCT_PRO_MONTHLY_ID=
 POLAR_PRODUCT_PRO_YEARLY_ID=
-POLAR_PRODUCT_UNLIMITED_MONTHLY_ID=
-POLAR_PRODUCT_UNLIMITED_YEARLY_ID=
-POLAR_PRODUCT_ENTERPRISE_MONTHLY_ID=
-POLAR_PRODUCT_ENTERPRISE_YEARLY_ID=
+POLAR_PRODUCT_ULTRA_MONTHLY_ID=
+POLAR_PRODUCT_ULTRA_YEARLY_ID=
 POLAR_PRODUCT_PRO_WEEKLY_ID=
 ```
 

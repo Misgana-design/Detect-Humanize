@@ -28,7 +28,7 @@ This AI detection feature uses Google's Gemini API to analyze text and determine
 
 **Security & Rate Limiting**:
 - User authentication via Supabase Auth
-- Tier-based rate limiting (free: 10, pro: 1000, enterprise: 10000)
+- Tier-based rate limiting (free: 10, pro: 1000, ultra: 10000)
 - Input validation (minimum 50 words)
 
 **Cost Optimization**:
@@ -78,7 +78,7 @@ This AI detection feature uses Google's Gemini API to analyze text and determine
 
 #### `profiles` (enhanced)
 ```sql
-- subscription_tier: TEXT ('free', 'pro', 'enterprise')
+- subscription_tier: TEXT ('free', 'pro', 'ultra')
 - api_usage_count: INTEGER - Current usage count
 - updated_at: TIMESTAMPTZ
 ```
@@ -123,7 +123,7 @@ GEMINI_MODEL=gemini-3-flash  # Override default model
 
 - **Free**: 10 detections per month
 - **Pro**: 1,000 detections per month  
-- **Enterprise**: 10,000 detections per month
+- **Ultra**: 10,000 detections per month
 
 ## Cost Optimization Strategies
 
