@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const productId = getPolarProductId(body.tier, body.cadence);
+    const productId = getPolarProductId(plan.tier, body.cadence);
     if (!productId) {
       return NextResponse.json(
         { error: "Plan is not connected to a Polar product yet." },
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       returnUrl: `${baseUrl}/pricing`,
       metadata: {
         user_id: user.id,
-        requested_tier: body.tier,
+        requested_tier: plan.tier,
         requested_cadence: body.cadence,
       },
     });
