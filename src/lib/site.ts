@@ -77,7 +77,7 @@ export const faqEntries = [
   {
     question: "Is there a word limit per input?",
     answer:
-      "Yes. Free and Basic plans allow up to 500 words per input. Pro allows 1,500 words. Unlimited and Enterprise allow 2,500 words. Pro Weekly allows 1,000 words. For longer texts, we recommend splitting them into sections and processing each separately.",
+      "Yes. Free and Basic plans allow up to 500 words per input. Pro allows 1,500 words. Ultra allows 2,500 words. Pro Weekly allows 1,000 words. For longer texts, we recommend splitting them into sections and processing each separately.",
   },
 ];
 
@@ -130,7 +130,7 @@ export const testimonials = [
     title: "Content Agency Owner",
     category: "Agency",
     quote:
-      "We process hundreds of articles a week. The bulk API and priority processing on the Unlimited plan cut our review time in half. It pays for itself every single month.",
+      "We process hundreds of articles a week. The bulk API and priority processing on the Ultra plan cut our review time in half. It pays for itself every single month.",
     rating: 5,
   },
   {
