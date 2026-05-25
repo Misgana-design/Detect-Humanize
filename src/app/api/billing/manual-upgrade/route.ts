@@ -6,7 +6,7 @@
  *
  * Remove or protect this endpoint before going to production.
  *
- * Body: { tier: "basic" | "pro" | "unlimited" | "enterprise" | "pro_weekly", cadence?: "monthly" | "yearly" | "weekly" }
+ * Body: { tier: "basic" | "pro" | "ultra" | "pro_weekly", cadence?: "monthly" | "yearly" | "weekly" }
  */
 
 import { NextResponse } from "next/server";
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
   const plan = getPlanDefinition(tier);
   if (plan.tier === "free") {
-    return NextResponse.json({ error: "Use tier=basic/pro/unlimited/enterprise/pro_weekly" }, { status: 400 });
+    return NextResponse.json({ error: "Use tier=basic/pro/ultra/pro_weekly" }, { status: 400 });
   }
 
   if (!plan.supportedCadences.includes(cadence)) {
@@ -52,12 +52,12 @@ export async function POST(request: Request) {
   const { error } = await serviceClient
     .from("profiles")
     .update({
-      subscription_tier: tier,
+      subscription_tier: plan.tier,
       billing_cadence: cadence,
       polar_subscription_id: `manual_test_${Date.now()}`,
       words_used: 0,
       api_usage_count: 0,
-      credits: getPlanStartingCredits(tier),
+      credits: getPlanStartingCredits(plan.tier),
     })
     .eq("id", user.id);
 
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     ok: true,
     message: `Upgraded to ${plan.name} (${cadence})`,
     userId: user.id,
-    tier,
+    tier: plan.tier,
     cadence,
   });
 }
