@@ -8,10 +8,8 @@ const productMap: PolarProductMap = {
   basic_yearly:     process.env.POLAR_PRODUCT_BASIC_YEARLY_ID      || "",
   pro_monthly:      process.env.POLAR_PRODUCT_PRO_MONTHLY_ID       || "",
   pro_yearly:       process.env.POLAR_PRODUCT_PRO_YEARLY_ID        || "",
-  unlimited_monthly:process.env.POLAR_PRODUCT_UNLIMITED_MONTHLY_ID || "",
-  unlimited_yearly: process.env.POLAR_PRODUCT_UNLIMITED_YEARLY_ID  || "",
-  enterprise_monthly:process.env.POLAR_PRODUCT_ENTERPRISE_MONTHLY_ID || "",
-  enterprise_yearly: process.env.POLAR_PRODUCT_ENTERPRISE_YEARLY_ID  || "",
+  ultra_monthly:    process.env.POLAR_PRODUCT_ULTRA_MONTHLY_ID     || "",
+  ultra_yearly:     process.env.POLAR_PRODUCT_ULTRA_YEARLY_ID      || "",
   // Pro Weekly: tier="pro_weekly", cadence="weekly" → key="pro_weekly_weekly"
   pro_weekly_weekly: process.env.POLAR_PRODUCT_PRO_WEEKLY_ID       || "",
 };

@@ -155,7 +155,7 @@ export const blogPosts: BlogPost[] = [
       { heading: "The SEO content workflow with Text Humanica", body: "Step 1: Generate your draft with ChatGPT or Claude. Step 2: Paste into Text Humanica's detector to get a baseline AI score. Step 3: Run through the humanizer with Professional or Persuasive tone. Step 4: Re-scan to verify the score is below 20%. Step 5: Do a final human edit for brand voice and accuracy." },
       { heading: "Originality.ai vs Content at Scale: which is harder to bypass?", body: "Content at Scale is generally considered the hardest AI detector to bypass because it checks for token-level predictability. Text Humanica's high-temperature polish stage specifically targets this." },
       { heading: "Does Google penalize AI content?", body: "Google's official position is that it rewards high-quality content regardless of how it was produced. The real risk is not AI detection per se but content quality. A humanizer that improves readability also improves content quality." },
-      { heading: "Bulk processing for agencies", body: "Text Humanica's Unlimited and Enterprise plans support bulk processing via the API. Agencies processing hundreds of articles per week can integrate the humanizer directly into their content pipeline." }
+      { heading: "Bulk processing for agencies", body: "Text Humanica's Ultra plan supports bulk processing via the API. Agencies processing hundreds of articles per week can integrate the humanizer directly into their content pipeline." }
     ],
     faq: [
       { q: "Does Originality.ai detect humanized content?", a: "Originality.ai is one of the more sophisticated detectors. Properly humanized text using a 3-stage pipeline like Text Humanica's Pro model consistently scores below its detection threshold." },
@@ -225,7 +225,7 @@ export const toolPages: ToolPage[] = [
       { feature: "Free plan", us: "1,000 words/mo", them: "5,000 chars" },
       { feature: "Sentence-level flags", us: "Yes", them: "Yes" },
       { feature: "Document history", us: "Yes", them: "No" },
-      { feature: "API access", us: "Enterprise plan", them: "Paid plan" }
+      { feature: "API access", us: "Ultra plan", them: "Paid plan" }
     ]
   },
   {
@@ -246,7 +246,7 @@ export const toolPages: ToolPage[] = [
       { feature: "False positive rate", us: "3.1%", them: "6.1%" },
       { feature: "Free plan", us: "1,000 words/mo", them: "No" },
       { feature: "File upload", us: "PDF, DOCX, TXT", them: "Institutional only" },
-      { feature: "API access", us: "Enterprise plan", them: "Institutional only" }
+      { feature: "API access", us: "Ultra plan", them: "Institutional only" }
     ]
   },
   {
@@ -267,7 +267,7 @@ export const toolPages: ToolPage[] = [
       { feature: "Pricing model", us: "Flat monthly", them: "Per credit" },
       { feature: "Free plan", us: "1,000 words/mo", them: "No" },
       { feature: "File upload", us: "PDF, DOCX, TXT", them: "Text only" },
-      { feature: "Team features", us: "Enterprise plan", them: "Yes" }
+      { feature: "Team features", us: "Ultra plan", them: "Yes" }
     ]
   },
   {
@@ -379,7 +379,7 @@ export const useCasePages: UseCasePage[] = [
     benefits: [
       { icon: "", title: "5-minute content workflow", body: "Generate, detect, humanize, verify. The full workflow takes about 5 minutes per article and consistently produces content that passes Originality.ai." },
       { icon: "", title: "8 tones for any content type", body: "Professional, Persuasive, Casual, Academic, Creative, Formal, Friendly, Simple. Match the tone to the client's brand voice." },
-      { icon: "", title: "Bulk processing for agencies", body: "Unlimited and Enterprise plans support bulk processing via API. Integrate the humanizer directly into your content pipeline." },
+      { icon: "", title: "Bulk processing for agencies", body: "Ultra supports bulk processing via API. Integrate the humanizer directly into your content pipeline." },
       { icon: "", title: "Verify before delivery", body: "Re-scan after humanizing to confirm the score is below your client's threshold before delivering." }
     ],
     testimonial: { quote: "Originality.ai used to flag almost everything I wrote. Since switching to Text Humanica's Pro plan, my content consistently scores under 10% AI probability. Worth every penny.", name: "Carlos Mendez", role: "SEO Writer" }
@@ -388,17 +388,17 @@ export const useCasePages: UseCasePage[] = [
     slug: "for-content-agencies",
     title: "AI Detector and Humanizer for Content Agencies",
     headline: "Process hundreds of articles per week. Deliver content that passes every check.",
-    description: "Content agencies use Text Humanica's Unlimited and Enterprise plans to humanize AI-generated content at scale with bulk processing and API access.",
+    description: "Content agencies use Text Humanica's Ultra plan to humanize AI-generated content at scale with bulk processing and API access.",
     keywords: ["ai humanizer for content agencies","bulk ai humanizer","ai detector for agencies","enterprise ai humanizer","content agency ai tools"],
     audience: "Content Agencies",
     painPoints: ["Processing hundreds of articles per week manually is not scalable","Different clients have different AI detection thresholds","Need consistent quality across all writers and AI tools","Client contracts require content to pass Originality.ai"],
     benefits: [
-      { icon: "", title: "Bulk API processing", body: "Enterprise plan includes API access for bulk processing. Integrate Text Humanica directly into your content pipeline." },
-      { icon: "", title: "Priority processing", body: "Unlimited and Enterprise plans jump the queue. Your requests are processed with high priority so you never wait." },
-      { icon: "", title: "Team management", body: "Enterprise plan includes team accounts, usage reporting, and dedicated support." },
+      { icon: "", title: "Bulk API processing", body: "Ultra includes API access for bulk processing. Integrate Text Humanica directly into your content pipeline." },
+      { icon: "", title: "Priority processing", body: "Ultra requests are processed with high priority so you never wait." },
+      { icon: "", title: "Team management", body: "Ultra includes team accounts, usage reporting, and dedicated support." },
       { icon: "", title: "Consistent results", body: "The same 3-stage pipeline processes every article. Consistent quality regardless of which writer or AI tool generated the original." }
     ],
-    testimonial: { quote: "I run a content agency and we process hundreds of articles a week. The bulk API and priority processing on the Unlimited plan have been a game changer for our workflow.", name: "James Okonkwo", role: "Content Strategist" }
+    testimonial: { quote: "I run a content agency and we process hundreds of articles a week. The bulk API and priority processing on the Ultra plan have been a game changer for our workflow.", name: "James Okonkwo", role: "Content Strategist" }
   },
   {
     slug: "for-academic-writing",

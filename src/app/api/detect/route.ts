@@ -92,7 +92,7 @@ export async function POST(req: Request) {
       aiResult = cachedDoc.result;
       isCached = true;
     } else {
-      // Free → Flash model; all paid plans (basic, pro, unlimited, enterprise, pro_weekly) → Pro model
+      // Free -> Flash model; all paid plans (basic, pro, ultra, pro_weekly) -> Pro model
       const modelTier = plan.tier === "free" ? "free" : "pro";
 
       aiResult = await DetectionService.analyzeText(text, modelTier);

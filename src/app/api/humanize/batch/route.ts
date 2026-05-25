@@ -1,7 +1,7 @@
 /**
  * POST /api/humanize/batch
  *
- * Bulk humanization endpoint for Unlimited and Enterprise plans.
+ * Bulk humanization endpoint for the Ultra plan.
  * Accepts up to 10 texts in a single request and processes them
  * concurrently with per-item error isolation.
  *
@@ -21,7 +21,7 @@ import { HumanizerService, type Tone, type HumanizerTier } from "@/services/ai/h
 export const maxDuration = 60; // Vercel Pro allows up to 60s
 
 const BATCH_LIMIT = 10;
-const BULK_ELIGIBLE_TIERS = new Set(["unlimited", "enterprise"]);
+const BULK_ELIGIBLE_TIERS = new Set(["ultra"]);
 const VALID_TONES = new Set<Tone>([
   "casual",
   "professional",
@@ -64,11 +64,11 @@ export async function POST(req: Request) {
 
     const plan = getPlanDefinition(profile?.subscription_tier);
 
-    // Only Unlimited and Enterprise can use bulk processing
+    // Only Ultra can use bulk processing
     if (!BULK_ELIGIBLE_TIERS.has(plan.tier)) {
       return NextResponse.json(
         {
-          error: `Bulk processing requires an Unlimited or Enterprise plan. You are on ${plan.name}.`,
+          error: `Bulk processing requires the Ultra plan. You are on ${plan.name}.`,
         },
         { status: 403 },
       );
@@ -116,7 +116,6 @@ export async function POST(req: Request) {
       0,
     );
 
-    // Unlimited/Enterprise have null wordQuota — no quota check needed
     if (plan.wordQuota !== null && wordsUsed + totalWords > plan.wordQuota) {
       return NextResponse.json(
         {
@@ -126,7 +125,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const humanizerTier: HumanizerTier = "pro"; // Unlimited/Enterprise always use Pro pipeline
+    const humanizerTier: HumanizerTier = "pro"; // Ultra always uses the Pro pipeline
 
     // Process all items concurrently with per-item error isolation
     const results: BatchResultItem[] = await Promise.all(

@@ -17,8 +17,7 @@ export interface UserProfile {
     | "free"
     | "basic"
     | "pro"
-    | "unlimited"
-    | "enterprise"
+    | "ultra"
     | "pro_weekly"
     | null;
   billing_cadence?: "free" | "monthly" | "yearly" | "weekly" | null;

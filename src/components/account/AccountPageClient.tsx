@@ -112,7 +112,7 @@ export function AccountPageClient() {
   const remaining = getRemainingWords(account?.subscription_tier, wordsUsed);
   const usagePct = plan.wordQuota
     ? Math.min((wordsUsed / plan.wordQuota) * 100, 100)
-    : 0; // Unlimited plans show 0% — no quota to fill
+    : 0;
 
   const isGoogleUser = authUser?.provider === "google";
 
@@ -200,7 +200,7 @@ export function AccountPageClient() {
                 <span className="font-semibold text-slate-600">Word usage</span>
                 <span className="text-slate-500">
                   {plan.wordQuota === null
-                    ? `${wordsUsed.toLocaleString()} used (unlimited)`
+                    ? `${wordsUsed.toLocaleString()} used`
                     : `${wordsUsed.toLocaleString()} / ${plan.wordQuota.toLocaleString()}`}
                 </span>
               </div>

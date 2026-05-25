@@ -2,8 +2,7 @@ export type BillingTier =
   | "free"
   | "basic"
   | "pro"
-  | "unlimited"
-  | "enterprise"
+  | "ultra"
   | "pro_weekly";
 
 export type BillingCadence = "free" | "monthly" | "yearly" | "weekly";
@@ -37,8 +36,7 @@ export const PLAN_ORDER: BillingTier[] = [
   "free",
   "basic",
   "pro",
-  "unlimited",
-  "enterprise",
+  "ultra",
   "pro_weekly",
 ];
 
@@ -135,60 +133,33 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
       teamDashboard: false,
     },
   },
-  unlimited: {
-    tier: "unlimited",
-    name: "Unlimited",
-    description: "Unlimited words/month with bulk processing, team dashboard, and priority speed. Ideal for content professionals and agencies scaling AI workflows.",
+  ultra: {
+    tier: "ultra",
+    name: "Ultra",
+    description: "45,000 words/month with bulk processing, multi-user access, team dashboard, and priority speed. Built for power users, teams, and agencies scaling AI workflows.",
     cta: "Subscribe",
     href: "/signup",
     supportedCadences: ["monthly", "yearly"],
-    prices: { monthly: 29.99, yearly: 11.99 },
+    prices: { monthly: 39.99, yearly: 19.99 },
     maxWordsPerInput: 2500,
-    wordQuota: null,
-    quotaPeriod: "none",
+    wordQuota: 45000,
+    quotaPeriod: "month",
     features: [
-      "Natural rewriting for long-form work",
+      "Natural rewriting for long-form and team workflows",
       "2500 words max per input",
-      "Unlimited words/month",
-      "Team dashboard",
+      "45,000 words/month",
+      "Full AI detection with Pro model",
+      "3-stage Pro humanizer",
+      "All tones",
+      "Re-humanize feature",
+      "Full dashboard history + Comparizon mode",
+      "Copy for Google Docs + PDF export",
       "Export & integrations",
-      "Dedicated support",
-      "Priority speed",
       "Bulk processing",
-      "Long text support",
-      "Error free",
-      "Plagiarism-free rewrites",
-    ],
-    comparison: {
-      aiDetection: true,
-      humanizer: true,
-      saveReports: true,
-      apiAccess: true,
-      teamDashboard: true,
-    },
-  },
-  enterprise: {
-    tier: "enterprise",
-    name: "Enterprise",
-    description: "Unlimited words, multi-user access, no rate limits, and dedicated support. For organizations that need full control and team-wide deployment.",
-    cta: "Subscribe",
-    href: "/signup",
-    supportedCadences: ["monthly", "yearly"],
-    prices: { monthly: 79.99, yearly: 39.99 },
-    maxWordsPerInput: 2500,
-    wordQuota: null,
-    quotaPeriod: "none",
-    features: [
-      "Natural rewriting for team workflows",
-      "2500 words max per input",
-      "No daily rate limit",
       "Team access (multi-user)",
       "Team dashboard",
-      "Export & integrations",
+      "Priority processing",
       "Dedicated support",
-      "Priority speed",
-      "Bulk processing",
-      "Long text support",
       "Error free",
       "Plagiarism-free rewrites",
     ],
@@ -245,6 +216,7 @@ export const COMPARISON_ROWS = [
 
 export function getPlanDefinition(tier?: string | null): PlanDefinition {
   if (!tier) return PLAN_DEFINITIONS.free;
+  if (tier === "unlimited" || tier === "enterprise") return PLAN_DEFINITIONS.ultra;
   return PLAN_DEFINITIONS[tier as BillingTier] ?? PLAN_DEFINITIONS.free;
 }
 
@@ -272,7 +244,7 @@ export function getPlanPrice(
 
 export function getQuotaLabel(plan: PlanDefinition): string {
   if (plan.wordQuota === null) {
-    return plan.quotaPeriod === "month" ? "Unlimited words/month" : "Unlimited";
+    return plan.quotaPeriod === "month" ? "No monthly word cap" : "No word cap";
   }
 
   return `${plan.wordQuota.toLocaleString()} words/${plan.quotaPeriod}`;

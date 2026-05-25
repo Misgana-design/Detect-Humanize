@@ -23,32 +23,32 @@ type CompareRow = {
 
 const COMPARE_ROWS: CompareRow[] = [
   // Detection
-  { category: "Detection", feature: "AI Detection",          values: { free: true, basic: true, pro: true, unlimited: true, enterprise: true, pro_weekly: true } },
-  { category: "Detection", feature: "Detection model",       values: { free: "Flash", basic: "Pro", pro: "Pro", unlimited: "Pro", enterprise: "Pro", pro_weekly: "Pro" } },
-  { category: "Detection", feature: "Flagged sentence view", values: { free: true, basic: true, pro: true, unlimited: true, enterprise: true, pro_weekly: true } },
+  { category: "Detection", feature: "AI Detection",          values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
+  { category: "Detection", feature: "Detection model",       values: { free: "Flash", basic: "Pro", pro: "Pro", ultra: "Pro", pro_weekly: "Pro" } },
+  { category: "Detection", feature: "Flagged sentence view", values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
   // Humanization
-  { category: "Humanization", feature: "Humanizer",          values: { free: true, basic: true, pro: true, unlimited: true, enterprise: true, pro_weekly: true } },
-  { category: "Humanization", feature: "Humanizer pipeline", values: { free: "1-stage", basic: "3-stage", pro: "3-stage", unlimited: "3-stage", enterprise: "3-stage", pro_weekly: "3-stage" } },
-  { category: "Humanization", feature: "Humanizer model",    values: { free: "Flash", basic: "Flash", pro: "Pro", unlimited: "Pro", enterprise: "Pro", pro_weekly: "Pro" } },
-  { category: "Humanization", feature: "Available tones",    values: { free: "Casual only", basic: "All tones", pro: "All tones", unlimited: "All tones", enterprise: "All tones", pro_weekly: "All tones" } },
-  { category: "Humanization", feature: "Re-Humanize",        values: { free: false, basic: true, pro: true, unlimited: true, enterprise: true, pro_weekly: true } },
+  { category: "Humanization", feature: "Humanizer",          values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
+  { category: "Humanization", feature: "Humanizer pipeline", values: { free: "1-stage", basic: "3-stage", pro: "3-stage", ultra: "3-stage", pro_weekly: "3-stage" } },
+  { category: "Humanization", feature: "Humanizer model",    values: { free: "Flash", basic: "Flash", pro: "Pro", ultra: "Pro", pro_weekly: "Pro" } },
+  { category: "Humanization", feature: "Available tones",    values: { free: "Casual only", basic: "All tones", pro: "All tones", ultra: "All tones", pro_weekly: "All tones" } },
+  { category: "Humanization", feature: "Re-Humanize",        values: { free: false, basic: true, pro: true, ultra: true, pro_weekly: true } },
   // Quotas
-  { category: "Quotas", feature: "Words per input",          values: { free: "500", basic: "500", pro: "1,500", unlimited: "2,500", enterprise: "2,500", pro_weekly: "1,000" } },
-  { category: "Quotas", feature: "Word quota",               values: { free: "1,000/mo", basic: "4,000/mo", pro: "20,000/mo", unlimited: "Unlimited", enterprise: "Unlimited", pro_weekly: "5,000/wk" } },
+  { category: "Quotas", feature: "Words per input",          values: { free: "500", basic: "500", pro: "1,500", ultra: "2,500", pro_weekly: "1,000" } },
+  { category: "Quotas", feature: "Word quota",               values: { free: "1,000/mo", basic: "4,000/mo", pro: "20,000/mo", ultra: "45,000/mo", pro_weekly: "5,000/wk" } },
   // Exports
-  { category: "Exports", feature: "Copy for Google Docs",    values: { free: false, basic: true, pro: true, unlimited: true, enterprise: true, pro_weekly: true } },
-  { category: "Exports", feature: "PDF export",              values: { free: false, basic: true, pro: true, unlimited: true, enterprise: true, pro_weekly: true } },
+  { category: "Exports", feature: "Copy for Google Docs",    values: { free: false, basic: true, pro: true, ultra: true, pro_weekly: true } },
+  { category: "Exports", feature: "PDF export",              values: { free: false, basic: true, pro: true, ultra: true, pro_weekly: true } },
   // History
-  { category: "History", feature: "Document history",        values: { free: "Last 3", basic: "Full", pro: "Full", unlimited: "Full", enterprise: "Full", pro_weekly: "Full" } },
-  { category: "History", feature: "Comparison mode",         values: { free: "Last 3", basic: "Full", pro: "Full", unlimited: "Full", enterprise: "Full", pro_weekly: "Full" } },
+  { category: "History", feature: "Document history",        values: { free: "Last 3", basic: "Full", pro: "Full", ultra: "Full", pro_weekly: "Full" } },
+  { category: "History", feature: "Comparison mode",         values: { free: "Last 3", basic: "Full", pro: "Full", ultra: "Full", pro_weekly: "Full" } },
   // Team
-  { category: "Team", feature: "Team dashboard",             values: { free: false, basic: false, pro: false, unlimited: true, enterprise: true, pro_weekly: false } },
-  { category: "Team", feature: "Multi-user access",          values: { free: false, basic: false, pro: false, unlimited: false, enterprise: true, pro_weekly: false } },
+  { category: "Team", feature: "Team dashboard",             values: { free: false, basic: false, pro: false, ultra: true, pro_weekly: false } },
+  { category: "Team", feature: "Multi-user access",          values: { free: false, basic: false, pro: false, ultra: true, pro_weekly: false } },
   // Support
-  { category: "Support", feature: "Support level",           values: { free: "Email", basic: "Email", pro: "Priority", unlimited: "Dedicated", enterprise: "Dedicated", pro_weekly: "Priority" } },
+  { category: "Support", feature: "Support level",           values: { free: "Email", basic: "Email", pro: "Priority", ultra: "Dedicated", pro_weekly: "Priority" } },
 ];
 
-const DISPLAY_TIERS: BillingTier[] = ["free", "basic", "pro", "unlimited", "enterprise", "pro_weekly"];
+const DISPLAY_TIERS: BillingTier[] = ["free", "basic", "pro", "ultra", "pro_weekly"];
 
 function CellValue({ value }: { value: string | boolean | undefined }) {
   if (value === true)  return <Check className="mx-auto h-4 w-4 text-emerald-500" />;
@@ -166,7 +166,7 @@ export default function PricingPage() {
                 Yearly
               </span>
               <span className="animate-pulse rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
-                Save up to 53%
+                Save up to 60%
               </span>
             </div>
             {billingView === "yearly" && (
@@ -266,10 +266,12 @@ export default function PricingPage() {
                         )}
                       </div>
                       <p className="text-xs font-medium text-slate-500">
-                        Billed annually at{" "}
+                        Billed{" "}
                         <span className="font-bold text-slate-700">
                           ${(pricing.amount * 12).toFixed(2)}
                         </span>
+                        {" "}every 12 months
+                        {savingsPct > 0 && ` — save ${savingsPct}%`}
                       </p>
                     </div>
                   ) : (

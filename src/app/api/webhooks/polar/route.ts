@@ -17,10 +17,12 @@ function buildProductMap(): Map<string, PlanMapping> {
     [process.env.POLAR_PRODUCT_BASIC_YEARLY_ID, { tier: "basic", cadence: "yearly" }],
     [process.env.POLAR_PRODUCT_PRO_MONTHLY_ID, { tier: "pro", cadence: "monthly" }],
     [process.env.POLAR_PRODUCT_PRO_YEARLY_ID, { tier: "pro", cadence: "yearly" }],
-    [process.env.POLAR_PRODUCT_UNLIMITED_MONTHLY_ID, { tier: "unlimited", cadence: "monthly" }],
-    [process.env.POLAR_PRODUCT_UNLIMITED_YEARLY_ID, { tier: "unlimited", cadence: "yearly" }],
-    [process.env.POLAR_PRODUCT_ENTERPRISE_MONTHLY_ID, { tier: "enterprise", cadence: "monthly" }],
-    [process.env.POLAR_PRODUCT_ENTERPRISE_YEARLY_ID, { tier: "enterprise", cadence: "yearly" }],
+    [process.env.POLAR_PRODUCT_ULTRA_MONTHLY_ID, { tier: "ultra", cadence: "monthly" }],
+    [process.env.POLAR_PRODUCT_ULTRA_YEARLY_ID, { tier: "ultra", cadence: "yearly" }],
+    [process.env.POLAR_PRODUCT_UNLIMITED_MONTHLY_ID, { tier: "ultra", cadence: "monthly" }],
+    [process.env.POLAR_PRODUCT_UNLIMITED_YEARLY_ID, { tier: "ultra", cadence: "yearly" }],
+    [process.env.POLAR_PRODUCT_ENTERPRISE_MONTHLY_ID, { tier: "ultra", cadence: "monthly" }],
+    [process.env.POLAR_PRODUCT_ENTERPRISE_YEARLY_ID, { tier: "ultra", cadence: "yearly" }],
     [process.env.POLAR_PRODUCT_PRO_WEEKLY_ID, { tier: "pro_weekly", cadence: "weekly" }],
   ];
 

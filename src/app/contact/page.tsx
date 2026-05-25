@@ -8,13 +8,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: "Contact Support",
     description:
-      "Contact Text Humanica for AI detector support, AI humanizer questions, billing help, enterprise plans, API access, or GPTZero bypass workflow guidance.",
+      "Contact Text Humanica for AI detector support, AI humanizer questions, billing help, Ultra plans, API access, or GPTZero bypass workflow guidance.",
     path: "/contact",
     keywords: [
       "Text Humanica support",
       "AI humanizer support",
       "AI detector support",
-      "enterprise AI writing API",
+      "Ultra AI writing API",
     ],
   });
 }

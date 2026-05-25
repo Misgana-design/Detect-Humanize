@@ -5,7 +5,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: "Pricing for AI Detection & Humanization",
     description:
-      "Compare Free, Basic, Pro, Pro Weekly, Unlimited, and Enterprise plans for AI detection, AI humanization, GPTZero bypass workflows, and team writing tools.",
+      "Compare Free, Basic, Pro, Ultra, and Pro Weekly plans for AI detection, AI humanization, GPTZero bypass workflows, and team writing tools.",
     path: "/pricing",
     keywords: [
       "AI humanizer pricing",

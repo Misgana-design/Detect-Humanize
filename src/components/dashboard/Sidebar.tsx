@@ -47,9 +47,9 @@ export function Sidebar() {
     ? 0
     : Math.min((wordsUsed / plan.wordQuota) * 100, 100);
   const usageLabel    = plan.wordQuota === null
-    ? "Unlimited"
+    ? wordsUsed.toLocaleString()
     : `${wordsUsed.toLocaleString()} / ${plan.wordQuota.toLocaleString()}`;
-  const creditsLabel  = remainingWords === null ? "Unlimited" : remainingWords.toLocaleString();
+  const creditsLabel  = remainingWords === null ? "No cap" : remainingWords.toLocaleString();
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
@@ -98,7 +98,7 @@ export function Sidebar() {
           <Zap size={14} className="mb-1 fill-yellow-500 text-yellow-500" />
         </div>
         <p className="mb-3 text-[11px] text-slate-500">
-          Max {plan.maxWordsPerInput?.toLocaleString() ?? "unlimited"} words per
+          Max {plan.maxWordsPerInput?.toLocaleString() ?? "no cap"} words per
           input • {getQuotaPeriodLabel(plan)} quota
         </p>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">

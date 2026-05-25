@@ -32,7 +32,7 @@ export function CreditBadge({ wordsUsed, tier }: CreditBadgeProps) {
         className={`text-xs font-bold ${isLow ? "text-rose-700" : "text-emerald-700"}`}
       >
         {remaining === null || limit === null
-          ? "Unlimited credits"
+          ? "No word cap"
           : `${remaining} / ${limit} Credits Left`}
       </span>
     </div>

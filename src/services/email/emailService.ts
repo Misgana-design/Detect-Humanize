@@ -172,7 +172,7 @@ export async function sendDetectionEmail(payload: DetectionEmailPayload): Promis
         ` : `
         <div style="flex:1;min-width:120px;">
           <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Words Remaining</p>
-          <p style="margin:4px 0 0;font-size:14px;font-weight:600;color:#10b981;">Unlimited</p>
+          <p style="margin:4px 0 0;font-size:14px;font-weight:600;color:#10b981;">No word cap</p>
         </div>
         `}
       </div>
@@ -264,7 +264,7 @@ export async function sendHumanizationEmail(payload: HumanizationEmailPayload): 
         ` : `
         <div style="flex:1;min-width:100px;">
           <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Words Left</p>
-          <p style="margin:4px 0 0;font-size:14px;font-weight:600;color:#10b981;">Unlimited</p>
+          <p style="margin:4px 0 0;font-size:14px;font-weight:600;color:#10b981;">No word cap</p>
         </div>
         `}
       </div>

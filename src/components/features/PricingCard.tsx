@@ -25,11 +25,11 @@ export default function PricingPage() {
           ]}
         />
         <PlanCard
-          title="Pro"
-          price="29"
+          title="Ultra"
+          price="39.99"
           highlight
           features={[
-            "Unlimited Words",
+            "45,000 words / month",
             "Advanced Humanizer",
             "Bulk Uploads",
             "API Access",
