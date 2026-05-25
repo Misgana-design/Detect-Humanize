@@ -1,14 +1,6 @@
 -- Merge the previous Unlimited and Enterprise tiers into Ultra.
 -- Ultra has a 45,000-word monthly quota.
 
-UPDATE public.profiles
-SET
-  subscription_tier = 'ultra',
-  credits = 45000,
-  words_used = COALESCE(words_used, 0),
-  updated_at = NOW()
-WHERE subscription_tier IN ('unlimited', 'enterprise');
-
 ALTER TABLE public.profiles
   DROP CONSTRAINT IF EXISTS profiles_subscription_tier_check;
 
@@ -23,6 +15,14 @@ ALTER TABLE public.profiles
       'pro_weekly'
     )
   );
+
+UPDATE public.profiles
+SET
+  subscription_tier = 'ultra',
+  credits = 45000,
+  words_used = COALESCE(words_used, 0),
+  updated_at = NOW()
+WHERE subscription_tier IN ('unlimited', 'enterprise');
 
 CREATE OR REPLACE FUNCTION public.get_remaining_credits(user_id_input uuid)
 RETURNS integer
