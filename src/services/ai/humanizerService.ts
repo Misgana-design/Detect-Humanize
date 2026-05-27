@@ -22,7 +22,7 @@ type GenerateContentParams = Parameters<typeof client.models.generateContent>[0]
 // ── Per-call timeouts (ms) ────────────────────────────────────────────────────
 // Free:  35s  (Flash model, single-pass prompt)
 // Paid:  175s (Pro model, 3-pass prompt — Vercel allows 300s on Pro plan)
-const TIMEOUT_FREE_MS  = 35_000;
+const TIMEOUT_FREE_MS  = 65_000;
 const TIMEOUT_PAID_MS  = 175_000;
 
 const AI_RETRY_ATTEMPTS = 3;
