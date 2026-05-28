@@ -276,7 +276,10 @@ export async function POST(request: Request) {
         break;
 
       case "subscription.canceled":
-        await downgradeToFree(data, "subscription cancellation");
+        // Do NOT downgrade here. Polar fires this when a user cancels but they
+        // still have access until the end of their billing period.
+        // Downgrade happens on subscription.revoked (fired at period end).
+        console.log(`[polar-webhook] subscription.canceled received — no action taken, waiting for subscription.revoked`);
         break;
 
       case "subscription.revoked":
