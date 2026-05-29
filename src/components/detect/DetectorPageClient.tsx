@@ -363,6 +363,7 @@ export function DetectorPageClient() {
         </section>
 
         {/* ── Results panel — fixed height, internal scroll ── */}
+        <div className="space-y-4">
         <section className={`flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${PANEL_HEIGHT}`}>
 
           {/* Empty state */}
@@ -493,7 +494,7 @@ export function DetectorPageClient() {
 
                 {/* Forensic analysis — eye-catching card */}
                 {data.analysis && (
-                  <div className={`mx-4 mb-4 overflow-hidden rounded-xl border ${colors.analysisBg}`}>
+                  <div className={`hidden mx-4 mb-4 overflow-hidden rounded-xl border ${colors.analysisBg}`}>
                     <div className="flex items-center justify-between gap-3 border-b border-white/70 bg-white/45 px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${colors.badge}`}>
@@ -527,7 +528,7 @@ export function DetectorPageClient() {
                   </div>
                 )}
                 {data.sentenceFindings && data.sentenceFindings.length > 0 && (
-                  <div className="mx-4 mb-4 rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="mx-4 mb-4 hidden rounded-xl border border-slate-200 bg-white p-4">
                     <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
                       Sentence Evidence
                     </p>
@@ -583,6 +584,71 @@ export function DetectorPageClient() {
             </div>
           )}
         </section>
+        {data && colors && (
+          <section className="space-y-4">
+            {data.analysis && (
+              <div className={`overflow-hidden rounded-2xl border bg-white shadow-sm ${colors.analysisBg}`}>
+                <div className="flex items-center justify-between gap-3 border-b border-white/70 bg-white/65 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${colors.badge}`}>
+                      <Brain size={15} />
+                    </div>
+                    <div>
+                      <p className={`text-[10px] font-black uppercase tracking-widest ${colors.analysisLabel}`}>
+                        Forensic Analysis
+                      </p>
+                      <p className="text-[11px] font-medium text-slate-500">
+                        Burstiness, perplexity, rhythm, and humanized traits
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${colors.badge}`}>
+                    {data.confidence}
+                  </span>
+                </div>
+                <div className="space-y-3 p-4">
+                  {analysisBlocks.map((block, index) => (
+                    <div key={`${block.slice(0, 24)}-${index}`} className="flex gap-3">
+                      <div className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${colors.badge}`}>
+                        {index + 1}
+                      </div>
+                      <p className={`text-xs leading-6 ${colors.analysisText}`}>{block}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {data.sentenceFindings && data.sentenceFindings.length > 0 && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Sentence Evidence
+                </p>
+                <div className="space-y-2">
+                  {data.sentenceFindings.slice(0, 8).map((finding, index) => (
+                    <div key={`${finding.sentence.slice(0, 20)}-${index}`} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                          {finding.category}
+                        </span>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          finding.severity === "high"
+                            ? "bg-rose-100 text-rose-700"
+                            : finding.severity === "medium"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-slate-100 text-slate-600"
+                        }`}>
+                          {finding.severity}
+                        </span>
+                      </div>
+                      <p className="text-xs leading-5 text-slate-700">{finding.reason}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+        </div>
       </div>
     </div>
   );

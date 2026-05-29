@@ -26,24 +26,33 @@ const COMPARE_ROWS: CompareRow[] = [
   { category: "Detection", feature: "AI Detection",          values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
   { category: "Detection", feature: "Detection model",       values: { free: "Flash", basic: "Pro", pro: "Pro", ultra: "Pro", pro_weekly: "Pro" } },
   { category: "Detection", feature: "Flagged sentence view", values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
+  { category: "Detection", feature: "Sentence evidence",     values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
+  { category: "Languages", feature: "Multi-language support", values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
   // Humanization
   { category: "Humanization", feature: "Humanizer",          values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
   { category: "Humanization", feature: "Humanizer pipeline", values: { free: "1-stage", basic: "3-stage", pro: "3-stage", ultra: "3-stage", pro_weekly: "3-stage" } },
   { category: "Humanization", feature: "Humanizer model",    values: { free: "Flash", basic: "Flash", pro: "Pro", ultra: "Pro", pro_weekly: "Pro" } },
   { category: "Humanization", feature: "Available tones",    values: { free: "Casual only", basic: "All tones", pro: "All tones", ultra: "All tones", pro_weekly: "All tones" } },
   { category: "Humanization", feature: "Re-Humanize",        values: { free: false, basic: true, pro: true, ultra: true, pro_weekly: true } },
+  { category: "Humanization", feature: "Post-humanize re-scan", values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
+  { category: "Workflow", feature: "Draft recovery",         values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
   // Quotas
   { category: "Quotas", feature: "Words per input",          values: { free: "500", basic: "500", pro: "1,500", ultra: "2,500", pro_weekly: "1,000" } },
   { category: "Quotas", feature: "Word quota",               values: { free: "1,000/mo", basic: "4,000/mo", pro: "20,000/mo", ultra: "45,000/mo", pro_weekly: "5,000/wk" } },
   // Exports
   { category: "Exports", feature: "Copy for Google Docs",    values: { free: false, basic: true, pro: true, ultra: true, pro_weekly: true } },
   { category: "Exports", feature: "PDF export",              values: { free: false, basic: true, pro: true, ultra: true, pro_weekly: true } },
+  { category: "Exports", feature: "TXT / MD / DOC exports",  values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
+  { category: "Exports", feature: "Detection report export", values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
   // History
   { category: "History", feature: "Document history",        values: { free: "Last 3", basic: "Full", pro: "Full", ultra: "Full", pro_weekly: "Full" } },
   { category: "History", feature: "Comparison mode",         values: { free: "Last 3", basic: "Full", pro: "Full", ultra: "Full", pro_weekly: "Full" } },
   // Team
   { category: "Team", feature: "Team dashboard",             values: { free: false, basic: false, pro: false, ultra: true, pro_weekly: false } },
   { category: "Team", feature: "Multi-user access",          values: { free: false, basic: false, pro: false, ultra: true, pro_weekly: false } },
+  { category: "API", feature: "API access",                  values: { free: false, basic: false, pro: true, ultra: true, pro_weekly: true } },
+  { category: "API", feature: "API key management",          values: { free: false, basic: false, pro: true, ultra: true, pro_weekly: true } },
+  { category: "API", feature: "Bulk humanizer endpoint",     values: { free: false, basic: false, pro: false, ultra: true, pro_weekly: false } },
   // Support
   { category: "Support", feature: "Support level",           values: { free: "Email", basic: "Email", pro: "Priority", ultra: "Dedicated", pro_weekly: "Priority" } },
 ];

@@ -3,18 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { BookOpenText, LayoutDashboard, Menu, ScanText, ShieldCheck, Sparkles, Tags, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ProfileMenu } from "@/components/auth/ProfileMenu";
 import { createClient } from "@/lib/supabase/client";
 import { Brand } from "./Brand";
 
 const navLinks = [
-  { name: "AI Detector", href: "/detector"  },
-  { name: "Humanizer",   href: "/humanize"  },
-  { name: "Detectors",   href: "/detectors" },
-  { name: "Pricing",     href: "/pricing"   },
-  { name: "Blog",        href: "/blog"      },
+  { name: "AI Detector", href: "/detect", icon: ScanText  },
+  { name: "Humanizer",   href: "/humanize", icon: Sparkles  },
+  { name: "Detectors",   href: "/detectors", icon: ShieldCheck },
+  { name: "Pricing",     href: "/pricing", icon: Tags },
+  { name: "Blog",        href: "/blog", icon: BookOpenText },
 ];
 
 export default function Navbar() {
@@ -38,9 +38,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close mobile menu on route change
-  useEffect(() => { setMobileOpen(false); }, [pathname]);
-
   // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -50,6 +47,14 @@ export default function Navbar() {
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
   // Prevent body scroll when menu is open
@@ -96,48 +101,49 @@ export default function Navbar() {
       <nav
         className={`sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl transition-shadow duration-200 ${
           scrolled
-            ? "shadow-sm shadow-slate-900/5"
+            ? "border-b border-slate-200 shadow-sm shadow-slate-900/5"
             : "border-b border-slate-100"
         }`}
       >
-        <div className="mx-auto flex h-15 max-w-7xl items-center justify-between px-5 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-5 lg:px-8">
           {/* Brand */}
           <Brand size="lg" />
 
           {/* Desktop nav — centered */}
-          <div className="hidden items-center gap-1 md:flex">
+          <div className="hidden items-center rounded-2xl border border-slate-200 bg-slate-50/80 p-1 lg:flex">
             {navLinks.map((link) => {
+              const Icon = link.icon;
               const isActive =
                 pathname === link.href || pathname.startsWith(link.href + "/");
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`relative rounded-lg px-3.5 py-2 text-sm font-medium transition-colors duration-150 ${
+                  aria-current={isActive ? "page" : undefined}
+                  className={`relative inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors duration-150 ${
                     isActive
-                      ? "text-indigo-600"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-slate-600 hover:bg-white hover:text-slate-900"
                   }`}
                 >
+                  <Icon className="h-4 w-4" />
                   {link.name}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-indigo-600" />
-                  )}
                 </Link>
               );
             })}
           </div>
 
           {/* Desktop auth */}
-          <div className="hidden items-center gap-2.5 md:flex">
+          <div className="hidden items-center gap-2.5 lg:flex">
             {user ? (
               <>
                 <Link href="/dashboard">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-slate-600 hover:text-slate-900"
+                    className="gap-2 text-slate-600 hover:text-slate-900"
                   >
+                    <LayoutDashboard className="h-4 w-4" />
                     Dashboard
                   </Button>
                 </Link>
@@ -172,7 +178,7 @@ export default function Navbar() {
 
           {/* Mobile hamburger */}
           <button
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 lg:hidden"
             onClick={() => setMobileOpen((o) => !o)}
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
@@ -188,7 +194,7 @@ export default function Navbar() {
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 md:hidden" aria-modal="true">
+        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm"
@@ -198,7 +204,7 @@ export default function Navbar() {
           {/* Panel — slides in from right */}
           <div
             ref={menuRef}
-            className="absolute right-0 top-0 flex h-full w-70 flex-col bg-white shadow-2xl"
+            className="absolute right-0 top-0 flex h-full w-[min(22rem,calc(100vw-1.5rem))] flex-col bg-white shadow-2xl"
           >
             {/* Header */}
             <div className="flex h-15 items-center justify-between border-b border-slate-100 px-5">
@@ -216,18 +222,21 @@ export default function Navbar() {
             <nav className="flex-1 overflow-y-auto px-3 py-4">
               <ul className="space-y-0.5">
                 {navLinks.map((link) => {
-                  const isActive = pathname === link.href;
+                  const Icon = link.icon;
+                  const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
                   return (
                     <li key={link.name}>
                       <Link
                         href={link.href}
                         onClick={() => setMobileOpen(false)}
-                        className={`flex items-center rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                        aria-current={isActive ? "page" : undefined}
+                        className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
                           isActive
                             ? "bg-indigo-50 text-indigo-600"
                             : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                       >
+                        <Icon className="h-4 w-4" />
                         {link.name}
                       </Link>
                     </li>

@@ -394,7 +394,7 @@ export function HumanizerPageClient() {
 
                   {/* Improvements — eye-catching cards */}
                   {data.changes && data.changes.length > 0 && (
-                    <div className="mt-4">
+                    <div className="mt-4 hidden">
                       <div className="mb-2.5 flex items-center gap-2">
                         <div className="h-px flex-1 bg-gradient-to-r from-emerald-200 to-transparent" />
                         <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
@@ -417,7 +417,7 @@ export function HumanizerPageClient() {
                       </ul>
                     </div>
                   )}
-                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mt-4 hidden rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
@@ -483,6 +483,61 @@ export function HumanizerPageClient() {
             >
               <Copy size={16} /> Copy Result
             </button>
+          )}
+          {data && !isPending && (
+            <section className="space-y-4">
+              {data.changes && data.changes.length > 0 && (
+                <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                      {data.changes.length} Improvements Made
+                    </p>
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-700">
+                      {isFree ? "1-pass" : "3-pass"}
+                    </span>
+                  </div>
+                  <ul className="space-y-2">
+                    {data.changes.map((change, i) => (
+                      <li
+                        key={`${change}-${i}`}
+                        className="flex items-start gap-2.5 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-800"
+                      >
+                        <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500">
+                          <Check size={9} className="text-white" />
+                        </div>
+                        {change}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                      Verification
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">
+                      {scanData
+                        ? `Humanized score: ${Math.round(scanData.aiProbability)}% AI probability`
+                        : "Run a detector pass on the humanized text."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleRescan}
+                    disabled={isScanningHumanized}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-black disabled:opacity-60"
+                  >
+                    {isScanningHumanized ? (
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    ) : (
+                      <ScanText size={14} />
+                    )}
+                    {isScanningHumanized ? "Scanning..." : "Re-scan output"}
+                  </button>
+                </div>
+              </div>
+            </section>
           )}
         </div>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FileText, Loader2, UploadCloud } from "lucide-react";
+import { FileText, Loader2, Trash2, UploadCloud } from "lucide-react";
 import {
   MAX_UPLOAD_SIZE,
   SUPPORTED_EXTENSIONS,
@@ -90,6 +90,8 @@ export function TextUploadField({
     const file = files?.[0];
     if (file) void parseFile(file);
   };
+  const charCount = value.length;
+  const lineCount = value ? value.split(/\r\n|\r|\n/).length : 0;
 
   return (
     <div className="space-y-3">
@@ -104,13 +106,13 @@ export function TextUploadField({
           setIsDragging(false);
           handleFileList(e.dataTransfer.files);
         }}
-        className={`rounded-3xl border bg-white p-5 shadow-sm transition ${
+        className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition ${
           isDragging
             ? "border-indigo-400 ring-4 ring-indigo-100"
             : "border-slate-200"
         }`}
       >
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-slate-900">
               Paste or upload text
@@ -125,10 +127,24 @@ export function TextUploadField({
               className="hidden"
               onChange={(e) => handleFileList(e.target.files)}
             />
+            {value && (
+              <button
+                type="button"
+                onClick={() => {
+                  onChange("");
+                  setFileInfo(null);
+                  setUploadError(null);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-rose-600"
+              >
+                <Trash2 className="h-4 w-4" />
+                Clear
+              </button>
+            )}
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               <UploadCloud className="h-4 w-4" />
               Click to browse
@@ -136,22 +152,26 @@ export function TextUploadField({
           </div>
         </div>
 
-        <label className="block">
+        <label className="block p-3">
           <span className="sr-only">Text input</span>
           <textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className={`w-full resize-none rounded-2xl border border-slate-200 px-4 py-4 text-base leading-relaxed text-slate-800 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 ${minHeightClassName}`}
+            spellCheck
+            className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-4 text-base leading-7 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 ${minHeightClassName}`}
           />
         </label>
 
-        <div className="mt-4 flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 border-t border-slate-100 bg-white px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             <span>{SUPPORTED_UPLOAD_LABEL}</span>
           </div>
           <div className="flex items-center gap-3">
+            <span className="hidden text-slate-400 sm:inline">
+              {charCount.toLocaleString()} chars · {lineCount.toLocaleString()} lines
+            </span>
             {isParsing && (
               <span className="inline-flex items-center gap-2 text-indigo-600">
                 <Loader2 className="h-4 w-4 animate-spin" />
