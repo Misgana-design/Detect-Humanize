@@ -17,6 +17,7 @@ import { NextResponse } from "next/server";
 import { getPlanDefinition } from "@/lib/billing/plans";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { HumanizerService, type Tone, type HumanizerTier } from "@/services/ai/humanizerService";
+import { normalizeLanguage } from "@/lib/languages";
 
 export const maxDuration = 60; // Vercel Pro allows up to 60s
 
@@ -36,6 +37,7 @@ interface BatchItem {
   id?: string;
   text: string;
   tone?: unknown;
+  language?: unknown;
 }
 
 type BatchResultItem =
@@ -134,9 +136,10 @@ export async function POST(req: Request) {
           typeof item.tone === "string" && VALID_TONES.has(item.tone as Tone)
             ? (item.tone as Tone)
             : "casual";
+        const language = normalizeLanguage(item.language);
         const cacheKey = crypto
           .createHash("sha256")
-          .update(`${item.text.trim()}_${tone}`)
+          .update(`${item.text.trim()}_${tone}_${language}`)
           .digest("hex");
 
         try {
@@ -153,7 +156,7 @@ export async function POST(req: Request) {
           }
 
           // Run humanizer
-          const aiResult = await HumanizerService.rewrite(item.text, tone, humanizerTier);
+          const aiResult = await HumanizerService.rewrite(item.text, tone, humanizerTier, language);
 
           // Save to cache (fire-and-forget, don't block response)
           void supabase.from("humanization_cache").upsert({
@@ -171,6 +174,7 @@ export async function POST(req: Request) {
             original_content: item.text,
             humanized_content: aiResult.humanizedText,
             tone_used: tone,
+            language,
           });
 
           return { id: item.id, ...aiResult, cached: false };
