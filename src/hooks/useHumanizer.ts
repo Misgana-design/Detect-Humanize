@@ -1,10 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { HumanizerResult, Tone } from "@/services/ai/humanizerService";
 import { readJsonResponse } from "@/lib/http/apiClient";
+import type { SupportedLanguage } from "@/lib/languages";
 
 interface HumanizerPayload {
   text: string;
   tone: Tone;
+  language?: SupportedLanguage;
   documentId?: string | null; // Add this!
 }
 
@@ -15,12 +17,13 @@ export function useHumanizer() {
     mutationFn: async ({
       text,
       tone,
+      language,
       documentId,
     }: HumanizerPayload): Promise<HumanizerResult & { cached?: boolean; fallback?: boolean }> => {
       const res = await fetch("/api/humanize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, tone, documentId }),
+        body: JSON.stringify({ text, tone, language, documentId }),
       });
 
       if (res.status === 401) {

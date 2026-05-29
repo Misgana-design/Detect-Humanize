@@ -45,6 +45,31 @@ export const detectionSchema = {
       type: "ARRAY",
       items: { type: "STRING" },
     },
+    sentenceFindings: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          sentence: { type: "STRING" },
+          reason: { type: "STRING" },
+          category: {
+            type: "STRING",
+            enum: [
+              "generic phrasing",
+              "low burstiness",
+              "low perplexity",
+              "template transition",
+              "uniform rhythm",
+              "human variance",
+              "other",
+            ],
+          },
+          severity: { type: "STRING", enum: ["low", "medium", "high"] },
+        },
+        required: ["sentence", "reason", "category", "severity"],
+      },
+    },
+    detectedLanguage: { type: "STRING" },
     confidence: { type: "STRING", enum: ["low", "medium", "high"] },
     aiProbability: {
       type: "NUMBER",

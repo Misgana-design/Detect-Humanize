@@ -1,10 +1,25 @@
 import { client, detectionSchema, MODELS } from "./geminiClient";
+import { getLanguagePromptLabel, type SupportedLanguage } from "@/lib/languages";
 
 export interface DetectionResult {
   aiProbability: number;
   confidence: "low" | "medium" | "high";
   flaggedSentences: string[];
   analysis: string;
+  sentenceFindings?: Array<{
+    sentence: string;
+    reason: string;
+    category:
+      | "generic phrasing"
+      | "low burstiness"
+      | "low perplexity"
+      | "template transition"
+      | "uniform rhythm"
+      | "human variance"
+      | "other";
+    severity: "low" | "medium" | "high";
+  }>;
+  detectedLanguage?: string;
   cached?: boolean;
   documentId?: string;
   modelUsed?: string;
@@ -52,6 +67,7 @@ IMPORTANT GUIDANCE:
   static async analyzeText(
     text: string,
     userTier: string = "free",
+    language: SupportedLanguage = "auto",
   ): Promise<DetectionResult> {
     if (!text?.trim()) {
       return {
@@ -59,11 +75,12 @@ IMPORTANT GUIDANCE:
         confidence: "low",
         flaggedSentences: [],
         analysis: "Empty or whitespace-only input",
+        detectedLanguage: language === "auto" ? "unknown" : getLanguagePromptLabel(language),
         modelUsed: userTier === "pro" ? MODELS.PRO : MODELS.FREE,
       };
     }
 
-    const result = await this.analyzeDocument(text.trim(), userTier);
+    const result = await this.analyzeDocument(text.trim(), userTier, language);
 
     return {
       ...result,
@@ -71,8 +88,14 @@ IMPORTANT GUIDANCE:
     };
   }
 
-  private static buildDetectionPrompt(text: string): string {
+  private static buildDetectionPrompt(text: string, language: SupportedLanguage): string {
+    const languageLabel = getLanguagePromptLabel(language);
     return `Analyze the text below for AI markers using the same measurable traits and three-pass structure as the humanizer.
+
+LANGUAGE:
+- Requested language mode: ${languageLabel}.
+- If set to the source language, infer the language and analyze the text in that language.
+- Return the analysis in English, but judge grammar, rhythm, transitions, and sentence structure according to the source language rather than English-only rules.
 
 Work through three mental passes before writing your output:
 PASS 1 - DIAGNOSE: Identify every AI signal: forbidden transitions, uniform sentence length, predictable word choices, missing human markers.
@@ -84,12 +107,13 @@ Text:
 ${text}
 """
 
-Return ONLY valid JSON matching the response schema. The analysis must briefly state which measurable traits were present, which were missing, and why the final score was chosen.`;
+Return ONLY valid JSON matching the response schema. Include sentenceFindings with concise sentence-level reasons and categories. The analysis must briefly state which measurable traits were present, which were missing, and why the final score was chosen.`;
   }
 
   private static async analyzeDocument(
     text: string,
     userTier: string,
+    language: SupportedLanguage,
     attempt = 1,
   ): Promise<DetectionResult> {
     const modelName = userTier === "pro" ? MODELS.PRO : MODELS.FREE;
@@ -100,7 +124,7 @@ Return ONLY valid JSON matching the response schema. The analysis must briefly s
         contents: [
           {
             role: "user",
-            parts: [{ text: this.buildDetectionPrompt(text) }],
+            parts: [{ text: this.buildDetectionPrompt(text, language) }],
           },
         ],
         config: {
@@ -152,12 +176,12 @@ Return ONLY valid JSON matching the response schema. The analysis must briefly s
           `Vertex ${modelName} busy, retrying document (Attempt ${attempt})...`,
         );
         await new Promise((r) => setTimeout(r, attempt * 1000));
-        return this.analyzeDocument(text, userTier, attempt + 1);
+        return this.analyzeDocument(text, userTier, language, attempt + 1);
       }
 
       if (userTier === "pro" && attempt === 3) {
         console.warn("Pro model failed 3 times. Falling back to Flash...");
-        return this.analyzeDocument(text, "free", 4);
+        return this.analyzeDocument(text, "free", language, 4);
       }
 
       throw error;

@@ -1,4 +1,5 @@
 import { client, MODELS } from "./geminiClient";
+import { getLanguagePromptLabel, type SupportedLanguage } from "@/lib/languages";
 
 export type Tone =
   | "casual"
@@ -113,10 +114,12 @@ MEANING PRESERVATION (absolute):
 
 // ── Prompt builders ───────────────────────────────────────────────────────────
 
-function buildFreePrompt(text: string, tone: Tone): string {
+function buildFreePrompt(text: string, tone: Tone, language: SupportedLanguage): string {
+  const languageLabel = getLanguagePromptLabel(language);
   return `You are an expert writing editor. Rewrite the text below so it reads as genuinely human-written while preserving all original meaning.
 
 TONE: ${TONE_RULES[tone]}
+LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
 ${UNIVERSAL_BYPASS_RULES}
 Text:
 """
@@ -127,10 +130,12 @@ Return ONLY valid JSON: { "humanizedText": "...", "changes": ["change 1", "chang
 The changes array must describe what you changed and why it reduces AI detection probability.`;
 }
 
-function buildPaidPrompt(text: string, tone: Tone): string {
+function buildPaidPrompt(text: string, tone: Tone, language: SupportedLanguage): string {
+  const languageLabel = getLanguagePromptLabel(language);
   return `You are an expert writing editor and AI detection specialist. Rewrite the text below so it is completely undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
 
 TONE: ${TONE_RULES[tone]}
+LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
 ${UNIVERSAL_BYPASS_RULES}
 Work through three mental passes before writing your output:
 PASS 1 — DIAGNOSE: Identify every AI signal: forbidden transitions, uniform sentence length, predictable word choices, missing human markers.
@@ -296,13 +301,14 @@ export class HumanizerService {
     text: string,
     tone: Tone,
     tier: HumanizerTier = "free",
+    language: SupportedLanguage = "auto",
   ): Promise<HumanizerResult> {
     const model = tier === "free" || tier === "basic" ? MODELS.FREE : MODELS.PRO;
 
     // Single call — no chunking. Chunking re-enabled once Pro model latency is resolved.
     return tier === "free"
-      ? this.rewriteFree(text, tone, model)
-      : this.rewritePaid(text, tone, model);
+      ? this.rewriteFree(text, tone, model, language)
+      : this.rewritePaid(text, tone, model, language);
   }
 
   // ── Free tier: single AI call ─────────────────────────────────────────────
@@ -311,12 +317,13 @@ export class HumanizerService {
     text: string,
     tone: Tone,
     model: string,
+    language: SupportedLanguage,
   ): Promise<HumanizerResult> {
     try {
       const response = await generateContentWithRetry(
         {
           model,
-          contents: buildFreePrompt(text, tone),
+          contents: buildFreePrompt(text, tone, language),
           config: {
             systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
             temperature: 0.8,
@@ -340,6 +347,7 @@ export class HumanizerService {
     text: string,
     tone: Tone,
     model: string,
+    language: SupportedLanguage,
   ): Promise<HumanizerResult> {
     // All tones use 0.92 — high temperature maximises perplexity and burstiness
     // which are the two core metrics AI detectors measure.
@@ -349,7 +357,7 @@ export class HumanizerService {
       const response = await generateContentWithRetry(
         {
           model,
-          contents: buildPaidPrompt(text, tone),
+          contents: buildPaidPrompt(text, tone, language),
           config: {
             systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
             temperature,

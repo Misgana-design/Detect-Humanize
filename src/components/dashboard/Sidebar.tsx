@@ -10,7 +10,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { History, Settings2, Zap, BarChartBig, Menu, X } from "lucide-react";
+import { History, Layers3, Settings2, Zap, BarChartBig, Menu, X } from "lucide-react";
 import { Brand } from "@/components/layout/Brand";
 
 export function Sidebar() {
@@ -37,6 +37,7 @@ export function Sidebar() {
   const navItems = [
     { name: "Overview",       href: "/dashboard",         icon: <BarChartBig size={18} /> },
     { name: "History",        href: "/dashboard/history", icon: <History size={18} />     },
+    { name: "Bulk",           href: "/dashboard/bulk",    icon: <Layers3 size={18} />     },
     { name: "Manage Account", href: "/account",           icon: <Settings2 size={18} />   },
   ];
 

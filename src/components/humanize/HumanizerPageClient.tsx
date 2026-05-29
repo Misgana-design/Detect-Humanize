@@ -2,11 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertCircle, Check, Copy, FileText, Lock, Sparkles, Zap } from "lucide-react";
+import { AlertCircle, Check, Copy, Download, FileText, Lock, ScanText, Sparkles, Zap } from "lucide-react";
 import { TextUploadField } from "@/components/forms/TextUploadField";
 import { useHumanizer } from "@/hooks/useHumanizer";
+import { useDetection } from "@/hooks/useDetection";
 import { useProfile } from "@/hooks/userProfile";
 import { type Tone } from "@/services/ai/humanizerService";
+import { exportHtmlDoc, exportMarkdown, exportPlainText } from "@/lib/clientExports";
+import { type SupportedLanguage } from "@/lib/languages";
+import { LanguageSelect } from "@/components/workspace/LanguageSelect";
+import { QuotaInline } from "@/components/workspace/QuotaInline";
 
 type ToneOption = { value: Tone; label: string; proOnly: boolean };
 
@@ -118,10 +123,22 @@ export function HumanizerPageClient() {
 
   const [text, setText] = useState(() => resolveInitialText());
   const [tone, setTone] = useState<Tone>("casual");
+  const [language, setLanguage] = useState<SupportedLanguage>(() => {
+    try {
+      return (sessionStorage.getItem("humanize_language") as SupportedLanguage) || "auto";
+    } catch {
+      return "auto";
+    }
+  });
   const [documentId] = useState<string | null>(() => resolveInitialDocId());
   const [copied, setCopied] = useState(false);
 
   const { mutate, data, isPending, error } = useHumanizer();
+  const {
+    mutate: scanHumanized,
+    data: scanData,
+    isPending: isScanningHumanized,
+  } = useDetection();
   const { data: profile } = useProfile();
 
   const isFree = !profile?.subscription_tier || profile.subscription_tier === "free";
@@ -135,7 +152,46 @@ export function HumanizerPageClient() {
     }
   };
 
-  const handleHumanize = () => mutate({ text, tone, documentId });
+  useEffect(() => {
+    try {
+      if (text.trim()) sessionStorage.setItem("humanizer_draft", text);
+      sessionStorage.setItem("humanize_language", language);
+    } catch {
+      // ignore
+    }
+  }, [text, language]);
+
+  const handleRestoreDraft = () => {
+    try {
+      const draft = sessionStorage.getItem("humanizer_draft");
+      if (draft) setText(draft);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleHumanize = () => mutate({ text, tone, language, documentId });
+  const handleRescan = () => {
+    if (data?.humanizedText) {
+      scanHumanized({ text: data.humanizedText, language, save: false });
+    }
+  };
+
+  const handleExport = (format: "txt" | "md" | "doc") => {
+    if (!data?.humanizedText) return;
+    const payload = {
+      title: "Humanized Output",
+      metadata: {
+        Tone: tone,
+        Pipeline: isFree ? "1-pass" : "3-pass",
+        "Post-humanize AI score": scanData ? `${Math.round(scanData.aiProbability)}%` : undefined,
+      },
+      body: data.humanizedText,
+    };
+    if (format === "txt") exportPlainText(payload);
+    if (format === "md") exportMarkdown(payload);
+    if (format === "doc") exportHtmlDoc(payload);
+  };
 
   const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
 
@@ -145,7 +201,7 @@ export function HumanizerPageClient() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:p-6">
       {/* Header */}
-      <header className="mb-6 flex items-end justify-between gap-4">
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             AI Humanizer <Sparkles className="text-indigo-500" size={22} />
@@ -157,14 +213,17 @@ export function HumanizerPageClient() {
               : "Your plan uses a 3-stage pipeline for deeper humanization."}
           </p>
         </div>
-        {documentId && (
-          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5">
-            <FileText size={14} className="text-amber-600" />
-            <span className="text-[10px] font-bold uppercase tracking-tight text-amber-700">
-              Updating Existing Scan
-            </span>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <LanguageSelect value={language} onChange={setLanguage} />
+          {documentId && (
+            <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5">
+              <FileText size={14} className="text-amber-600" />
+              <span className="text-[10px] font-bold uppercase tracking-tight text-amber-700">
+                Updating Existing Scan
+              </span>
+            </div>
+          )}
+        </div>
       </header>
 
       {/* Tone selector */}
@@ -215,10 +274,17 @@ export function HumanizerPageClient() {
             placeholder="Paste or drop your text here..."
             minHeightClassName="min-h-[420px]"
           />
-          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
-            <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-              {wordCount} {wordCount === 1 ? "word" : "words"}
-            </span>
+          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <QuotaInline profile={profile} wordCount={wordCount} />
+              <button
+                type="button"
+                onClick={handleRestoreDraft}
+                className="text-xs font-semibold text-indigo-600 hover:underline"
+              >
+                Restore saved draft
+              </button>
+            </div>
             <button
               onClick={handleHumanize}
               disabled={isPending || wordCount < 50}
@@ -232,6 +298,11 @@ export function HumanizerPageClient() {
               {isPending ? "Humanizing..." : documentId ? "Update & Humanize" : "Humanize Text"}
             </button>
           </div>
+          {wordCount < 50 && (
+            <p className="px-1 text-xs font-medium text-slate-400">
+              Minimum 50 words required before humanization.
+            </p>
+          )}
           {error && (
             <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
               <div className="h-1 w-full bg-gradient-to-r from-red-500 to-rose-500" />
@@ -346,10 +417,36 @@ export function HumanizerPageClient() {
                       </ul>
                     </div>
                   )}
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                          Verification
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-slate-800">
+                          {scanData
+                            ? `Humanized score: ${Math.round(scanData.aiProbability)}% AI probability`
+                            : "Run a detector pass on the humanized text."}
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleRescan}
+                        disabled={isScanningHumanized}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-black disabled:opacity-60"
+                      >
+                        {isScanningHumanized ? (
+                          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        ) : (
+                          <ScanText size={14} />
+                        )}
+                        {isScanningHumanized ? "Scanning..." : "Re-scan output"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Copy button — pinned to bottom */}
-                <div className="shrink-0 border-t border-slate-100 bg-white p-3">
+                <div className="grid shrink-0 gap-2 border-t border-slate-100 bg-white p-3 sm:grid-cols-[1fr_auto]">
                   <button
                     onClick={handleCopy}
                     className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
@@ -360,6 +457,19 @@ export function HumanizerPageClient() {
                   >
                     {copied ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy Result</>}
                   </button>
+                  <div className="flex gap-2">
+                    {(["txt", "md", "doc"] as const).map((format) => (
+                      <button
+                        key={format}
+                        onClick={() => handleExport(format)}
+                        className="inline-flex h-10 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold uppercase text-slate-600 transition hover:bg-slate-50"
+                        title={`Download ${format.toUpperCase()}`}
+                      >
+                        <Download size={14} />
+                        {format}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

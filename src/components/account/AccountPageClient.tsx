@@ -9,9 +9,12 @@ import {
   ExternalLink,
   KeyRound,
   Loader2,
+  Plus,
   Save,
   Sparkles,
+  Trash2,
   UserCircle2,
+  Users,
   Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -37,11 +40,36 @@ type AuthUser = {
   googleAvatarUrl: string | null;
 };
 
+type ApiKey = {
+  id: string;
+  name: string;
+  key_prefix: string;
+  created_at: string;
+  last_used_at: string | null;
+  revoked_at: string | null;
+};
+
+type TeamPayload = {
+  team: null | {
+    id: string;
+    name: string;
+    team_members: Array<{
+      id: string;
+      email: string;
+      role: string;
+      status: string;
+      created_at: string;
+    }>;
+  };
+};
+
 export function AccountPageClient() {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const [passwordMessage, setPasswordMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
+  const [newApiKey, setNewApiKey] = useState<string | null>(null);
+  const [integrationError, setIntegrationError] = useState<string | null>(null);
 
   // Fetch both the profile row and the auth user (for Google avatar + provider)
   const { data: account } = useQuery<AccountProfile | null>({
@@ -78,6 +106,25 @@ export function AccountPageClient() {
     },
   });
 
+  const { data: apiKeys = [] } = useQuery<ApiKey[]>({
+    queryKey: ["api-keys"],
+    queryFn: async () => {
+      const res = await fetch("/api/account/api-keys");
+      if (!res.ok) return [];
+      const payload = (await res.json()) as { keys?: ApiKey[] };
+      return payload.keys ?? [];
+    },
+  });
+
+  const { data: teamPayload } = useQuery<TeamPayload>({
+    queryKey: ["account-team"],
+    queryFn: async () => {
+      const res = await fetch("/api/account/team");
+      if (!res.ok) return { team: null };
+      return (await res.json()) as TeamPayload;
+    },
+  });
+
   const { mutate: saveProfile, isPending: isSavingProfile } = useMutation({
     mutationFn: async (payload: { full_name: string; avatar_url: string | null }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -101,6 +148,54 @@ export function AccountPageClient() {
     onError: (err) => setPasswordMessage({ ok: false, text: err instanceof Error ? err.message : "Failed to update password." }),
   });
 
+  const { mutate: createApiKey, isPending: isCreatingApiKey } = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/account/api-keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Production key" }),
+      });
+      const payload = (await response.json()) as { secret?: string; error?: string };
+      if (!response.ok || !payload.secret) throw new Error(payload.error || "Could not create API key.");
+      return payload.secret;
+    },
+    onSuccess: (secret) => {
+      setNewApiKey(secret);
+      setIntegrationError(null);
+      queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+    },
+    onError: (err) => setIntegrationError(err instanceof Error ? err.message : "Could not create API key."),
+  });
+
+  const { mutate: revokeApiKey } = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch("/api/account/api-keys", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!response.ok) throw new Error("Could not revoke API key.");
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["api-keys"] }),
+  });
+
+  const { mutate: inviteTeammate, isPending: isInvitingTeammate } = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await fetch("/api/account/team", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Could not invite teammate.");
+    },
+    onSuccess: () => {
+      setIntegrationError(null);
+      queryClient.invalidateQueries({ queryKey: ["account-team"] });
+    },
+    onError: (err) => setIntegrationError(err instanceof Error ? err.message : "Could not invite teammate."),
+  });
+
   // Resolve the best avatar: Google OAuth avatar takes priority, then profile row
   const resolvedAvatar =
     authUser?.googleAvatarUrl ||
@@ -115,6 +210,8 @@ export function AccountPageClient() {
     : 0;
 
   const isGoogleUser = authUser?.provider === "google";
+  const canUseIntegrations = plan.tier === "pro" || plan.tier === "ultra" || plan.tier === "pro_weekly";
+  const canUseTeam = plan.tier === "ultra";
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
@@ -381,6 +478,137 @@ export function AccountPageClient() {
               </button>
             </div>
           </form>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <KeyRound className="h-5 w-5 text-indigo-600" />
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">API access</h2>
+                  <p className="text-sm text-slate-500">Create keys for integrations and bulk workflows.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={!canUseIntegrations || isCreatingApiKey}
+                onClick={() => createApiKey()}
+                className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                New key
+              </button>
+            </div>
+
+            {!canUseIntegrations && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                API access is available on Pro, Pro Weekly, and Ultra.
+              </div>
+            )}
+
+            {newApiKey && (
+              <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <p className="text-sm font-bold text-emerald-800">Copy this key now. It will not be shown again.</p>
+                <div className="mt-2 flex gap-2">
+                  <code className="flex-1 overflow-x-auto rounded-xl bg-white px-3 py-2 text-xs text-slate-700">{newApiKey}</code>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(newApiKey)}
+                    className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {apiKeys.map((key) => (
+                <div key={key.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">{key.name}</p>
+                    <p className="text-xs text-slate-500">
+                      {key.key_prefix}... · {key.revoked_at ? "Revoked" : "Active"}
+                    </p>
+                  </div>
+                  {!key.revoked_at && (
+                    <button
+                      type="button"
+                      onClick={() => revokeApiKey(key.id)}
+                      className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
+                      aria-label="Revoke API key"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {apiKeys.length === 0 && (
+                <p className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-400">
+                  No API keys yet.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <Users className="h-5 w-5 text-indigo-600" />
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Team access</h2>
+                <p className="text-sm text-slate-500">Invite collaborators and prepare shared Ultra workflows.</p>
+              </div>
+            </div>
+
+            {!canUseTeam ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Team seats are available on Ultra.
+              </div>
+            ) : (
+              <form
+                className="flex flex-col gap-2 sm:flex-row"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const form = new FormData(event.currentTarget);
+                  inviteTeammate(String(form.get("email") || ""));
+                  event.currentTarget.reset();
+                }}
+              >
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="teammate@example.com"
+                  className="flex-1 rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                />
+                <button
+                  type="submit"
+                  disabled={isInvitingTeammate}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+                >
+                  <Plus className="h-4 w-4" />
+                  Invite
+                </button>
+              </form>
+            )}
+
+            {teamPayload?.team?.team_members?.length ? (
+              <div className="mt-4 space-y-2">
+                {teamPayload.team.team_members.map((member) => (
+                  <div key={member.id} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm">
+                    <span className="font-semibold text-slate-700">{member.email}</span>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold capitalize text-slate-500">
+                      {member.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {integrationError && (
+              <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {integrationError}
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </div>

@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   Brain,
   ChevronRight,
+  Download,
   Loader2,
   ShieldAlert,
   ShieldCheck,
@@ -14,6 +15,11 @@ import {
 } from "lucide-react";
 import { TextUploadField } from "@/components/forms/TextUploadField";
 import { useDetection } from "@/hooks/useDetection";
+import { useProfile } from "@/hooks/userProfile";
+import { exportJson, exportMarkdown, exportPlainText } from "@/lib/clientExports";
+import { getLanguageLabel, type SupportedLanguage } from "@/lib/languages";
+import { LanguageSelect } from "@/components/workspace/LanguageSelect";
+import { QuotaInline } from "@/components/workspace/QuotaInline";
 
 // ── Colour helpers ────────────────────────────────────────────────────────────
 
@@ -174,18 +180,45 @@ export function DetectorPageClient() {
   };
 
   const [text, setText] = useState(() => resolveInitialText());
+  const [language, setLanguage] = useState<SupportedLanguage>(() => {
+    try {
+      return (sessionStorage.getItem("detector_language") as SupportedLanguage) || "auto";
+    } catch {
+      return "auto";
+    }
+  });
   const { mutate, data, isPending, error } = useDetection();
+  const { data: profile } = useProfile();
 
   const wordCount = useMemo(
     () => (text.trim() === "" ? 0 : text.trim().split(/\s+/).length),
     [text],
   );
 
-  const handleScan = () => mutate(text);
+  useEffect(() => {
+    try {
+      if (text.trim()) sessionStorage.setItem("detector_draft", text);
+      sessionStorage.setItem("detector_language", language);
+    } catch {
+      // ignore
+    }
+  }, [text, language]);
+
+  const handleRestoreDraft = () => {
+    try {
+      const draft = sessionStorage.getItem("detector_draft");
+      if (draft) setText(draft);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleScan = () => mutate({ text, language });
 
   const handleRedirectToHumanizer = () => {
     try {
       sessionStorage.setItem("humanize_prefill_text", text);
+      sessionStorage.setItem("humanize_language", language);
       if (data?.documentId) {
         sessionStorage.setItem("humanize_prefill_docId", data.documentId);
       }
@@ -225,19 +258,46 @@ export function DetectorPageClient() {
   const colors = data ? scoreColor(data.aiProbability) : null;
   const pct = data ? Math.round(data.aiProbability) : 0;
   const analysisBlocks = data?.analysis ? formatAnalysis(data.analysis) : [];
+  const exportReport = (format: "txt" | "md" | "json") => {
+    if (!data) return;
+    const title = "AI Detection Report";
+    const metadata = {
+      "AI probability": `${pct}%`,
+      Confidence: data.confidence,
+      Language: data.detectedLanguage || getLanguageLabel(language),
+      "Flagged sentences": data.flaggedSentences?.length ?? 0,
+      Model: data.modelUsed ?? "Pro",
+    };
+    const body = [
+      data.analysis,
+      "",
+      "Flagged sentences:",
+      ...(data.flaggedSentences?.length ? data.flaggedSentences : ["None"]),
+      "",
+      "Original text:",
+      text,
+    ].join("\n");
+
+    if (format === "json") exportJson("ai-detection-report", { metadata, result: data, text });
+    if (format === "md") exportMarkdown({ title, metadata, body });
+    if (format === "txt") exportPlainText({ title, metadata, body });
+  };
 
   // Panel height matches the input area (textarea + action bar)
   const PANEL_HEIGHT = "h-[calc(380px+56px)]";
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:space-y-8 sm:p-6">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          AI Content Detector
-        </h1>
-        <p className="mt-2 text-sm text-slate-500 sm:text-base">
-          Paste or upload text to detect AI-generated patterns, flagged sentences, and a detailed forensic breakdown.
-        </p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            AI Content Detector
+          </h1>
+          <p className="mt-2 text-sm text-slate-500 sm:text-base">
+            Paste or upload text to detect AI-generated patterns, flagged sentences, and a detailed forensic breakdown.
+          </p>
+        </div>
+        <LanguageSelect value={language} onChange={setLanguage} />
       </header>
 
       <div className="grid items-start gap-6 sm:gap-8 lg:grid-cols-2">
@@ -249,10 +309,17 @@ export function DetectorPageClient() {
             placeholder="Paste or drop your text here..."
             minHeightClassName="min-h-[320px] sm:min-h-[380px]"
           />
-          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
-            <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-              {wordCount} {wordCount === 1 ? "word" : "words"}
-            </span>
+          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <QuotaInline profile={profile} wordCount={wordCount} />
+              <button
+                type="button"
+                onClick={handleRestoreDraft}
+                className="text-xs font-semibold text-indigo-600 hover:underline"
+              >
+                Restore saved draft
+              </button>
+            </div>
             <button
               onClick={handleScan}
               disabled={isPending || wordCount < 50}
@@ -262,6 +329,11 @@ export function DetectorPageClient() {
               {isPending ? "Analyzing..." : "Analyze Content"}
             </button>
           </div>
+          {wordCount < 50 && (
+            <p className="px-1 text-xs font-medium text-slate-400">
+              Minimum 50 words required before analysis.
+            </p>
+          )}
           {error && (
             <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
               {/* Top accent */}
@@ -386,7 +458,7 @@ export function DetectorPageClient() {
                         { label: "Confidence", value: data.confidence },
                         { label: "Flagged", value: `${data.flaggedSentences?.length ?? 0} sentences` },
                         { label: "Words", value: wordCount },
-                        { label: "Model", value: "Pro" },
+                        { label: "Language", value: data.detectedLanguage || getLanguageLabel(language) },
                       ].map((m) => (
                         <div key={m.label} className="rounded-lg border border-white/80 bg-white/70 px-2.5 py-1.5 text-center backdrop-blur-sm">
                           <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{m.label}</p>
@@ -454,10 +526,38 @@ export function DetectorPageClient() {
                     </div>
                   </div>
                 )}
+                {data.sentenceFindings && data.sentenceFindings.length > 0 && (
+                  <div className="mx-4 mb-4 rounded-xl border border-slate-200 bg-white p-4">
+                    <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      Sentence Evidence
+                    </p>
+                    <div className="space-y-2">
+                      {data.sentenceFindings.slice(0, 8).map((finding, index) => (
+                        <div key={`${finding.sentence.slice(0, 20)}-${index}`} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                          <div className="mb-1 flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                              {finding.category}
+                            </span>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                              finding.severity === "high"
+                                ? "bg-rose-100 text-rose-700"
+                                : finding.severity === "medium"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-slate-100 text-slate-600"
+                            }`}>
+                              {finding.severity}
+                            </span>
+                          </div>
+                          <p className="text-xs leading-5 text-slate-700">{finding.reason}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* CTA — pinned to bottom */}
-              <div className="shrink-0 border-t border-slate-100 bg-white p-3">
+              <div className="grid shrink-0 gap-2 border-t border-slate-100 bg-white p-3 sm:grid-cols-[1fr_auto]">
                 <button
                   onClick={handleRedirectToHumanizer}
                   className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-lg transition ${colors.cta}`}
@@ -466,6 +566,19 @@ export function DetectorPageClient() {
                   Humanize this text
                   <ChevronRight size={15} />
                 </button>
+                <div className="flex gap-2">
+                  {(["txt", "md", "json"] as const).map((format) => (
+                    <button
+                      key={format}
+                      onClick={() => exportReport(format)}
+                      className="inline-flex h-11 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold uppercase text-slate-600 transition hover:bg-slate-50"
+                      title={`Download ${format.toUpperCase()} report`}
+                    >
+                      <Download size={14} />
+                      {format}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}

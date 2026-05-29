@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/hooks/userProfile";
+import { exportHtmlDoc, exportMarkdown, exportPlainText } from "@/lib/clientExports";
+import { getLanguageLabel } from "@/lib/languages";
 
 type HistoryDocument = {
   id: string;
@@ -29,6 +31,7 @@ type HistoryDocument = {
   original_content: string;
   humanized_content: string | null;
   tone_used: string | null;
+  language?: string | null;
   created_at: string;
 };
 
@@ -92,6 +95,22 @@ function ComparisonPanel({
     pdf.save(`humanized-${doc.id.slice(0, 8)}.pdf`);
   };
 
+  const handleExportText = (format: "txt" | "md" | "doc") => {
+    if (!doc.humanized_content) return;
+    const payload = {
+      title: doc.title || "Humanized Content",
+      metadata: {
+        Tone: doc.tone_used ?? "casual",
+        Language: getLanguageLabel(doc.language),
+        Date: new Date(doc.created_at).toLocaleDateString(),
+      },
+      body: doc.humanized_content,
+    };
+    if (format === "txt") exportPlainText(payload);
+    if (format === "md") exportMarkdown(payload);
+    if (format === "doc") exportHtmlDoc(payload);
+  };
+
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {/* Panel header */}
@@ -126,7 +145,7 @@ function ComparisonPanel({
       {/* Action bar */}
       {doc.humanized_content ? (
         <div className="border-b border-slate-100 bg-white px-4 py-3 sm:px-5">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
             <button
               onClick={handleCopyPlain}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:cursor-pointer"
@@ -210,6 +229,21 @@ function ComparisonPanel({
                 </>
               )}
             </button>
+            {(["txt", "md", "doc"] as const).map((format) => (
+              <button
+                key={format}
+                onClick={() => isPaidUser && handleExportText(format)}
+                disabled={!isPaidUser}
+                title={!isPaidUser ? "Upgrade to Basic or above" : undefined}
+                className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold uppercase transition ${
+                  !isPaidUser
+                    ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
+                    : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:cursor-pointer"
+                }`}
+              >
+                <Download size={12} /> {format}
+              </button>
+            ))}
           </div>
 
           {!isPaidUser && (
@@ -307,6 +341,8 @@ export default function HistoryPage() {
 
   const [isConfirming, setIsConfirming] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "humanized" | "detection">("all");
+  const [toneFilter, setToneFilter] = useState("all");
   // On mobile: "list" shows the document list, "detail" shows the comparison panel
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
 
@@ -317,7 +353,7 @@ export default function HistoryPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("id, title, original_content, humanized_content, tone_used, created_at")
+        .select("id, title, original_content, humanized_content, tone_used, language, created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as HistoryDocument[];
@@ -388,10 +424,14 @@ export default function HistoryPage() {
 
   const filteredDocuments = documents.filter((doc) => {
     const q = searchTerm.toLowerCase();
-    return (
+    const matchesSearch =
       doc.title?.toLowerCase().includes(q) ||
-      doc.original_content.toLowerCase().includes(q)
-    );
+      doc.original_content.toLowerCase().includes(q);
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "humanized" ? Boolean(doc.humanized_content) : !doc.humanized_content);
+    const matchesTone = toneFilter === "all" || (doc.tone_used || "casual") === toneFilter;
+    return matchesSearch && matchesStatus && matchesTone;
   });
 
   const FREE_DOC_LIMIT = 3;
@@ -439,6 +479,29 @@ export default function HistoryPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm outline-none transition focus:ring-2 focus:ring-indigo-400"
           />
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-200"
+          >
+            <option value="all">All statuses</option>
+            <option value="humanized">Humanized</option>
+            <option value="detection">Detection only</option>
+          </select>
+          <select
+            value={toneFilter}
+            onChange={(event) => setToneFilter(event.target.value)}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-200"
+          >
+            <option value="all">All tones</option>
+            {Array.from(new Set(documents.map((doc) => doc.tone_used || "casual"))).map((tone) => (
+              <option key={tone} value={tone}>
+                {tone}
+              </option>
+            ))}
+          </select>
         </div>
       </header>
 

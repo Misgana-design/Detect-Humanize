@@ -5,6 +5,7 @@ import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/s
 import { HumanizerService, Tone, HumanizerTier } from "@/services/ai/humanizerService";
 import { runWithPriority } from "@/lib/queue/humanizeQueue";
 import { sendHumanizationEmail } from "@/services/email/emailService";
+import { normalizeLanguage } from "@/lib/languages";
 
 export const maxDuration = 180;
 export const runtime = "nodejs";
@@ -12,6 +13,7 @@ export const runtime = "nodejs";
 type HumanizeRequestBody = {
   text?: unknown;
   tone?: unknown;
+  language?: unknown;
   documentId?: unknown;
 };
 
@@ -76,6 +78,7 @@ export async function POST(req: Request) {
       typeof body.tone === "string" && VALID_TONES.has(body.tone as Tone)
         ? (body.tone as Tone)
         : "casual";
+    const language = normalizeLanguage(body.language);
     const documentId =
       typeof body.documentId === "string" && body.documentId.trim()
         ? body.documentId
@@ -122,7 +125,7 @@ export async function POST(req: Request) {
 
     const cacheKey = crypto
       .createHash("sha256")
-      .update(`${text.trim()}_${tone}`)
+      .update(`${text.trim()}_${tone}_${language}`)
       .digest("hex");
 
     const { data: cachedResult } = await supabase
@@ -150,7 +153,7 @@ export async function POST(req: Request) {
 
       // Run through priority queue — paid users get high priority
       aiResult = await runWithPriority(
-        () => HumanizerService.rewrite(text, tone, humanizerTier),
+        () => HumanizerService.rewrite(text, tone, humanizerTier, language),
         isPaid,
       );
     }
@@ -195,6 +198,7 @@ export async function POST(req: Request) {
             .update({
               humanized_content: aiResult.humanizedText,
               tone_used: tone,
+              language,
             })
             .eq("id", documentId)
             .eq("user_id", user.id);
@@ -217,6 +221,7 @@ export async function POST(req: Request) {
             original_content: text,
             humanized_content: aiResult.humanizedText,
             tone_used: tone,
+            language,
           });
           if (error) throw error;
         })(),
