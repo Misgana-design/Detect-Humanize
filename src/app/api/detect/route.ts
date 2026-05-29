@@ -4,6 +4,7 @@ import { DetectionService } from "@/services/ai/detectionService";
 import { getPlanDefinition, getRemainingWords } from "@/lib/billing/plans";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { sendDetectionEmail } from "@/services/email/emailService";
+import { normalizeLanguage } from "@/lib/languages";
 
 export async function POST(req: Request) {
   try {
@@ -19,7 +20,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const { text, _ownerBypass } = await req.json();
+    const { text, language: rawLanguage, save = true, _ownerBypass } = await req.json();
+    const language = normalizeLanguage(rawLanguage);
     const wordCount = text?.trim() ? text.trim().split(/\s+/).length : 0;
 
     // ── Owner bypass: returns a low score without calling the AI ──────────
@@ -76,7 +78,7 @@ export async function POST(req: Request) {
 
     const textHash = crypto
       .createHash("sha256")
-      .update(text.trim())
+      .update(`${text.trim()}_${language}`)
       .digest("hex");
 
     const { data: cachedDoc } = await supabase
@@ -95,11 +97,19 @@ export async function POST(req: Request) {
       // Free -> Flash model; all paid plans (basic, pro, ultra, pro_weekly) -> Pro model
       const modelTier = plan.tier === "free" ? "free" : "pro";
 
-      aiResult = await DetectionService.analyzeText(text, modelTier);
+      aiResult = await DetectionService.analyzeText(text, modelTier, language);
 
       if (typeof aiResult?.aiProbability !== "number") {
         throw new Error("AI Service returned invalid data structure");
       }
+    }
+
+    if (save === false) {
+      return NextResponse.json({
+        ...aiResult,
+        documentId: null,
+        cached: isCached,
+      });
     }
 
     const generatedTitle =
@@ -117,6 +127,7 @@ export async function POST(req: Request) {
         original_content: text,
         humanized_content: null,
         tone_used: "analytical",
+        language,
       })
       .select()
       .single();
