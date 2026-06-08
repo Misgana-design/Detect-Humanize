@@ -35,7 +35,6 @@ export function CookieBanner() {
   const rejectNonEssential = () => save("rejected");
   const saveCustom = () => save("custom");
 
-  // Don't render until mounted (avoids SSR mismatch) or if already decided
   if (!mounted || consent !== null) return null;
 
   return (
@@ -43,58 +42,70 @@ export function CookieBanner() {
       role="dialog"
       aria-label="Cookie consent"
       aria-modal="false"
-      className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-2xl"
+      className="fixed bottom-4 right-4 z-50 w-[min(360px,calc(100vw-2rem))]"
     >
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10">
-        {/* Main banner */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/15">
+
+        {/* ── Main banner ── */}
         {!showCustomize ? (
           <div className="p-5">
-            <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50">
-                <Cookie className="h-5 w-5 text-indigo-600" />
+            {/* Close button */}
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50">
+                  <Cookie className="h-4.5 w-4.5 text-indigo-600" />
+                </div>
+                <h2 className="text-base font-bold text-slate-900">
+                  We value your privacy
+                </h2>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900">
-                  We use cookies to enhance your experience
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                  We use essential cookies to keep you signed in and functional
-                  cookies to remember your preferences. We do not use
-                  advertising or tracking cookies.{" "}
-                  <Link
-                    href="/cookies"
-                    className="text-indigo-600 hover:underline"
-                  >
-                    Cookie Policy
-                  </Link>
-                </p>
-              </div>
+              <button
+                onClick={rejectNonEssential}
+                className="shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Dismiss"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
+            {/* Body text */}
+            <p className="text-sm leading-relaxed text-slate-500">
+              We use cookies to enhance your experience, analyze site traffic,
+              and remember your preferences. By clicking &ldquo;Accept All&rdquo;,
+              you consent to our use of cookies. You can customize your
+              preferences or learn more in our{" "}
+              <Link href="/privacy" className="text-indigo-600 hover:underline">
+                Privacy Policy
+              </Link>
+              .
+            </p>
+
+            {/* Buttons */}
+            <div className="mt-4 flex flex-col gap-2">
               <button
                 onClick={acceptAll}
-                className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 hover:cursor-pointer"
+                className="w-full cursor-pointer rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-indigo-100 transition hover:bg-indigo-700"
               >
                 Accept All
               </button>
               <button
                 onClick={rejectNonEssential}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:cursor-pointer"
+                className="w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                Reject Non-Essential
+                Necessary Only
               </button>
               <button
                 onClick={() => setShowCustomize(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-50"
+                className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-50"
               >
-                <Settings className="h-3.5 w-3.5 hover:cursor-pointer" />
+                <Settings className="h-3.5 w-3.5" />
                 Customize
               </button>
             </div>
           </div>
         ) : (
-          /* Customize panel */
+
+          /* ── Customize panel ── */
           <div className="p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-900">
@@ -175,13 +186,13 @@ export function CookieBanner() {
             <div className="mt-4 flex gap-2">
               <button
                 onClick={saveCustom}
-                className="flex-1 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                className="flex-1 cursor-pointer rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
               >
                 Save preferences
               </button>
               <button
                 onClick={rejectNonEssential}
-                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
               >
                 Reject all
               </button>
