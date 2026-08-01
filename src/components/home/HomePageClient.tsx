@@ -610,33 +610,54 @@ export function HomePageClient() {
       </section>
 
       {/* Trusted By */}
-      <section className="overflow-hidden border-y border-slate-200 bg-white py-14">
+      <section className="border-y border-slate-100 bg-gradient-to-b from-white to-slate-50/60 py-20">
         <div className="container mx-auto px-4">
-          <p className="mb-8 text-center text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
-            Trusted by students and researchers from
-          </p>
-          <div className="group relative overflow-hidden">
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-linear-to-r from-white to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-linear-to-l from-white to-transparent" />
-            <div className="marquee flex items-center gap-10 py-3 group-hover:[animation-play-state:paused]">
-              {[...trustedByLogos, ...trustedByLogos].map((logo, index) => (
-                <div
-                  key={`${logo.name}-${index}`}
-                  className="flex shrink-0 items-center justify-center opacity-50 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
-                  style={{ minWidth: "120px" }}
-                >
+
+          {/* Heading */}
+          <div className="mb-12 text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-indigo-400">
+              Trusted by
+            </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl">
+              Students & researchers from world-class institutions
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              From undergraduate essays to PhD dissertations — used at over 50 universities worldwide.
+            </p>
+          </div>
+
+          {/* Logo grid */}
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-4">
+            {trustedByLogos.map((logo, i) => (
+              <motion.div
+                key={logo.name}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ delay: i * 0.07, duration: 0.45, ease: "easeOut" }}
+                className="group flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm transition-all duration-300 hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-50"
+              >
+                <div className="relative flex h-16 w-full items-center justify-center">
                   <Image
                     src={logo.src}
                     alt={logo.name}
-                    width={120}
-                    height={48}
-                    className="h-10 w-auto object-contain"
+                    width={160}
+                    height={64}
+                    className="h-14 w-auto max-w-[140px] object-contain grayscale transition-all duration-300 group-hover:grayscale-0"
                     unoptimized
                   />
                 </div>
-              ))}
-            </div>
+                <p className="text-center text-[11px] font-semibold leading-tight text-slate-400 transition-colors duration-300 group-hover:text-indigo-600">
+                  {logo.name}
+                </p>
+              </motion.div>
+            ))}
           </div>
+
+          {/* Bottom note */}
+          <p className="mt-10 text-center text-xs text-slate-400">
+            + thousands more at universities across 60 countries
+          </p>
         </div>
       </section>
 
