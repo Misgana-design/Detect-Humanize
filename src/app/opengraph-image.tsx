@@ -51,11 +51,11 @@ export default function OpenGraphImage() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div style={{ fontSize: 72, fontWeight: 800, color: "white" }}>
-            Detect AI. Rewrite Naturally.
+            Humanize AI. Rewrite Naturally.
           </div>
           <div style={{ fontSize: 28, color: "#cbd5e1", maxWidth: 900 }}>
             A polished workspace for students, researchers, and writers who need
-            trustworthy detection and humanization in one flow.
+            AI-assisted drafts to sound natural, clear, and publication-ready.
           </div>
         </div>
       </div>

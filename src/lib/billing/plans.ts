@@ -24,7 +24,6 @@ export interface PlanDefinition {
   quotaPeriod: QuotaPeriod;
   features: string[];
   comparison: {
-    aiDetection: boolean;
     humanizer: boolean;
     saveReports: boolean;
     apiAccess: boolean;
@@ -44,7 +43,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
   free: {
     tier: "free",
     name: "Free",
-    description: "Detect and humanize up to 1,000 words/month. No credit card needed — a solid starting point to test the tool before committing.",
+    description: "Humanize up to 1,000 words/month. No credit card needed — a solid starting point to test the tool before committing.",
     cta: "Get started",
     href: "/signup",
     supportedCadences: ["free"],
@@ -54,14 +53,12 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     quotaPeriod: "month",
     features: [
       "1,000 words/month",
-      "Basic detection (Flash model)",
       "Basic humanization (Casual tone only)",
-      "Multi-language detect and rewrite",
-      "Last 3 documents history + Comparizon mode",
+      "Multi-language rewrite",
+      "Last 3 documents history + Comparison mode",
       "Email support",
     ],
     comparison: {
-      aiDetection: true,
       humanizer: true,
       saveReports: true,
       apiAccess: false,
@@ -82,12 +79,10 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     features: [
       "Natural rewriting for everyday drafts",
       "500 words max per input",
-      "4000 words per month",
-      "Basic AI detection",
-      "Limited humanization",
+      "4,000 words per month",
       "All tones",
-      "Multi-language detect and rewrite",
-      "Full dashboard history + Comparizon mode",
+      "Multi-language rewrite",
+      "Full dashboard history + Comparison mode",
       "Re-humanize feature",
       "Copy for Google Docs + PDF export",
       "Plagiarism free",
@@ -95,7 +90,6 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
       "Email support",
     ],
     comparison: {
-      aiDetection: true,
       humanizer: true,
       saveReports: true,
       apiAccess: false,
@@ -116,13 +110,12 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     quotaPeriod: "month",
     features: [
       "Natural rewriting for longer drafts",
-      "1500 max per input",
+      "1,500 max per input",
       "20,000 words/month",
       "All tones (casual, academic, professional,...)",
-      "Multi-language detect and rewrite",
+      "Multi-language rewrite",
       "API access",
-      "Full AI detection + Humanization experience",
-      "Full dashboard history + Comparizon mode",
+      "Full dashboard history + Comparison mode",
       "Re-humanize feature",
       "Priority support",
       "Copy for Google Docs + PDF export",
@@ -130,7 +123,6 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
       "Plagiarism-free rewrites",
     ],
     comparison: {
-      aiDetection: true,
       humanizer: true,
       saveReports: true,
       apiAccess: true,
@@ -150,15 +142,14 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     quotaPeriod: "month",
     features: [
       "Natural rewriting for long-form and team workflows",
-      "2500 words max per input",
+      "2,500 words max per input",
       "45,000 words/month",
-      "Full AI detection with Pro model",
-      "3-stage Pro humanizer",
+      "3-pass Pro humanizer",
       "All tones",
-      "Multi-language detect and rewrite",
+      "Multi-language rewrite",
       "API access + API key management",
       "Re-humanize feature",
-      "Full dashboard history + Comparizon mode",
+      "Full dashboard history + Comparison mode",
       "Copy for Google Docs + PDF export",
       "Export & integrations",
       "Bulk processing",
@@ -170,7 +161,6 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
       "Plagiarism-free rewrites",
     ],
     comparison: {
-      aiDetection: true,
       humanizer: true,
       saveReports: true,
       apiAccess: true,
@@ -191,13 +181,12 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     quotaPeriod: "week",
     features: [
       "Natural rewriting for deadline-driven drafts",
-      "1000 max per input",
+      "1,000 max per input",
       "5,000 words/week",
       "All tones (casual, academic, professional,...)",
-      "Multi-language detect and rewrite",
+      "Multi-language rewrite",
       "API access",
-      "Full AI detection + Humanization",
-      "Full dashboard history + Comparizon mode",
+      "Full dashboard history + Comparison mode",
       "Re-humanize feature",
       "Priority support",
       "Copy for Google Docs + PDF export",
@@ -205,7 +194,6 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
       "Plagiarism-free rewrites",
     ],
     comparison: {
-      aiDetection: true,
       humanizer: true,
       saveReports: true,
       apiAccess: true,
@@ -215,7 +203,6 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
 };
 
 export const COMPARISON_ROWS = [
-  { key: "aiDetection", feature: "AI Detection" },
   { key: "humanizer", feature: "Humanizer" },
   { key: "saveReports", feature: "Save reports" },
   { key: "apiAccess", feature: "API access" },

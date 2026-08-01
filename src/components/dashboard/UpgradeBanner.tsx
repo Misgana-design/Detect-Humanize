@@ -37,7 +37,7 @@ export function UpgradeBanner() {
             You&apos;ve hit the Free Tier limit!
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Upgrade to Pro to get 1,000 scans per month and access advanced
+            Upgrade to Pro to get 20,000 words per month and access advanced
             humanization.
           </p>
         </div>

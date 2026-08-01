@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Brain, Clock, FileText, Lock, Zap } from "lucide-react";
+import { Clock, FileText, Lock, Sparkles, Zap } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/hooks/userProfile";
@@ -13,7 +13,6 @@ type DashboardDocument = {
   id: string;
   title: string | null;
   created_at: string;
-  detection_results?: Array<{ ai_score: number | null }> | null;
 };
 
 function DashboardSkeleton() {
@@ -26,7 +25,7 @@ function DashboardSkeleton() {
         </div>
         <div className="h-10 w-36 rounded-xl bg-slate-200" />
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="space-y-3 rounded-2xl border bg-white p-6">
             <div className="h-8 w-8 rounded-lg bg-slate-100" />
@@ -74,7 +73,7 @@ function DashboardContent() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select(`id, title, created_at, detection_results (ai_score)`)
+        .select(`id, title, created_at`)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as DashboardDocument[];
@@ -83,11 +82,6 @@ function DashboardContent() {
 
   const totalDocs = documents.length;
   const displayedDocs = isFree ? documents.slice(0, FREE_DOC_LIMIT) : documents;
-  const totalScore = documents.reduce(
-    (acc, doc) => acc + (doc.detection_results?.[0]?.ai_score || 0),
-    0,
-  );
-  const avgScore = totalDocs > 0 ? ((totalScore / totalDocs) * 100).toFixed(1) : "0";
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -98,15 +92,15 @@ function DashboardContent() {
             Overview
           </h1>
           <p className="text-sm text-slate-500">
-            Monitor your AI content footprint and recent scans.
+            Monitor your writing activity and recent documents.
           </p>
         </div>
         <Link
-          href="/detect"
+          href="/#humanizer"
           className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-100 transition-all hover:bg-indigo-700"
         >
-          <Zap className="mr-2 h-4 w-4 fill-current" />
-          New Analysis
+          <Sparkles className="mr-2 h-4 w-4" />
+          New Humanization
         </Link>
       </div>
 
@@ -121,29 +115,22 @@ function DashboardContent() {
               Keep your content workflow clean and submission-ready
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-indigo-100">
-              Review detection patterns, keep rewrites organized, and move quickly
-              between analyze and humanize actions from one dashboard.
+              Keep rewrites organized and move quickly from saved drafts back
+              into the humanizer.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm sm:shrink-0">
-            <div className="rounded-2xl bg-white/10 px-4 py-3">
+          <div className="rounded-2xl bg-white/10 px-4 py-3 text-sm sm:shrink-0">
               <p className="text-indigo-100">Documents</p>
               <p className="text-xl font-bold">{totalDocs}</p>
             </div>
-            <div className="rounded-2xl bg-white/10 px-4 py-3">
-              <p className="text-indigo-100">Avg Score</p>
-              <p className="text-xl font-bold">{avgScore}%</p>
-            </div>
-          </div>
         </div>
       </section>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <StatCard label="Total Scans"      value={totalDocs.toString()} icon={FileText} trend="+4%" />
-        <StatCard label="Avg AI Score"     value={`${avgScore}%`}       icon={Brain}    trend="-2%" />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+        <StatCard label="Total Documents"  value={totalDocs.toString()} icon={FileText} />
         <StatCard label="Recent Activity"  value="Active"               icon={Clock} />
-        <StatCard label="Detector Status"  value="Ready"                icon={Zap} />
+        <StatCard label="Humanizer Status" value="Ready"                icon={Zap} />
       </div>
 
       {/* Recent documents */}
@@ -158,29 +145,18 @@ function DashboardContent() {
             <thead>
               <tr className="text-xs uppercase tracking-wider text-slate-400">
                 <th className="px-6 py-4 font-semibold">Document Name</th>
-                <th className="px-6 py-4 font-semibold">AI Probability</th>
                 <th className="px-6 py-4 font-semibold">Date</th>
                 <th className="px-6 py-4 font-semibold">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {displayedDocs.map((doc) => {
-                const rawScore = doc.detection_results?.[0]?.ai_score || 0;
-                const scorePercentage = Math.round(rawScore * 100);
                 return (
                   <tr key={doc.id} className="group cursor-pointer transition-colors hover:bg-slate-50/80">
                     <td className="px-6 py-4">
                       <span className="text-sm font-medium text-slate-900 transition-colors group-hover:text-indigo-600">
-                        {doc.title || "Untitled Scan"}
+                        {doc.title || "Untitled Document"}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
-                          <div className="h-full bg-rose-500" style={{ width: `${scorePercentage}%` }} />
-                        </div>
-                        <span className="text-xs font-bold text-slate-600">{scorePercentage}%</span>
-                      </div>
                     </td>
                     <td className="px-6 py-4 text-xs text-slate-500">
                       {formatDistanceToNow(new Date(doc.created_at))} ago
@@ -200,29 +176,19 @@ function DashboardContent() {
         {/* Mobile card list — shown only on mobile */}
         <div className="divide-y divide-slate-100 sm:hidden">
           {displayedDocs.map((doc) => {
-            const rawScore = doc.detection_results?.[0]?.ai_score || 0;
-            const scorePercentage = Math.round(rawScore * 100);
             return (
               <div key={doc.id} className="flex items-center justify-between gap-3 px-4 py-4">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900">
-                    {doc.title || "Untitled Scan"}
+                    {doc.title || "Untitled Document"}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-400">
                     {formatDistanceToNow(new Date(doc.created_at))} ago
                   </p>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-1.5 w-12 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full bg-rose-500" style={{ width: `${scorePercentage}%` }} />
-                    </div>
-                    <span className="text-xs font-bold text-slate-600">{scorePercentage}%</span>
-                  </div>
-                  <span className="rounded-md border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-                    Completed
-                  </span>
-                </div>
+                <span className="rounded-md border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                  Completed
+                </span>
               </div>
             );
           })}
@@ -236,7 +202,7 @@ function DashboardContent() {
             <div className="space-y-1">
               <p className="font-semibold text-slate-900">No documents found</p>
               <p className="text-sm text-slate-500">
-                Create your first analysis to see results here.
+                Humanize your first draft to see results here.
               </p>
             </div>
           </div>

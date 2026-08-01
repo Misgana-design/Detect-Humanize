@@ -3,13 +3,12 @@ import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    title: "Pricing for AI Detection & Humanization",
+    title: "Pricing for AI Humanization",
     description:
-      "Compare Free, Basic, Pro, Ultra, and Pro Weekly plans for AI detection, AI humanization, GPTZero bypass workflows, and team writing tools.",
+      "Compare Free, Basic, Pro, Ultra, and Pro Weekly plans for AI humanization, GPTZero bypass workflows, and team writing tools.",
     path: "/pricing",
     keywords: [
       "AI humanizer pricing",
-      "AI detector pricing",
       "GPTZero bypass plans",
       "undetectable AI subscription",
     ],

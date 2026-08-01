@@ -8,12 +8,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: "Contact Support",
     description:
-      "Contact Text Humanica for AI detector support, AI humanizer questions, billing help, Ultra plans, API access, or GPTZero bypass workflow guidance.",
+      "Contact Text Humanica for AI humanizer questions, billing help, Ultra plans, API access, or GPTZero bypass workflow guidance.",
     path: "/contact",
     keywords: [
       "Text Humanica support",
       "AI humanizer support",
-      "AI detector support",
       "Ultra AI writing API",
     ],
   });
@@ -22,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 const supportTopics = [
   {
     icon: <Zap className="h-5 w-5 text-indigo-400" />,
-    title: "Detection & Humanization",
+    title: "Humanization",
     desc: "Questions about accuracy, bypass rates, or how the AI pipeline works.",
   },
   {
@@ -61,7 +60,7 @@ export default function ContactPage() {
             We&apos;re here to help
           </h1>
           <p className="mt-4 leading-7 text-indigo-100">
-            Whether you have a question about detection accuracy, need help with
+            Whether you have a question about humanization quality, need help with
             your subscription, or want to explore a partnership — send us a
             message and we&apos;ll get back to you promptly.
           </p>

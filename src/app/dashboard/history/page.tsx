@@ -145,8 +145,7 @@ function ComparisonPanel({
       {/* Action bar */}
       {doc.humanized_content ? (
         <div className="border-b border-slate-100 bg-white px-4 py-3 sm:px-5">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-            <button
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">            <button
               onClick={handleCopyPlain}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:cursor-pointer"
             >
@@ -264,7 +263,7 @@ function ComparisonPanel({
             <div className="flex items-center gap-2">
               <Sparkles size={14} className="text-amber-600" />
               <p className="text-xs font-semibold text-amber-800">
-                Detection only — not yet humanized
+                Not yet humanized
               </p>
             </div>
             {isFree ? (
@@ -341,7 +340,7 @@ export default function HistoryPage() {
 
   const [isConfirming, setIsConfirming] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "humanized" | "detection">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "humanized">("all");
   const [toneFilter, setToneFilter] = useState("all");
   // On mobile: "list" shows the document list, "detail" shows the comparison panel
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
@@ -427,7 +426,7 @@ export default function HistoryPage() {
     const matchesSearch =
       doc.title?.toLowerCase().includes(q) ||
       doc.original_content.toLowerCase().includes(q);
-    const matchesStatus =
+            const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "humanized" ? Boolean(doc.humanized_content) : !doc.humanized_content);
     const matchesTone = toneFilter === "all" || (doc.tone_used || "casual") === toneFilter;
@@ -488,7 +487,6 @@ export default function HistoryPage() {
           >
             <option value="all">All statuses</option>
             <option value="humanized">Humanized</option>
-            <option value="detection">Detection only</option>
           </select>
           <select
             value={toneFilter}

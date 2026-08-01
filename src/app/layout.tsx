@@ -21,9 +21,9 @@ const dmSans = DM_Sans({
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    title: "Undetectable AI Detector & Humanizer",
+    title: "AI Humanizer — Rewrite AI Text Naturally",
     description:
-      "Detect AI-generated writing, humanize AI text, bypass GPTZero-style flags, and manage your writing workflow in one polished AI workspace.",
+      "Humanize AI text, bypass GPTZero-style flags, and manage your writing workflow in one polished AI workspace.",
     path: "/",
   });
 }

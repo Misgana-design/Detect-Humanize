@@ -13,10 +13,7 @@ export function useHistory() {
           `
           id,
           title,
-          created_at,
-          detection_results (
-            ai_score
-          )
+          created_at
         `,
         )
         .order("created_at", { ascending: false });
