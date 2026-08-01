@@ -20,13 +20,15 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const RESEND_API_KEY = process.env.RESEND_API_KEY!;
 const FROM = process.env.RESEND_FROM_EMAIL ?? "notifications@texthumanica.com";
-const SITE_URL = "https://texthumanica.com";
+const SITE_URL = "https://www.texthumanica.com/";
 
 const DAILY_LIMIT = 90; // Stay safely under Resend's 100/day free limit
 const LOG_FILE = path.join(import.meta.dirname, "sent-log.json");
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !RESEND_API_KEY) {
-  console.error("❌ Missing required env vars. Make sure .env.local is present.");
+  console.error(
+    "❌ Missing required env vars. Make sure .env.local is present.",
+  );
   process.exit(1);
 }
 
@@ -169,7 +171,9 @@ async function main() {
   const batch = remaining.slice(0, DAILY_LIMIT);
   const daysLeft = Math.ceil((remaining.length - batch.length) / DAILY_LIMIT);
 
-  console.log(`\n📤 Sending to ${batch.length} users today (${DAILY_LIMIT}/day limit)...`);
+  console.log(
+    `\n📤 Sending to ${batch.length} users today (${DAILY_LIMIT}/day limit)...`,
+  );
   if (daysLeft > 0) {
     console.log(`📅 After today, ~${daysLeft} more day(s) needed to finish.\n`);
   }
@@ -205,7 +209,9 @@ async function main() {
   const stillRemaining = allUsers.length - sentLog.size;
   console.log(`\n📬 Done for today. Sent: ${sent} | Failed: ${failed}`);
   if (stillRemaining > 0) {
-    console.log(`⏳ ${stillRemaining} users still pending. Run again tomorrow.`);
+    console.log(
+      `⏳ ${stillRemaining} users still pending. Run again tomorrow.`,
+    );
   } else {
     console.log("🎉 All users emailed!");
   }
