@@ -2,7 +2,7 @@ export const siteConfig = {
   name: "Text Humanica",
   shortName: "TextHumanica",
   description:
-    "Undetectable AI detector and humanizer for students, researchers, SEO writers, and teams who need natural, trustworthy text that can bypass GPTZero-style AI checks.",
+    "AI humanizer for students, researchers, SEO writers, and teams who need natural, trustworthy text that bypasses GPTZero-style AI checks.",
   url: "https://texthumanica.com",
   logo: "/logo-icon.png",
   favicon: "/humanica-icon.ico",
@@ -10,7 +10,6 @@ export const siteConfig = {
   twitterImage: "/twitter-image",
   locale: "en_US",
   keywords: [
-    "AI detector",
     "AI humanizer",
     "undetectable AI",
     "humanize AI text",
@@ -19,9 +18,9 @@ export const siteConfig = {
     "ChatGPT humanizer",
     "AI text humanizer",
     "text humanizer",
-    "AI content detector",
-    "GPTZero detector",
-    "Turnitin AI detector",
+    "AI detector bypass",
+    "GPTZero bypass",
+    "Turnitin AI detector bypass",
     "plagiarism-free rewrite",
     "student writing tools",
   ],
@@ -31,19 +30,13 @@ export const siteConfig = {
     contact: "/contact",
     terms: "/terms",
     privacy: "/privacy",
-    detector: "/detector",
-    humanizer: "/humanize",
+    humanizer: "/#humanizer",
     dashboard: "/dashboard",
     account: "/account",
   },
 };
 
 export const faqEntries = [
-  {
-    question: "How accurate is the AI detector?",
-    answer:
-      "Our detector uses Humanica Pro model with a multi-chunk linguistic forensic analysis. It evaluates text on burstiness, perplexity, sentence rhythm, and transitional phrase density — the same signals used by GPTZero and Originality.ai. Free plan users get the Flash model; paid plans use the Pro model for deeper analysis. In our internal testing, the Pro model achieves over 95% accuracy on unmodified AI-generated text.",
-  },
   {
     question: "Can I humanize ChatGPT content?",
     answer:
@@ -67,7 +60,7 @@ export const faqEntries = [
   {
     question: "What is the difference between the Free and Pro plans?",
     answer:
-      "The Free plan gives you 1,000 words per month with basic detection (Flash model) and single-pass humanization (Casual tone only). The Pro plan gives you 20,000 words per month, the full 3-pass Pro model pipeline, all tones, re-humanization, PDF export, Copy for Google Docs, and full document history with comparison mode.",
+      "The Free plan gives you 1,000 words per month with single-pass humanization (Casual tone only). The Pro plan gives you 20,000 words per month, the full 3-pass Pro model pipeline, all tones, re-humanization, PDF export, Copy for Google Docs, and full document history with comparison mode.",
   },
   {
     question: "Can I cancel my subscription at any time?",
@@ -106,7 +99,7 @@ export const testimonials = [
     title: "PhD Candidate, MIT",
     category: "Academic",
     quote:
-      "The detector notes are easy to understand, and the humanizer gives me a stronger first draft to refine. The Pro model output is genuinely impressive.",
+      "The humanizer gives me a stronger first draft to refine. The 3-pass Pro pipeline output is genuinely impressive — my writing sounds natural and varied.",
     rating: 5,
   },
   {
@@ -162,7 +155,7 @@ export const testimonials = [
     title: "Startup Founder",
     category: "Business",
     quote:
-      "I write all our investor updates and blog posts with AI assistance. Text Humanica makes sure they read as genuinely mine. The detector gives me confidence before I hit send.",
+      "I write all our investor updates and blog posts with AI assistance. Text Humanica makes sure they read as genuinely mine. The humanizer gives me confidence before I hit send.",
     rating: 5,
   },
 ];
