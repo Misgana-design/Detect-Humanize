@@ -42,7 +42,7 @@ async function SignupFormContent({
             Create your account
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Start detecting, humanizing, and saving your documents in one place.
+            Start humanizing and saving your documents in one place.
           </p>
         </div>
 

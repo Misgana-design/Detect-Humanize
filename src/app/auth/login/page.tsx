@@ -40,7 +40,7 @@ async function LoginFormContent({
             Welcome back
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Sign in to continue to your detector and humanizer workspace.
+            Sign in to continue to your humanizer workspace.
           </p>
         </div>
 
