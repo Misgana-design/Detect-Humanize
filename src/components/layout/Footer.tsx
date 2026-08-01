@@ -5,9 +5,7 @@ import { Brand } from "./Brand";
 
 const footerLinks = {
   Product: [
-    { href: "/detector",  label: "AI Detector"        },
-    { href: "/humanize",  label: "Humanizer"          },
-    { href: "/detectors", label: "Detectors We Bypass" },
+    { href: "/#humanizer", label: "Humanizer" },
     { href: "/pricing",   label: "Pricing"            },
   ],
   Resources: [
@@ -33,8 +31,8 @@ export default function Footer() {
           <div className="lg:col-span-1">
             <Brand size="lg" />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">
-              Detect AI content, humanize with confidence, and keep your writing
-              workflow clean end-to-end.
+              Humanize AI-assisted drafts with confidence, and keep your
+              writing workflow clean end-to-end.
             </p>
           </div>
 

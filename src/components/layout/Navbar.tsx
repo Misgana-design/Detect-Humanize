@@ -2,24 +2,41 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { BookOpenText, LayoutDashboard, Menu, ScanText, ShieldCheck, Sparkles, Tags, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { BookOpenText, LayoutDashboard, Menu, Sparkles, Tags, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ProfileMenu } from "@/components/auth/ProfileMenu";
 import { createClient } from "@/lib/supabase/client";
 import { Brand } from "./Brand";
 
 const navLinks = [
-  { name: "AI Detector", href: "/detect", icon: ScanText  },
-  { name: "Humanizer",   href: "/humanize", icon: Sparkles  },
-  { name: "Detectors",   href: "/detectors", icon: ShieldCheck },
-  { name: "Pricing",     href: "/pricing", icon: Tags },
-  { name: "Blog",        href: "/blog", icon: BookOpenText },
+  { name: "Humanizer", href: "/", icon: Sparkles, scrollTo: "humanizer" },
+  { name: "Pricing",   href: "/pricing", icon: Tags },
+  { name: "Blog",      href: "/blog",    icon: BookOpenText },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const supabase = createClient();
+
+  // Scroll to a section id, navigating to the homepage first if needed
+  const handleScrollTo = (sectionId: string) => {
+    const tryScroll = () => {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+
+    if (pathname !== "/") {
+      router.push("/");
+      // Wait for the page to render before scrolling
+      setTimeout(tryScroll, 400);
+    } else {
+      tryScroll();
+    }
+  };
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -113,8 +130,27 @@ export default function Navbar() {
           <div className="hidden items-center rounded-2xl border border-slate-200 bg-slate-50/80 p-1 lg:flex">
             {navLinks.map((link) => {
               const Icon = link.icon;
-              const isActive =
-                pathname === link.href || pathname.startsWith(link.href + "/");
+              const isActive = link.scrollTo
+                ? pathname === "/"
+                : pathname === link.href || pathname.startsWith(link.href + "/");
+
+              if (link.scrollTo) {
+                return (
+                  <button
+                    key={link.name}
+                    onClick={() => handleScrollTo(link.scrollTo!)}
+                    className={`relative inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors duration-150 hover:cursor-pointer ${
+                      isActive
+                        ? "bg-white text-indigo-600 shadow-sm"
+                        : "text-slate-600 hover:bg-white hover:text-slate-900"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {link.name}
+                  </button>
+                );
+              }
+
               return (
                 <Link
                   key={link.name}
@@ -223,7 +259,31 @@ export default function Navbar() {
               <ul className="space-y-0.5">
                 {navLinks.map((link) => {
                   const Icon = link.icon;
-                  const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+                  const isActive = link.scrollTo
+                    ? pathname === "/"
+                    : pathname === link.href || pathname.startsWith(link.href + "/");
+
+                  if (link.scrollTo) {
+                    return (
+                      <li key={link.name}>
+                        <button
+                          onClick={() => {
+                            setMobileOpen(false);
+                            handleScrollTo(link.scrollTo!);
+                          }}
+                          className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:cursor-pointer ${
+                            isActive
+                              ? "bg-indigo-50 text-indigo-600"
+                              : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {link.name}
+                        </button>
+                      </li>
+                    );
+                  }
+
                   return (
                     <li key={link.name}>
                       <Link
