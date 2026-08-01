@@ -1,36 +1,34 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight,
-  FileText, Lock, ScanText, ShieldCheck, Sparkles, Star,
-  TrendingUp, Upload, Users, Zap, Quote,
+  FileText, Lock, ShieldCheck, Sparkles, Star,
+  Upload, Users, Zap, Quote,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { TextUploadField } from "@/components/forms/TextUploadField";
+import { HumanizerWorkspace } from "@/components/humanize/HumanizerPageClient";
 import { siteConfig, testimonials, trustedByLogos } from "@/lib/site";
 
 const steps = [
   { n: "1", title: "Paste or upload", desc: "Drop in a draft or import a document in seconds." },
-  { n: "2", title: "Choose your tool", desc: "Run the AI detector or humanize directly  your call." },
+  { n: "2", title: "Humanize instantly", desc: "Rewrite AI-heavy phrasing with natural rhythm, tone, and variation." },
   { n: "3", title: "Refine and export", desc: "Save reports, compare versions, and keep your workflow moving." },
 ];
 
 const homeFaqEntries = [
-  { question: "How accurate is the AI detector?", answer: "Our detector uses Humanica Pro model with a multi-chunk linguistic forensic analysis. It scores text on burstiness, perplexity, and sentence rhythm  the same signals GPTZero and Originality.ai use. Paid plans use the Pro model for deeper analysis." },
   { question: "Will the humanized text pass GPTZero and Turnitin?", answer: "Our 3-stage humanizer is specifically engineered to maximize burstiness and perplexity  the two metrics AI detectors rely on. Pro and above plans use our full pipeline which has been tested against GPTZero, Originality.ai, and Turnitin. Results vary by text length and original content." },
   { question: "What file types can I upload?", answer: "TXT, MD, RTF, DOCX, and PDF files up to 10MB are supported. Text is extracted automatically and pre-filled into the editor." },
   { question: "Is my text stored or shared?", answer: "Your documents are stored in your private account and are never shared or used to train AI models. You can delete any document from your history at any time." },
-  { question: "Can I try it for free?", answer: "Yes. The free plan gives you 1,000 words per month with basic detection and humanization. No credit card required." },
+  { question: "Can I try it for free?", answer: "Yes. The free plan gives you 1,000 words per month with humanization included. No credit card required." },
 ];
 
 const stats = [
   { value: "400k+", label: "Active users", icon: <Users className="h-5 w-5" /> },
-  { value: "98.2%", label: "Detection accuracy", icon: <TrendingUp className="h-5 w-5" /> },
+  { value: "3-stage", label: "Humanizer pipeline", icon: <Sparkles className="h-5 w-5" /> },
   { value: "4.9 / 5", label: "Average rating", icon: <Star className="h-5 w-5 fill-current" /> },
   { value: "< 10s", label: "Average analysis time", icon: <Zap className="h-5 w-5" /> },
 ];
@@ -199,10 +197,10 @@ function HumanizerSimulation() {
         <p className="text-center text-xs text-slate-400">
           This is a static preview.{" "}
           <Link
-            href="/humanize"
+            href="#humanizer"
             className="font-semibold text-indigo-600 hover:underline"
           >
-            Try the real humanizer
+            Try the humanizer
           </Link>
         </p>
       </div>
@@ -217,8 +215,8 @@ function TestimonialsSection() {
   const [page, setPage] = useState(0);
   const CARDS_PER_PAGE = 3;
 
-  const categories = ["All", ...Array.from(new Set(testimonials.map((t) => (t as any).category)))];
-  const filtered = activeCategory === "All" ? testimonials : testimonials.filter((t) => (t as any).category === activeCategory);
+  const categories = ["All", ...Array.from(new Set(testimonials.map((t) => t.category)))];
+  const filtered = activeCategory === "All" ? testimonials : testimonials.filter((t) => t.category === activeCategory);
   const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE);
   const visible = filtered.slice(page * CARDS_PER_PAGE, page * CARDS_PER_PAGE + CARDS_PER_PAGE);
 
@@ -262,7 +260,7 @@ function TestimonialsSection() {
           <AnimatePresence mode="wait">
             {visible.map((t, i) => {
               const catColor =
-                CATEGORY_COLORS[(t as any).category] ??
+                CATEGORY_COLORS[t.category] ??
                 "bg-slate-100 text-slate-600";
               return (
                 <motion.article
@@ -308,7 +306,7 @@ function TestimonialsSection() {
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${catColor}`}
                     >
-                      {(t as any).category}
+                      {t.category}
                     </span>
                   </div>
                 </motion.article>
@@ -351,44 +349,20 @@ function TestimonialsSection() {
 //  Main component 
 
 export function HomePageClient() {
-  const router = useRouter();
-  const [text, setText] = useState("");
-
-  const goToDetector = () => {
-    const trimmed = text.trim();
-    if (trimmed) { try { sessionStorage.setItem("detector_prefill_text", trimmed); } catch { /* ignore */ } }
-    const shortEnough = trimmed.length < 1500;
-    const query = trimmed && shortEnough ? `?text=${encodeURIComponent(trimmed)}&fromHome=1` : trimmed ? "?fromHome=1" : "";
-    router.push(`/detector${query}`);
-  };
-
-  const goToHumanizer = () => {
-    const trimmed = text.trim();
-    if (trimmed) { try { sessionStorage.setItem("humanize_prefill_text", trimmed); } catch { /* ignore */ } }
-    const shortEnough = trimmed.length < 1500;
-    const query = trimmed && shortEnough ? `?text=${encodeURIComponent(trimmed)}&fromHome=1` : trimmed ? "?fromHome=1" : "";
-    router.push(`/humanize${query}`);
-  };
-
   return (
     <div className="relative overflow-hidden bg-slate-50">
       <div className="pointer-events-none absolute left-1/2 top-0 -z-10 h-176 w-full -translate-x-1/2 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.18),transparent_40%),linear-gradient(to_bottom,rgba(248,250,252,1),rgba(238,242,255,1))]" />
 
       {/* Announcement bar */}
       <div className="border-b border-indigo-100 bg-indigo-50 py-2.5 text-center text-xs font-medium text-indigo-700">
-        Now bypassing GPTZero, Originality.ai, Turnitin, and more{" "}
-        <Link
-          href="/detectors"
-          className="underline underline-offset-2 hover:text-indigo-900"
-        >
-          see all supported detectors
-        </Link>
+        Humanize AI-assisted drafts for GPTZero, Originality.ai, Turnitin, and
+        more.
       </div>
 
       {/* Hero */}
       <section className="pb-16 pt-16">
-        <div className="container mx-auto grid items-start gap-14 px-4 lg:grid-cols-[1.15fr_0.85fr]">
-          <div>
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
               <div className="flex -space-x-1.5">
                 {["MT", "DB", "LA"].map((initials) => (
@@ -415,7 +389,7 @@ export function HomePageClient() {
             </div>
 
             <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 md:text-[4.5rem] md:leading-[1.08]">
-              Detect AI text.{" "}
+              Humanize AI text.{" "}
               <span className="relative">
                 <span className="relative z-10 animate-pulse text-indigo-600">
                   Rewrite it
@@ -425,12 +399,13 @@ export function HomePageClient() {
               naturally.
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-              One workspace for students, researchers, SEO writers, and content
-              teams who need to submit and publish with confidence.
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+              A focused workspace for students, researchers, SEO writers, and
+              content teams who need AI-assisted drafts to sound natural,
+              polished, and publication-ready.
             </p>
 
-            <ul className="mt-6 space-y-2">
+            <ul className="mx-auto mt-6 grid max-w-2xl gap-2 text-left sm:grid-cols-3">
               {[
                 "No credit card required to start",
                 "Results in under 10 seconds",
@@ -446,12 +421,12 @@ export function HomePageClient() {
               ))}
             </ul>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/auth/signup">
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <a href="#humanizer">
                 <Button size="lg" className="gap-2 hover:cursor-pointer">
-                  Start for free <ArrowRight className="h-4 w-4" />
+                  Start humanizing <ArrowRight className="h-4 w-4" />
                 </Button>
-              </Link>
+              </a>
               <Link href={siteConfig.links.pricing}>
                 <Button
                   variant="secondary"
@@ -463,76 +438,29 @@ export function HomePageClient() {
               </Link>
             </div>
 
-            <p className="mt-4 flex items-center gap-1.5 text-xs text-slate-400">
+            <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-slate-400">
               <Lock className="h-3.5 w-3.5" />
               Your text is private and never used to train AI models.
             </p>
           </div>
-
-          {/* Hero card */}
-          <div className="rounded-4xl border border-white/70 bg-white/95 p-6 shadow-2xl shadow-indigo-100/60 backdrop-blur">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-slate-900">
-                  Try it now free
-                </p>
-                <p className="text-xs text-slate-500">
-                  Paste text or upload a file
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-                Live
-              </div>
-            </div>
-            <TextUploadField
-              value={text}
-              onChange={setText}
-              placeholder="Paste or drop your text here..."
-              minHeightClassName="min-h-[240px]"
-            />
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <button
-                onClick={goToDetector}
-                className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 hover:cursor-pointer"
-              >
-                <ScanText className="h-4 w-4" />
-                AI Detector
-              </button>
-              <button
-                onClick={goToHumanizer}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3.5 text-sm font-semibold text-white shadow-md shadow-indigo-100 transition hover:bg-indigo-700 hover:cursor-pointer"
-              >
-                <Sparkles className="h-4 w-4" />
-                Humanizer
-              </button>
-            </div>
-            <p className="mt-3 text-center text-xs text-slate-400">
-              Text is optional paste it on the next page too.
-            </p>
-            <div className="mt-5 border-t border-slate-100 pt-4">
-              <p className="mb-2.5 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Bypasses
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {[
-                  "GPTZero",
-                  "Turnitin",
-                  "Originality.ai",
-                  "Copyleaks",
-                  "Winston AI",
-                ].map((d) => (
-                  <span
-                    key={d}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-500"
-                  >
-                    {d}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
+      </section>
+
+      {/* Dedicated Humanizer */}
+      <section
+        id="humanizer"
+        className="relative overflow-hidden border-y border-indigo-100 bg-[linear-gradient(135deg,#f8fafc_0%,#eef2ff_42%,#f0fdfa_100%)] py-20"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(99,102,241,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(20,184,166,0.08)_1px,transparent_1px)] bg-size-[44px_44px]" />
+        <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.08 }}
+          transition={{ duration: 0.55, ease: "easeOut" }}
+          className="container relative mx-auto px-4"
+        >
+          <HumanizerWorkspace variant="home" />
+        </motion.div>
       </section>
 
       {/* Stats bar */}
@@ -634,8 +562,8 @@ export function HomePageClient() {
             {[
               {
                 icon: <ShieldCheck className="text-indigo-600" />,
-                title: "Advanced Detection",
-                desc: "Multi-layer forensic analysis surfaces AI patterns, suspicious phrasing, and sentence-level flags with a probability score.",
+                title: "Natural Rewrite",
+                desc: "Rebuild stiff AI phrasing into smoother, more varied writing while preserving your original meaning.",
               },
               {
                 icon: <Sparkles className="text-emerald-600" />,
@@ -660,7 +588,7 @@ export function HomePageClient() {
               {
                 icon: <Upload className="text-violet-600" />,
                 title: "Full History",
-                desc: "Every scan and rewrite is saved. Compare original vs humanized side-by-side and re-humanize any document.",
+                desc: "Every rewrite is saved. Compare original vs humanized text side-by-side and re-humanize any document.",
               },
             ].map((f, i) => (
               <motion.div
@@ -769,7 +697,7 @@ export function HomePageClient() {
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-base text-indigo-100">
               Join 400k students, researchers, writers, and content teams who
-              use Text Humanica to detect, rewrite, and publish without
+              use Text Humanica to rewrite, polish, and publish without
               second-guessing their work.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
