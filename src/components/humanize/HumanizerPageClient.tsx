@@ -441,31 +441,14 @@ export function HumanizerWorkspace({
                     {data.humanizedText}
                   </div>
 
-                  {/* Improvements — eye-catching cards */}
-                  {data.changes && data.changes.length > 0 && (
-                    <div className="mt-4 hidden">
-                      <div className="mb-2.5 flex items-center gap-2">
-                        <div className="h-px flex-1 bg-gradient-to-r from-emerald-200 to-transparent" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
-                          {data.changes.length} Improvements Made
-                        </p>
-                        <div className="h-px flex-1 bg-gradient-to-l from-emerald-200 to-transparent" />
-                      </div>
-                      <ul className="space-y-1.5">
-                        {data.changes.map((change, i) => (
-                          <li
-                            key={`${change}-${i}`}
-                            className="flex items-start gap-2.5 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-800"
-                          >
-                            <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500">
-                              <Check size={9} className="text-white" />
-                            </div>
-                            {change}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  {/* Humanized badge */}
+                  <div className="mt-4 flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                      <Check size={12} className="text-emerald-500" />
+                      Humanized
+                    </span>
+                    <span className="text-xs text-slate-400">{isFree ? "1-pass" : "3-pass"} pipeline</span>
+                  </div>
                   <div className="mt-4 hidden rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
@@ -529,31 +512,13 @@ export function HumanizerWorkspace({
           )}
           {data && !isPending && (
             <section className="space-y-4">
-              {data.changes && data.changes.length > 0 && (
-                <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
-                      {data.changes.length} Improvements Made
-                    </p>
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-700">
-                      {isFree ? "1-pass" : "3-pass"}
-                    </span>
-                  </div>
-                  <ul className="space-y-2">
-                    {data.changes.map((change, i) => (
-                      <li
-                        key={`${change}-${i}`}
-                        className="flex items-start gap-2.5 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-800"
-                      >
-                        <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500">
-                          <Check size={9} className="text-white" />
-                        </div>
-                        {change}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <div className="flex items-center gap-2 rounded-2xl border border-emerald-100 bg-white px-4 py-3 shadow-sm">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                  <Check size={12} className="text-emerald-500" />
+                  Humanized
+                </span>
+                <span className="text-xs text-slate-400">{isFree ? "1-pass" : "3-pass"} pipeline · ready to use</span>
+              </div>
             </section>
           )}
         </div>
