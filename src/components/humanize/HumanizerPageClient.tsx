@@ -250,7 +250,9 @@ export function HumanizerWorkspace({
         }`}
       >
         <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-700">Select Tone</span>
+          <span className="text-sm font-semibold text-slate-700">
+            Select Tone
+          </span>
           {isFree && (
             <a
               href="/pricing"
@@ -316,7 +318,11 @@ export function HumanizerWorkspace({
               ) : (
                 <Sparkles size={16} />
               )}
-              {isPending ? "Humanizing..." : documentId ? "Update & Humanize" : "Humanize Text"}
+              {isPending
+                ? "Humanizing..."
+                : documentId
+                  ? "Update & Humanize"
+                  : "Humanize Text"}
             </button>
           </div>
           {wordCount < 50 && (
@@ -326,14 +332,16 @@ export function HumanizerWorkspace({
           )}
           {error && (
             <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
-              <div className="h-1 w-full bg-gradient-to-r from-red-500 to-rose-500" />
+              <div className="h-1 w-full bg-linear-to-r from-red-500 to-rose-500" />
               <div className="p-5">
                 <div className="flex items-start gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100">
                     <AlertCircle size={18} className="text-red-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-slate-900">Humanization failed</p>
+                    <p className="font-bold text-slate-900">
+                      Humanization failed
+                    </p>
                     <p className="mt-1 text-sm leading-6 text-slate-600">
                       {error.message}
                     </p>
@@ -353,8 +361,9 @@ export function HumanizerWorkspace({
 
         {/* ── Output — fixed height, internal scroll ── */}
         <div className="flex flex-col space-y-4">
-          <div className={`flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${PANEL_HEIGHT}`}>
-
+          <div
+            className={`flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${PANEL_HEIGHT}`}
+          >
             {/* Empty state */}
             {!data && !isPending && (
               <div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center">
@@ -362,8 +371,12 @@ export function HumanizerWorkspace({
                   <Sparkles className="h-8 w-8 text-slate-200" />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-700">Ready to humanize</p>
-                  <p className="mt-1 text-sm text-slate-400">Paste at least 50 words and click Humanize Text.</p>
+                  <p className="font-semibold text-slate-700">
+                    Ready to humanize
+                  </p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Paste at least 50 words and click Humanize Text.
+                  </p>
                 </div>
               </div>
             )}
@@ -375,7 +388,9 @@ export function HumanizerWorkspace({
             {data && !isPending && (
               <div className="flex h-full min-h-0 flex-col">
                 {/* Result header */}
-                <div className={`shrink-0 border-b border-slate-100 px-4 py-3 ${data.fallback ? "bg-gradient-to-r from-amber-50 to-yellow-50" : "bg-gradient-to-r from-emerald-50 to-teal-50"}`}>
+                <div
+                  className={`shrink-0 border-b border-slate-100 px-4 py-3 ${data.fallback ? "bg-linear-to-r from-amber-50 to-yellow-50" : "bg-linear-to-r from-emerald-50 to-teal-50"}`}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {data.fallback ? (
@@ -383,25 +398,38 @@ export function HumanizerWorkspace({
                           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400 shadow-sm shadow-amber-200">
                             <AlertCircle size={13} className="text-white" />
                           </div>
-                          <span className="text-sm font-bold text-amber-800">Backup Humanizer Used</span>
+                          <span className="text-sm font-bold text-amber-800">
+                            Backup Humanizer Used
+                          </span>
                         </>
                       ) : (
                         <>
                           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 shadow-sm shadow-emerald-200">
                             <Sparkles size={13} className="text-white" />
                           </div>
-                          <span className="text-sm font-bold text-emerald-800">Humanized Output</span>
+                          <span className="text-sm font-bold text-emerald-800">
+                            Humanized Output
+                          </span>
                         </>
                       )}
                     </div>
-                    <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${data.fallback ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                    <div
+                      className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${data.fallback ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}
+                    >
                       <Zap size={10} className="fill-current" />
-                      {data.fallback ? "Local fallback" : isFree ? "1-pass" : "3-pass Pro"}
+                      {data.fallback
+                        ? "Local fallback"
+                        : isFree
+                          ? "1-pass"
+                          : "3-pass Pro"}
                     </div>
                   </div>
                   {data.fallback && (
                     <p className="mt-2 text-xs leading-5 text-amber-700">
-                      The AI service was temporarily unavailable. A basic rewrite was applied — transitions simplified and contractions added. For full humanization, try again in a moment.
+                      The AI service was temporarily unavailable. A basic
+                      rewrite was applied — transitions simplified and
+                      contractions added. For full humanization, try again in a
+                      moment.
                     </p>
                   )}
                 </div>
@@ -409,11 +437,11 @@ export function HumanizerWorkspace({
                 {/* Scrollable content */}
                 <div className="min-h-0 flex-1 overflow-y-auto p-4">
                   {/* Humanized text — eye-catching */}
-                  <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/30 p-4 text-sm leading-7 text-slate-800 shadow-sm ring-1 ring-emerald-100">
+                  <div className="rounded-xl border border-emerald-100 bg-linear-to-br from-white to-emerald-50/30 p-4 text-sm leading-7 text-slate-800 shadow-sm ring-1 ring-emerald-100">
                     {data.humanizedText}
                   </div>
 
-                  {/* Improvements — eye-catching cards */}
+                  {/* Improvements — eye-catching cards
                   {data.changes && data.changes.length > 0 && (
                     <div className="mt-4 hidden">
                       <div className="mb-2.5 flex items-center gap-2">
@@ -437,7 +465,7 @@ export function HumanizerWorkspace({
                         ))}
                       </ul>
                     </div>
-                  )}
+                  )} */}
                   <div className="mt-4 hidden rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
@@ -462,7 +490,15 @@ export function HumanizerWorkspace({
                         : "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
                     }`}
                   >
-                    {copied ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy Result</>}
+                    {copied ? (
+                      <>
+                        <Check size={16} /> Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={16} /> Copy Result
+                      </>
+                    )}
                   </button>
                   <div className="flex gap-2">
                     {(["txt", "md", "doc"] as const).map((format) => (
