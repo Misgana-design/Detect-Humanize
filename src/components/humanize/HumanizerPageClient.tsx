@@ -441,7 +441,7 @@ export function HumanizerWorkspace({
                     {data.humanizedText}
                   </div>
 
-                  {/* Improvements — eye-catching cards
+                  {/* Improvements — eye-catching cards */}
                   {data.changes && data.changes.length > 0 && (
                     <div className="mt-4 hidden">
                       <div className="mb-2.5 flex items-center gap-2">
@@ -465,7 +465,7 @@ export function HumanizerWorkspace({
                         ))}
                       </ul>
                     </div>
-                  )} */}
+                  )}
                   <div className="mt-4 hidden rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
