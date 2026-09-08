@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight,
@@ -349,6 +350,24 @@ function TestimonialsSection() {
 //  Main component 
 
 export function HomePageClient() {
+  const searchParams = useSearchParams();
+  const initialText = searchParams.get("text");
+  const initialDocumentId = searchParams.get("documentId");
+  const fromHistory = searchParams.get("fromHistory") === "1";
+
+  useEffect(() => {
+    if (!fromHistory) return;
+
+    const frame = requestAnimationFrame(() => {
+      document.getElementById("humanizer")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [fromHistory]);
+
   return (
     <div className="relative overflow-hidden bg-slate-50">
       <div className="pointer-events-none absolute left-1/2 top-0 -z-10 h-176 w-full -translate-x-1/2 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.18),transparent_40%),linear-gradient(to_bottom,rgba(248,250,252,1),rgba(238,242,255,1))]" />
@@ -459,7 +478,13 @@ export function HomePageClient() {
           transition={{ duration: 0.55, ease: "easeOut" }}
           className="container relative mx-auto px-4"
         >
-          <HumanizerWorkspace variant="home" />
+          <HumanizerWorkspace
+            initialText={initialText}
+            initialDocumentId={initialDocumentId}
+            fromExternal={fromHistory}
+            restoreDocumentIdFromSession={fromHistory}
+            variant="home"
+          />
         </motion.div>
       </section>
 
