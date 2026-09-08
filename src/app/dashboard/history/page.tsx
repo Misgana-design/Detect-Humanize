@@ -418,7 +418,7 @@ export default function HistoryPage() {
     if (doc.original_content.length < 1500) params.set("text", doc.original_content);
     params.set("documentId", doc.id);
     params.set("fromHistory", "1");
-    router.push(`/humanize?${params.toString()}`);
+    router.push(`/?${params.toString()}`);
   };
 
   const filteredDocuments = documents.filter((doc) => {
