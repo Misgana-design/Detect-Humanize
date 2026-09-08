@@ -116,7 +116,7 @@ export function HumanizerWorkspace({
         if (stored) { sessionStorage.removeItem("humanize_prefill_text"); return stored; }
       } catch { /* ignore */ }
     }
-    return initialText ? decodeURIComponent(initialText) : "";
+    return initialText ?? "";
   };
 
   const resolveInitialDocId = () => {
