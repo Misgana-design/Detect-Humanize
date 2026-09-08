@@ -52,7 +52,7 @@ export default function ContactPage() {
       />
       <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr]">
         {/* Left — info panel */}
-        <div className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-600 via-indigo-500 to-sky-500 p-8 text-white shadow-2xl shadow-indigo-200">
+        <div className="rounded-3xl border border-indigo-100 bg-linear-to-br from-indigo-600 via-indigo-500 to-sky-500 p-8 text-white shadow-2xl shadow-indigo-200">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-200">
             Support
           </p>
@@ -60,8 +60,8 @@ export default function ContactPage() {
             We&apos;re here to help
           </h1>
           <p className="mt-4 leading-7 text-indigo-100">
-            Whether you have a question about humanization quality, need help with
-            your subscription, or want to explore a partnership — send us a
+            Whether you have a question about humanization quality, need help
+            with your subscription, or want to explore a partnership — send us a
             message and we&apos;ll get back to you promptly.
           </p>
 
@@ -78,11 +78,15 @@ export default function ContactPage() {
               </li>
               <li className="flex items-center justify-between">
                 <span>Basic plan</span>
-                <span className="font-semibold text-white">Within 24 hours</span>
+                <span className="font-semibold text-white">
+                  Within 24 hours
+                </span>
               </li>
               <li className="flex items-center justify-between">
                 <span>Free plan</span>
-                <span className="font-semibold text-white">Within 48 hours</span>
+                <span className="font-semibold text-white">
+                  Within 48 hours
+                </span>
               </li>
             </ul>
           </div>
@@ -110,15 +114,16 @@ export default function ContactPage() {
             </p>
             <div className="grid grid-cols-2 gap-2">
               {supportTopics.map((topic) => (
-                <div
-                  key={topic.title}
-                  className="rounded-xl bg-white/10 p-3"
-                >
+                <div key={topic.title} className="rounded-xl bg-white/10 p-3">
                   <div className="mb-1 flex items-center gap-1.5">
                     {topic.icon}
-                    <span className="text-xs font-bold text-white">{topic.title}</span>
+                    <span className="text-xs font-bold text-white">
+                      {topic.title}
+                    </span>
                   </div>
-                  <p className="text-[11px] leading-relaxed text-indigo-200">{topic.desc}</p>
+                  <p className="text-[11px] leading-relaxed text-indigo-200">
+                    {topic.desc}
+                  </p>
                 </div>
               ))}
             </div>
