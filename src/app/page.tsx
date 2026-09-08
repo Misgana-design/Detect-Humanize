@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { HomePageClient } from "@/components/home/HomePageClient";
 import { StructuredData } from "@/components/seo/StructuredData";
@@ -30,7 +31,9 @@ export default function HomePage() {
         data={buildBreadcrumbJsonLd([{ name: "Home", path: "/" }])}
       />
       <StructuredData data={buildSoftwareApplicationJsonLd()} />
-      <HomePageClient />
+      <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+        <HomePageClient />
+      </Suspense>
     </>
   );
 }
