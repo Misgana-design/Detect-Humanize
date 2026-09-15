@@ -106,7 +106,7 @@ export default function PricingPage() {
         >
           <span className="flex items-center gap-1.5">
             <Users className="h-4 w-4 text-indigo-400" />
-            <strong className="text-slate-700">400k</strong> students &
+            <strong className="text-slate-700">400K+</strong> students &
             researchers
           </span>
           <span className="hidden h-4 w-px bg-slate-200 sm:block" />
