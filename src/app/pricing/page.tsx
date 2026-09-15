@@ -13,6 +13,7 @@ import {
   type BillingTier,
   type PricingToggleCadence,
 } from "@/lib/billing/plans";
+import PricingHeroBanner from "@/components/pricing/PricingHeroBanner";
 
 // ── Detailed comparison rows ────────────────────────────────────────────────
 type CompareRow = {
@@ -178,6 +179,9 @@ export default function PricingPage() {
             )}
           </div>
         </motion.div>
+
+        {/* ── Back-to-School sale banner ── */}
+        <PricingHeroBanner />
 
         {/* ── Pricing cards ── */}
         <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

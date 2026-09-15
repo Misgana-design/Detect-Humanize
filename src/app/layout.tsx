@@ -6,6 +6,7 @@ import Providers from "./providers";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { CookieBanner } from "@/components/layout/CookieBanner";
+import SaleBanner from "@/components/layout/SaleBanner";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { buildMetadata, buildOrganizationJsonLd } from "@/lib/seo";
 
@@ -39,6 +40,7 @@ export default function RootLayout({
         <StructuredData data={buildOrganizationJsonLd()} />
         <Providers>
           <div className="flex min-h-screen flex-col">
+            <SaleBanner />
             <Suspense fallback={<div className="h-16 w-full animate-pulse bg-gray-50" />}>
               <Navbar />
             </Suspense>
