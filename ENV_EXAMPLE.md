@@ -19,7 +19,7 @@ GEMINI_API_KEY=your_gemini_api_key
 # NEXT_PUBLIC_SITE_URL=https://your-production-domain.com
 # NEXT_PUBLIC_APP_URL=https://your-production-domain.com
 
-# Optional: Resend email notifications
+# Optional: Resend contact form notifications
 # RESEND_API_KEY=re_your_resend_api_key
 # RESEND_FROM_EMAIL=notifications@texthumanica.com
 # CONTACT_NOTIFY_EMAIL=your-personal-email@gmail.com   ← receives contact form submissions
