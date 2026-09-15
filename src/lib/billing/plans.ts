@@ -72,7 +72,7 @@ export const PLAN_DEFINITIONS: Record<BillingTier, PlanDefinition> = {
     cta: "Subscribe",
     href: "/signup",
     supportedCadences: ["monthly", "yearly"],
-    prices: { monthly: 4.99, yearly: 1.99 },
+    prices: { monthly: 5.99, yearly: 2.99 },
     maxWordsPerInput: 500,
     wordQuota: 4000,
     quotaPeriod: "month",
