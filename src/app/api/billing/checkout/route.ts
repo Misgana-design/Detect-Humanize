@@ -6,6 +6,7 @@ import {
 } from "@/lib/billing/plans";
 import { createPolarClient, getPolarProductId } from "@/lib/billing/polar";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isSaleActive, getPolarDiscountId } from "@/lib/sale";
 
 function getBaseUrl(request: Request) {
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
@@ -63,12 +64,17 @@ export async function POST(request: Request) {
     const baseUrl = getBaseUrl(request);
     const polar = createPolarClient();
 
+    // Apply the back-to-school discount automatically — no code entry needed.
+    const discountId =
+      isSaleActive() ? getPolarDiscountId() : undefined;
+
     const checkout = await polar.checkouts.create({
       products: [productId],
       externalCustomerId: user.id,
       customerEmail: user.email ?? undefined,
       successUrl: `${baseUrl}/dashboard`,
       returnUrl: `${baseUrl}/pricing`,
+      ...(discountId ? { discountId } : {}),
       metadata: {
         user_id: user.id,
         requested_tier: plan.tier,
