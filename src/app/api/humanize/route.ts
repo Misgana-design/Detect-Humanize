@@ -1,10 +1,9 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
-import { getPlanDefinition, getRemainingWords } from "@/lib/billing/plans";
+import { getPlanDefinition } from "@/lib/billing/plans";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { HumanizerService, Tone, HumanizerTier } from "@/services/ai/humanizerService";
 import { runWithPriority } from "@/lib/queue/humanizeQueue";
-import { sendHumanizationEmail } from "@/services/email/emailService";
 import { normalizeLanguage } from "@/lib/languages";
 
 export const maxDuration = 180;
@@ -229,20 +228,6 @@ export async function POST(req: Request) {
     }
 
     await Promise.all(parallelTasks);
-
-    // Send notification email (fire-and-forget — never block the response)
-    if (user.email) {
-      const remaining = getRemainingWords(plan.tier, wordsUsed + wordCount);
-      void sendHumanizationEmail({
-        to: user.email,
-        name: profile?.full_name || user.email.split("@")[0] || "there",
-        wordCount,
-        tone,
-        planName: plan.name,
-        wordsRemaining: remaining,
-        changes: aiResult.changes ?? [],
-      }).catch((err) => console.error("[email] Humanization email failed:", err));
-    }
 
     return NextResponse.json({ ...aiResult, cached: isCached });
   } catch (error: unknown) {
