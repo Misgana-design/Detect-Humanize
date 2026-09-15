@@ -169,7 +169,7 @@ export default function PricingPage() {
                 Yearly
               </span>
               <span className="animate-pulse rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
-                Save up to 53%
+                Save up to 50%
               </span>
             </div>
             {billingView === "yearly" && (
