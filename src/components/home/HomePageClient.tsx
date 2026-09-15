@@ -394,7 +394,7 @@ export function HomePageClient() {
                 ))}
               </div>
               <span className="text-xs font-medium text-slate-600">
-                <strong className="text-slate-900">400k</strong> writers,
+                <strong className="text-slate-900">400K+</strong> writers,
                 students & professionals
               </span>
               <div className="flex gap-0.5">
@@ -746,7 +746,7 @@ export function HomePageClient() {
               Submit with confidence.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-base text-indigo-100">
-              Join 400k students, researchers, writers, and content teams who
+              Join 400K+ students, researchers, writers, and content teams who
               use Text Humanica to rewrite, polish, and publish without
               second-guessing their work.
             </p>
