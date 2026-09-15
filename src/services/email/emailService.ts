@@ -1,7 +1,6 @@
 /**
  * Email notification service using Resend.
- * Sends premium, psychologically-optimized transactional emails
- * after detection and humanization actions.
+ * Sends contact form notifications.
  */
 
 import { Resend } from "resend";
@@ -9,26 +8,6 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM_EMAIL || "notifications@texthumanica.com";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://texthumanica.com";
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function scoreColor(score: number): string {
-  if (score >= 75) return "#ef4444"; // red
-  if (score >= 45) return "#f59e0b"; // amber
-  return "#10b981"; // green
-}
-
-function scoreLabel(score: number): string {
-  if (score >= 75) return "Likely AI-Generated";
-  if (score >= 45) return "Mixed Signals";
-  return "Likely Human-Written";
-}
-
-function scoreEmoji(score: number): string {
-  if (score >= 75) return "🔴";
-  if (score >= 45) return "🟡";
-  return "🟢";
-}
 
 function baseTemplate(content: string): string {
   return `<!DOCTYPE html>
@@ -80,108 +59,6 @@ function baseTemplate(content: string): string {
   </table>
 </body>
 </html>`;
-}
-
-// ── Humanization email ────────────────────────────────────────────────────────
-
-interface HumanizationEmailPayload {
-  to: string;
-  name: string;
-  wordCount: number;
-  tone: string;
-  planName: string;
-  wordsRemaining: number | null;
-  changes: string[];
-}
-
-export async function sendHumanizationEmail(payload: HumanizationEmailPayload): Promise<void> {
-  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.startsWith("re_your")) return;
-
-  const { to, name, wordCount, tone, planName, wordsRemaining, changes } = payload;
-  const firstName = name.split(" ")[0] || "there";
-  const toneLabel = tone.charAt(0).toUpperCase() + tone.slice(1);
-
-  const content = `
-    <!-- Top accent -->
-    <div style="height:4px;background:linear-gradient(90deg,#10b981,#0ea5e9);"></div>
-
-    <div style="padding:40px 40px 32px;">
-      <p style="margin:0 0 8px;font-size:14px;color:#10b981;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">Humanization Complete</p>
-      <h1 style="margin:0 0 16px;font-size:26px;font-weight:800;color:#0f172a;line-height:1.2;">
-        Your content is ready, ${firstName} ✅
-      </h1>
-
-      <!-- Hero message -->
-      <div style="background:linear-gradient(135deg,#ecfdf5,#f0fdf4);border:1px solid #bbf7d0;border-radius:16px;padding:20px 24px;margin-bottom:24px;">
-        <p style="margin:0;font-size:16px;font-weight:700;color:#065f46;">
-          🎯 Your content is now engineered to bypass GPTZero, Turnitin, and Originality.ai.
-        </p>
-        <p style="margin:8px 0 0;font-size:14px;color:#047857;line-height:1.6;">
-          ${wordCount.toLocaleString()} words rewritten in <strong>${toneLabel}</strong> tone using our ${planName === "Free" ? "single-pass Flash" : "3-pass Pro model"} pipeline. Submit with confidence.
-        </p>
-      </div>
-
-      <!-- What changed -->
-      ${changes.length > 0 ? `
-      <div style="margin-bottom:24px;">
-        <p style="margin:0 0 12px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Improvements made</p>
-        <ul style="margin:0;padding:0;list-style:none;">
-          ${changes.slice(0, 3).map(change => `
-          <li style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
-            <span style="color:#10b981;font-size:16px;line-height:1.4;">✓</span>
-            <span style="font-size:14px;color:#475569;line-height:1.5;">${change}</span>
-          </li>
-          `).join("")}
-        </ul>
-      </div>
-      ` : ""}
-
-      <!-- CTA -->
-      <a href="${SITE_URL}/dashboard/history" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;margin-bottom:24px;">
-        View in history →
-      </a>
-
-      <!-- Stats row -->
-      <div style="border-top:1px solid #f1f5f9;padding-top:20px;display:flex;gap:16px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:100px;">
-          <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Words Processed</p>
-          <p style="margin:4px 0 0;font-size:14px;font-weight:600;color:#0f172a;">${wordCount.toLocaleString()}</p>
-        </div>
-        <div style="flex:1;min-width:100px;">
-          <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Tone</p>
-          <p style="margin:4px 0 0;font-size:14px;font-weight:600;color:#0f172a;">${toneLabel}</p>
-        </div>
-        ${wordsRemaining !== null ? `
-        <div style="flex:1;min-width:100px;">
-          <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Words Left</p>
-          <p style="margin:4px 0 0;font-size:14px;font-weight:600;color:${wordsRemaining < 200 ? "#ef4444" : "#0f172a"};">${wordsRemaining.toLocaleString()}</p>
-        </div>
-        ` : `
-        <div style="flex:1;min-width:100px;">
-          <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94a3b8;">Words Left</p>
-          <p style="margin:4px 0 0;font-size:14px;font-weight:600;color:#10b981;">No word cap</p>
-        </div>
-        `}
-      </div>
-
-      ${wordsRemaining !== null && wordsRemaining < 500 ? `
-      <!-- Low quota nudge -->
-      <div style="margin-top:20px;background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:14px 18px;">
-        <p style="margin:0;font-size:13px;color:#92400e;">
-          ⚡ You have <strong>${wordsRemaining.toLocaleString()} words</strong> left this month.
-          <a href="${SITE_URL}/pricing" style="color:#d97706;font-weight:700;text-decoration:none;">Upgrade your plan →</a>
-        </p>
-      </div>
-      ` : ""}
-    </div>
-  `;
-
-  await resend.emails.send({
-    from: `Text Humanica <${FROM}>`,
-    to,
-    subject: `✅ Your humanized content is ready — ${wordCount.toLocaleString()} words processed`,
-    html: baseTemplate(content),
-  });
 }
 
 // ── Contact notification email ────────────────────────────────────────────────
