@@ -200,13 +200,27 @@ function buildEmail(firstName: string): string {
 async function main() {
   console.log("📋 Fetching users from Supabase...");
 
-  const { data: profiles, error } = await supabase
-    .from("profiles")
-    .select("email, full_name");
+  // Supabase's PostgREST caps results at 1,000 rows by default.
+  // Paginate in batches of 1,000 until we've fetched everything.
+  const PAGE_SIZE = 1000;
+  const profiles: { email: string; full_name: string | null }[] = [];
+  let from = 0;
 
-  if (error) {
-    console.error("❌ Failed to fetch profiles:", error.message);
-    process.exit(1);
+  while (true) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("email, full_name")
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) {
+      console.error("❌ Failed to fetch profiles:", error.message);
+      process.exit(1);
+    }
+
+    if (!data || data.length === 0) break;
+    profiles.push(...(data as { email: string; full_name: string | null }[]));
+    if (data.length < PAGE_SIZE) break; // last page
+    from += PAGE_SIZE;
   }
 
   const allUsers = (profiles ?? []).filter((p) => p.email) as {
