@@ -22,7 +22,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY!;
 const FROM = process.env.RESEND_FROM_EMAIL ?? "notifications@texthumanica.com";
 const SITE_URL = "https://www.texthumanica.com/";
 
-const DAILY_LIMIT = 90; // Stay safely under Resend's 100/day free limit
+const DAILY_LIMIT = 97; // Stay safely under Resend's 100/day free limit
 const LOG_FILE = path.join(import.meta.dirname, "sent-log.json");
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !RESEND_API_KEY) {
