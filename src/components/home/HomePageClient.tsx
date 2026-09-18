@@ -12,6 +12,7 @@ import {
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { HumanizerWorkspace } from "@/components/humanize/HumanizerPageClient";
+import { PricingCardsSection } from "@/components/pricing/PricingCardsSection";
 import { siteConfig, testimonials, trustedByLogos } from "@/lib/site";
 
 const steps = [
@@ -692,6 +693,13 @@ export function HomePageClient() {
 
       {/* Testimonials */}
       <TestimonialsSection />
+
+      {/* Pricing */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <PricingCardsSection headingLevel="h2" />
+        </div>
+      </section>
 
       {/* FAQ */}
       <section className="bg-white py-20">
