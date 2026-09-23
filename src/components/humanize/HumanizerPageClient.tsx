@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertCircle, Check, Copy, Download, FileText, Lock, Sparkles, Zap } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, Copy, Download, FileText, Lock, Sparkles, Zap } from "lucide-react";
 import { TextUploadField } from "@/components/forms/TextUploadField";
 import { useHumanizer } from "@/hooks/useHumanizer";
 import { useProfile } from "@/hooks/userProfile";
@@ -11,6 +11,8 @@ import { exportHtmlDoc, exportMarkdown, exportPlainText } from "@/lib/clientExpo
 import { type SupportedLanguage } from "@/lib/languages";
 import { LanguageSelect } from "@/components/workspace/LanguageSelect";
 import { QuotaInline } from "@/components/workspace/QuotaInline";
+import { ExtraCreditsCard } from "@/components/billing/ExtraCreditsCard";
+import { getPlanDefinition } from "@/lib/billing/plans";
 
 type ToneOption = { value: Tone; label: string; proOnly: boolean };
 
@@ -146,6 +148,9 @@ export function HumanizerWorkspace({
 
   const isFree = !profile?.subscription_tier || profile.subscription_tier === "free";
   const isToneLocked = (t: ToneOption) => isFree && t.proOnly;
+  const plan = getPlanDefinition(profile?.subscription_tier);
+  const quotaExceeded =
+    !!error && (error as { status?: number }).status === 402;
 
   const handleCopy = async () => {
     if (data?.humanizedText) {
@@ -330,7 +335,47 @@ export function HumanizerWorkspace({
               Minimum 50 words required before humanization.
             </p>
           )}
-          {error && (
+          {quotaExceeded && isFree && (
+            <div className="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">
+              <div className="h-1 w-full bg-linear-to-r from-amber-500 to-orange-500" />
+              <div className="p-5">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+                    <Lock size={18} className="text-amber-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-slate-900">
+                      You&apos;ve used your free quota
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      The Free plan includes 1,000 words per month. Upgrade to
+                      Basic, Pro, or Ultra for up to 45,000 words per month and
+                      unlock every tone.
+                    </p>
+                    <a
+                      href="/pricing"
+                      className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-700"
+                    >
+                      Upgrade plan <ArrowRight size={12} />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {quotaExceeded && !isFree && (
+            <div className="space-y-3">
+              <div className="rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-700">
+                You&apos;ve hit your {plan.name} quota for this period. Top up
+                below to keep going — extra credits apply on top of your plan
+                and never expire.
+              </div>
+              <ExtraCreditsCard />
+            </div>
+          )}
+
+          {error && !quotaExceeded && (
             <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
               <div className="h-1 w-full bg-linear-to-r from-red-500 to-rose-500" />
               <div className="p-5">
