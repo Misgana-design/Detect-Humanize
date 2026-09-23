@@ -248,11 +248,13 @@ export function getQuotaLabel(plan: PlanDefinition): string {
 export function getRemainingWords(
   tier: string | null | undefined,
   wordsUsed: number | null | undefined,
+  extraCredits?: number | null,
 ): number | null {
   const plan = getPlanDefinition(tier);
 
   if (plan.wordQuota === null) return null;
-  return Math.max(plan.wordQuota - (wordsUsed ?? 0), 0);
+  const quotaRemaining = Math.max(plan.wordQuota - (wordsUsed ?? 0), 0);
+  return quotaRemaining + (extraCredits ?? 0);
 }
 
 export function getPlanStartingCredits(tier?: string | null): number | null {
