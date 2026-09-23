@@ -103,6 +103,7 @@ export async function POST(req: Request) {
 
     const plan = getPlanDefinition(profile?.subscription_tier);
     const wordsUsed = profile?.words_used ?? 0;
+    const extraCredits = profile?.extra_credits ?? 0;
 
     if (plan.maxWordsPerInput !== null && wordCount > plan.maxWordsPerInput) {
       return NextResponse.json(
@@ -113,10 +114,22 @@ export async function POST(req: Request) {
       );
     }
 
-    if (plan.wordQuota !== null && wordsUsed + wordCount > plan.wordQuota) {
+    // Total available = remaining monthly/weekly quota + purchased extra credits.
+    const quotaRemaining =
+      plan.wordQuota === null ? null : Math.max(plan.wordQuota - wordsUsed, 0);
+    const availableWords =
+      quotaRemaining === null ? null : quotaRemaining + extraCredits;
+
+    if (availableWords !== null && wordCount > availableWords) {
       return NextResponse.json(
         {
-          error: `${plan.name} includes ${plan.wordQuota.toLocaleString()} words per ${plan.quotaPeriod}.`,
+          error: `${plan.name} includes ${plan.wordQuota?.toLocaleString() ?? "..."} words per ${
+            plan.quotaPeriod === "week" ? "week" : "month"
+          }.${
+            extraCredits > 0
+              ? ` You have ${extraCredits.toLocaleString()} bonus credit${extraCredits === 1 ? "" : "s"} remaining.`
+              : " You've used your quota for this period."
+          }`,
         },
         { status: 402 },
       );
