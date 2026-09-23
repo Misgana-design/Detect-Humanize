@@ -112,16 +112,23 @@ export async function POST(req: Request) {
       }
     }
 
-    const wordsUsed = profile?.words_used ?? 0;
+const wordsUsed = profile?.words_used ?? 0;
+    const extraCredits = profile?.extra_credits ?? 0;
     const totalWords = items.reduce(
       (sum, item) => sum + item.text.trim().split(/\s+/).length,
       0,
     );
 
-    if (plan.wordQuota !== null && wordsUsed + totalWords > plan.wordQuota) {
+    // Total available = remaining monthly/weekly quota + purchased extra credits.
+    const quotaRemaining =
+      plan.wordQuota === null ? null : Math.max(plan.wordQuota - wordsUsed, 0);
+    const availableWords =
+      quotaRemaining === null ? null : quotaRemaining + extraCredits;
+
+    if (availableWords !== null && totalWords > availableWords) {
       return NextResponse.json(
         {
-          error: `This batch would exceed your ${plan.wordQuota.toLocaleString()} word quota for ${plan.name}.`,
+          error: `This batch would exceed your available word budget${extraCredits > 0 ? ` (including ${extraCredits.toLocaleString()} bonus credit${extraCredits === 1 ? "" : "s"})` : ""}.`,
         },
         { status: 402 },
       );
