@@ -8,9 +8,10 @@ export interface UserProfile {
   avatarUrl?: string | null;
   phone?: string | null;
   bio?: string | null;
-  role?: "user" | "admin" | "moderator" | null;
+role?: "user" | "admin" | "moderator" | null;
   isActive?: boolean;
   credits?: number | null;
+  extra_credits?: number | null;
   api_usage_count?: number | null;
   words_used?: number | null;
   subscription_tier?:
