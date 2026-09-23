@@ -31,10 +31,18 @@ export function useHumanizer() {
         throw new Error("Please sign in to humanize text.");
       }
 
-      return readJsonResponse<HumanizerResult & { cached?: boolean; fallback?: boolean }>(
-        res,
-        "Failed to humanize text. Please try again.",
-      );
+      try {
+        return await readJsonResponse<
+          HumanizerResult & { cached?: boolean; fallback?: boolean }
+        >(res, "Failed to humanize text. Please try again.");
+      } catch (error) {
+        // Surface the HTTP status (e.g. 402 → quota exceeded) so the UI can
+        // render the proper upgrade / buy-credits block.
+        if (error instanceof Error) {
+          Object.assign(error, { status: res.status });
+        }
+        throw error;
+      }
     },
     // This is the "magic" part for your History page
     onSuccess: () => {
