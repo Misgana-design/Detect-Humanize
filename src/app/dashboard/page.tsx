@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Clock, FileText, Lock, Sparkles, Zap } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { ExtraCreditsCard } from "@/components/billing/ExtraCreditsCard";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/hooks/userProfile";
 
@@ -132,6 +133,13 @@ function DashboardContent() {
         <StatCard label="Recent Activity"  value="Active"               icon={Clock} />
         <StatCard label="Humanizer Status" value="Ready"                icon={Zap} />
       </div>
+
+      {/* Extra credits — paid subscribers only */}
+      {!isFree && (
+        <div id="extra-credits">
+          <ExtraCreditsCard />
+        </div>
+      )}
 
       {/* Recent documents */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
