@@ -14,9 +14,20 @@ const productMap: PolarProductMap = {
   pro_weekly_weekly: process.env.POLAR_PRODUCT_PRO_WEEKLY_ID       || "",
 };
 
+// One-time credit packs (single-purchase Polar products).
+const creditsProductMap: Record<string, string> = {
+  "5000":  process.env.POLAR_CREDITS_5000_PRODUCT_ID  || "",
+  "20000": process.env.POLAR_CREDITS_20000_PRODUCT_ID || "",
+  "45000": process.env.POLAR_CREDITS_45000_PRODUCT_ID || "",
+};
+
 export function getPolarProductId(tier: BillingTier, cadence: BillingCadence) {
   const key = `${tier}_${cadence}`;
   return productMap[key] || null;
+}
+
+export function getCreditPackProductId(packKey: string) {
+  return creditsProductMap[packKey] || null;
 }
 
 export function createPolarClient() {
