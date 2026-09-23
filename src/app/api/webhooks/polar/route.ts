@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { validateEvent, WebhookVerificationError } from "@polar-sh/sdk/webhooks";
 import { createServiceSupabaseClient } from "@/lib/supabase/server";
-import { createPolarClient } from "@/lib/billing/polar";
+import { createPolarClient, getCreditPackProductId } from "@/lib/billing/polar";
+import { CREDIT_PACKS } from "@/lib/billing/credits";
 import {
   getPlanStartingCredits,
   type BillingCadence,
@@ -34,6 +35,17 @@ function buildProductMap(): Map<string, PlanMapping> {
 }
 
 const PRODUCT_MAP = buildProductMap();
+
+// One-time credit pack products. A product may be configured with any of the
+// pack sizes — we look the words up dynamically so the webhook stays in sync
+// with the pack definitions.
+function getCreditWordsForProduct(productId: string | null): number | null {
+  if (!productId) return null;
+  for (const pack of CREDIT_PACKS) {
+    if (getCreditPackProductId(pack.key) === productId) return pack.words;
+  }
+  return null;
+}
 
 function asRecord(value: unknown): PolarRecord | null {
   return value && typeof value === "object" ? (value as PolarRecord) : null;
@@ -226,6 +238,63 @@ async function revokeRefundedSubscription(data: ReturnType<typeof normalizePolar
   }
 }
 
+/**
+ * Credits a one-time credit pack purchase. Returns `true` when the product
+ * was a credit pack (even if crediting failed), `false` when it was unrelated
+ * to credit packs so callers can fall back to default handling.
+ */
+async function applyCreditPack(data: ReturnType<typeof normalizePolarData>): Promise<boolean> {
+  const creditWords = getCreditWordsForProduct(data.productId);
+  if (creditWords === null) return false;
+
+  const userId = await resolveUserId(data);
+  if (!userId) {
+    throw new Error(
+      `Could not resolve Supabase user for credit pack: Polar customer=${data.polarCustomerId ?? "missing"} externalCustomer=${data.externalCustomerId ?? "missing"} email=${data.email ?? "missing"}`,
+    );
+  }
+
+  const supabase = createServiceSupabaseClient();
+  const { data: balance, error } = await supabase.rpc("add_extra_credits", {
+    user_id_input: userId,
+    words_to_add: creditWords,
+  });
+  if (error) throw new Error(`Credit pack add failed: ${error.message}`);
+
+  console.log(
+    `[polar-webhook] Credited ${creditWords} extra credits to ${userId} — new balance ${balance}`,
+  );
+  return true;
+}
+
+/**
+ * Reverses a refunded credit pack purchase (deducts the words). Returns
+ * `true` when the refunded order was a credit pack.
+ */
+async function refundCreditPack(data: ReturnType<typeof normalizePolarData>): Promise<boolean> {
+  const creditWords = getCreditWordsForProduct(data.productId);
+  if (creditWords === null) return false;
+
+  const userId = await resolveUserId(data);
+  if (!userId) {
+    throw new Error(
+      `Could not resolve Supabase user for credit pack refund: Polar customer=${data.polarCustomerId ?? "missing"} externalCustomer=${data.externalCustomerId ?? "missing"} email=${data.email ?? "missing"}`,
+    );
+  }
+
+  const supabase = createServiceSupabaseClient();
+  const { data: balance, error } = await supabase.rpc("subtract_extra_credits", {
+    user_id_input: userId,
+    words_to_remove: creditWords,
+  });
+  if (error) throw new Error(`Credit pack refund failed: ${error.message}`);
+
+  console.log(
+    `[polar-webhook] Refunded credit pack — removed ${creditWords} extra credits from ${userId} — new balance ${balance}`,
+  );
+  return true;
+}
+
 export async function GET() {
   return NextResponse.json({
     ok: true,
@@ -263,7 +332,16 @@ export async function POST(request: Request) {
 
     switch (event.type) {
       case "order.paid":
-        if (data.subscriptionId) await activatePlan(data);
+        if (data.subscriptionId) {
+          await activatePlan(data);
+        } else {
+          const isCreditPack = await applyCreditPack(data);
+          if (!isCreditPack) {
+            console.log(
+              `[polar-webhook] One-time order without a subscription or known credit pack — ignored. Product=${data.productId ?? "missing"}`,
+            );
+          }
+        }
         break;
 
       case "subscription.created":
@@ -288,8 +366,11 @@ export async function POST(request: Request) {
         break;
 
       case "order.refunded":
-        await downgradeToFree(data, "order refund");
-        await revokeRefundedSubscription(data);
+        const wasCreditPack = await refundCreditPack(data);
+        if (!wasCreditPack) {
+          await downgradeToFree(data, "order refund");
+          await revokeRefundedSubscription(data);
+        }
         break;
 
       default:
