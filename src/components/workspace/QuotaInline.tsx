@@ -11,7 +11,12 @@ type Props = {
 export function QuotaInline({ profile, wordCount }: Props) {
   const plan = getPlanDefinition(profile?.subscription_tier);
   const wordsUsed = profile?.words_used ?? 0;
-  const remaining = getRemainingWords(profile?.subscription_tier, wordsUsed);
+  const extraCredits = profile?.extra_credits ?? 0;
+  const remaining = getRemainingWords(
+    profile?.subscription_tier,
+    wordsUsed,
+    extraCredits,
+  );
   const exceedsInput = plan.maxWordsPerInput !== null && wordCount > plan.maxWordsPerInput;
   const exceedsQuota = remaining !== null && wordCount > remaining;
 
@@ -30,6 +35,12 @@ export function QuotaInline({ profile, wordCount }: Props) {
             {remaining.toLocaleString()} left
           </span>
         </>
+      )}
+      {extraCredits > 0 && (
+        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-600">
+          +{extraCredits.toLocaleString()} bonus credit
+          {extraCredits === 1 ? "" : "s"}
+        </span>
       )}
       {(exceedsInput || exceedsQuota) && (
         <span className="rounded-full bg-rose-50 px-2 py-0.5 text-rose-600">
