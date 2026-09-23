@@ -43,7 +43,8 @@ export function Sidebar() {
 
   const plan          = getPlanDefinition(profile?.subscription_tier);
   const wordsUsed     = profile?.words_used || 0;
-  const remainingWords = getRemainingWords(profile?.subscription_tier, wordsUsed);
+  const remainingWords = getRemainingWords(profile?.subscription_tier, wordsUsed, profile?.extra_credits);
+  const isPaid        = !!profile?.subscription_tier && profile.subscription_tier !== "free";
   const percentage    = plan.wordQuota === null
     ? 0
     : Math.min((wordsUsed / plan.wordQuota) * 100, 100);
@@ -108,11 +109,19 @@ export function Sidebar() {
             style={{ width: `${percentage}%` }}
           />
         </div>
-        <Link href="/pricing">
-          <button className="mt-4 w-full cursor-pointer rounded-lg border border-slate-200 bg-white py-2 text-[11px] font-bold text-slate-700 transition-colors hover:bg-slate-100">
-            VIEW PLANS
-          </button>
-        </Link>
+        {isPaid ? (
+          <Link href="/dashboard#extra-credits">
+            <button className="mt-4 w-full cursor-pointer rounded-lg border border-indigo-200 bg-white py-2 text-[11px] font-bold text-indigo-600 transition-colors hover:bg-indigo-50">
+              BUY CREDITS
+            </button>
+          </Link>
+        ) : (
+          <Link href="/pricing">
+            <button className="mt-4 w-full cursor-pointer rounded-lg border border-slate-200 bg-white py-2 text-[11px] font-bold text-slate-700 transition-colors hover:bg-slate-100">
+              VIEW PLANS
+            </button>
+          </Link>
+        )}
       </div>
     </div>
   );
