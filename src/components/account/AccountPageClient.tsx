@@ -30,6 +30,7 @@ type AccountProfile = {
   subscription_tier: string | null;
   billing_cadence: string | null;
   words_used: number | null;
+  extra_credits: number | null;
   polar_subscription_id: string | null;
 };
 
@@ -79,7 +80,7 @@ export function AccountPageClient() {
       if (!user) return null;
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email, avatar_url, subscription_tier, billing_cadence, words_used, polar_subscription_id")
+        .select("id, full_name, email, avatar_url, subscription_tier, billing_cadence, words_used, extra_credits, polar_subscription_id")
         .eq("id", user.id)
         .single();
       if (error) throw error;
@@ -204,7 +205,8 @@ export function AccountPageClient() {
 
   const plan = getPlanDefinition(account?.subscription_tier);
   const wordsUsed = account?.words_used ?? 0;
-  const remaining = getRemainingWords(account?.subscription_tier, wordsUsed);
+  const remaining = getRemainingWords(account?.subscription_tier, wordsUsed, account?.extra_credits);
+  const extraCredits = account?.extra_credits ?? 0;
   const usagePct = plan.wordQuota
     ? Math.min((wordsUsed / plan.wordQuota) * 100, 100)
     : 0;
@@ -316,6 +318,15 @@ export function AccountPageClient() {
                 </p>
               )}
             </div>
+
+            {extraCredits > 0 && (
+              <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
+                <span className="font-bold">
+                  {extraCredits.toLocaleString()} bonus credits
+                </span>{" "}
+                — one-time purchases, never expire.
+              </div>
+            )}
 
             {plan.tier === "free" ? (
               <Link
