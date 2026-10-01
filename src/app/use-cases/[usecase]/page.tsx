@@ -82,7 +82,10 @@ export default async function UseCasePage({ params }: Props) {
               key={point}
               className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4"
             >
-              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-indigo-400" />
+              <CheckCircle2
+                size={16}
+                className="mt-0.5 shrink-0 text-indigo-400"
+              />
               <p className="text-sm text-slate-700">{point}</p>
             </div>
           ))}
@@ -102,14 +105,16 @@ export default async function UseCasePage({ params }: Props) {
             >
               <div className="mb-3 text-2xl">{benefit.icon}</div>
               <h3 className="font-bold text-slate-900">{benefit.title}</h3>
-              <p className="mt-2 text-sm leading-7 text-slate-600">{benefit.body}</p>
+              <p className="mt-2 text-sm leading-7 text-slate-600">
+                {benefit.body}
+              </p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Testimonial */}
-      <section className="mb-12 rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-sky-50 p-8">
+      <section className="mb-12 rounded-3xl border border-indigo-100 bg-linear-to-br from-indigo-50 to-sky-50 p-8">
         <div className="flex gap-0.5 text-amber-400">
           {[...Array(5)].map((_, i) => (
             <Star key={i} size={16} className="fill-current" />
@@ -119,13 +124,15 @@ export default async function UseCasePage({ params }: Props) {
           &ldquo;{page.testimonial.quote}&rdquo;
         </blockquote>
         <div className="mt-4">
-          <p className="text-sm font-bold text-slate-900">{page.testimonial.name}</p>
+          <p className="text-sm font-bold text-slate-900">
+            {page.testimonial.name}
+          </p>
           <p className="text-xs text-slate-500">{page.testimonial.role}</p>
         </div>
       </section>
 
       {/* CTA */}
-      <div className="rounded-3xl bg-gradient-to-br from-indigo-600 to-sky-500 px-8 py-10 text-center shadow-xl shadow-indigo-100">
+      <div className="rounded-3xl bg-linear-to-br from-indigo-600 to-sky-500 px-8 py-10 text-center shadow-xl shadow-indigo-100">
         <h2 className="text-xl font-extrabold text-white sm:text-2xl">
           Start free — no credit card required
         </h2>
@@ -142,7 +149,9 @@ export default async function UseCasePage({ params }: Props) {
 
       {/* Other use cases */}
       <div className="mt-12">
-        <h2 className="mb-5 text-lg font-bold text-slate-900">Other use cases</h2>
+        <h2 className="mb-5 text-lg font-bold text-slate-900">
+          Other use cases
+        </h2>
         <div className="grid gap-3 sm:grid-cols-2">
           {useCasePages
             .filter((u) => u.slug !== page.slug)
@@ -153,12 +162,17 @@ export default async function UseCasePage({ params }: Props) {
                 className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-indigo-200 hover:shadow-sm"
               >
                 <div>
-                  <span className="text-xs font-bold text-slate-400">{u.audience}</span>
+                  <span className="text-xs font-bold text-slate-400">
+                    {u.audience}
+                  </span>
                   <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-600">
                     {u.title}
                   </p>
                 </div>
-                <ArrowRight size={14} className="text-slate-400 group-hover:text-indigo-500" />
+                <ArrowRight
+                  size={14}
+                  className="text-slate-400 group-hover:text-indigo-500"
+                />
               </Link>
             ))}
         </div>
