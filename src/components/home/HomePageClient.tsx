@@ -573,6 +573,39 @@ export function HomePageClient() {
         </div>
       </section>
 
+      {/* YouTube Video Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto mb-10 max-w-2xl text-center">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
+              ✦ Watch &amp; Learn
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+              See Text <span className="brand-wordmark-accent">Humanica</span>{" "}
+              in action
+            </h2>
+            <p className="mt-3 text-base text-slate-500">
+              Here&apos;s why everyone is talking about Detect-AI Pro — watch
+              the video and see how we rank among the best humanizers out there.
+            </p>
+          </div>
+          <div className="mx-auto max-w-3xl rounded-2xl overflow-hidden border-4 border-gray-900 shadow-2xl">
+            <div
+              className="relative w-full"
+              style={{ paddingBottom: "56.25%" }}
+            >
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src="https://www.youtube.com/embed/XLPvWUgDj8g"
+                title="Detect-AI Pro demo video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section className="bg-slate-50 py-20">
         <div className="container mx-auto px-4">
