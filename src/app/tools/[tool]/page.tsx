@@ -62,7 +62,9 @@ export default async function ToolComparisonPage({ params }: Props) {
         <p className="text-xs font-bold uppercase tracking-widest text-indigo-500">
           Our verdict
         </p>
-        <p className="mt-2 text-base font-semibold text-slate-800">{page.verdict}</p>
+        <p className="mt-2 text-base font-semibold text-slate-800">
+          {page.verdict}
+        </p>
       </div>
 
       {/* Comparison table */}
@@ -94,7 +96,10 @@ export default async function ToolComparisonPage({ params }: Props) {
           </p>
           <ul className="space-y-2">
             {page.pros.map((pro) => (
-              <li key={pro} className="flex items-start gap-2 text-sm text-slate-700">
+              <li
+                key={pro}
+                className="flex items-start gap-2 text-sm text-slate-700"
+              >
                 <Check size={14} className="mt-0.5 shrink-0 text-emerald-500" />
                 {pro}
               </li>
@@ -107,7 +112,10 @@ export default async function ToolComparisonPage({ params }: Props) {
           </p>
           <ul className="space-y-2">
             {page.cons.map((con) => (
-              <li key={con} className="flex items-start gap-2 text-sm text-slate-600">
+              <li
+                key={con}
+                className="flex items-start gap-2 text-sm text-slate-600"
+              >
                 <X size={14} className="mt-0.5 shrink-0 text-slate-400" />
                 {con}
               </li>
@@ -117,7 +125,7 @@ export default async function ToolComparisonPage({ params }: Props) {
       </div>
 
       {/* CTA */}
-      <div className="rounded-3xl bg-gradient-to-br from-indigo-600 to-sky-500 px-8 py-10 text-center shadow-xl shadow-indigo-100">
+      <div className="rounded-3xl bg-linear-to-br from-indigo-600 to-sky-500 px-8 py-10 text-center shadow-xl shadow-indigo-100">
         <h2 className="text-xl font-extrabold text-white sm:text-2xl">
           Try Text Humanica free — no credit card required
         </h2>
@@ -142,7 +150,9 @@ export default async function ToolComparisonPage({ params }: Props) {
 
       {/* Related comparisons */}
       <div className="mt-12">
-        <h2 className="mb-5 text-lg font-bold text-slate-900">More comparisons</h2>
+        <h2 className="mb-5 text-lg font-bold text-slate-900">
+          More comparisons
+        </h2>
         <div className="grid gap-3 sm:grid-cols-2">
           {toolPages
             .filter((t) => t.slug !== page.slug)
@@ -156,7 +166,10 @@ export default async function ToolComparisonPage({ params }: Props) {
                 <span className="text-sm font-semibold text-slate-800 group-hover:text-indigo-600">
                   vs {t.competitor}
                 </span>
-                <ArrowRight size={14} className="text-slate-400 group-hover:text-indigo-500" />
+                <ArrowRight
+                  size={14}
+                  className="text-slate-400 group-hover:text-indigo-500"
+                />
               </Link>
             ))}
         </div>
