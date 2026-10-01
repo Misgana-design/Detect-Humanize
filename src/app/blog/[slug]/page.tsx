@@ -64,13 +64,17 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <StructuredData data={buildBreadcrumbJsonLd([
-        { name: "Home", path: "/" },
-        { name: "Blog", path: "/blog" },
-        { name: post.title, path: `/blog/${post.slug}` },
-      ])} />
+      <StructuredData
+        data={buildBreadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Blog", path: "/blog" },
+          { name: post.title, path: `/blog/${post.slug}` },
+        ])}
+      />
       <StructuredData data={buildArticleJsonLd(post)} />
-      {post.faq.length > 0 && <StructuredData data={buildFaqJsonLd(post.faq)} />}
+      {post.faq.length > 0 && (
+        <StructuredData data={buildFaqJsonLd(post.faq)} />
+      )}
 
       {/* Back link */}
       <Link
@@ -87,13 +91,20 @@ export default async function BlogPostPage({ params }: Props) {
           <span>{post.readingTime} min read</span>
           <span>·</span>
           <time dateTime={post.updatedAt}>
-            Updated {new Date(post.updatedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            Updated{" "}
+            {new Date(post.updatedAt).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
           </time>
         </div>
         <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">
           {post.title}
         </h1>
-        <p className="mt-4 text-lg leading-relaxed text-slate-500">{post.description}</p>
+        <p className="mt-4 text-lg leading-relaxed text-slate-500">
+          {post.description}
+        </p>
       </header>
 
       {/* Article body */}
@@ -121,7 +132,9 @@ export default async function BlogPostPage({ params }: Props) {
                 className="rounded-2xl border border-slate-100 bg-slate-50 p-5"
               >
                 <h3 className="font-bold text-slate-900">{item.q}</h3>
-                <p className="mt-2 text-sm leading-7 text-slate-600">{item.a}</p>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  {item.a}
+                </p>
               </div>
             ))}
           </div>
@@ -129,7 +142,7 @@ export default async function BlogPostPage({ params }: Props) {
       )}
 
       {/* CTA */}
-      <div className="mt-12 rounded-3xl bg-gradient-to-br from-indigo-600 to-sky-500 px-8 py-10 text-center shadow-xl shadow-indigo-100">
+      <div className="mt-12 rounded-3xl bg-linear-to-br from-indigo-600 to-sky-500 px-8 py-10 text-center shadow-xl shadow-indigo-100">
         <h2 className="text-xl font-extrabold text-white sm:text-2xl">
           Try Text Humanica free
         </h2>
@@ -147,7 +160,9 @@ export default async function BlogPostPage({ params }: Props) {
       {/* Related articles */}
       {related.length > 0 && (
         <div className="mt-14">
-          <h2 className="mb-6 text-xl font-bold text-slate-900">Related articles</h2>
+          <h2 className="mb-6 text-xl font-bold text-slate-900">
+            Related articles
+          </h2>
           <div className="grid gap-4 sm:grid-cols-3">
             {related.map((r) => (
               <Link
@@ -158,7 +173,9 @@ export default async function BlogPostPage({ params }: Props) {
                 <p className="text-sm font-semibold leading-snug text-slate-900 group-hover:text-indigo-600">
                   {r.title}
                 </p>
-                <p className="mt-1 text-xs text-slate-400">{r.readingTime} min read</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  {r.readingTime} min read
+                </p>
               </Link>
             ))}
           </div>
