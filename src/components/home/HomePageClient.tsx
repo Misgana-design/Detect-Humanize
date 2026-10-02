@@ -585,7 +585,7 @@ export function HomePageClient() {
               in action
             </h2>
             <p className="mt-3 text-base text-slate-500">
-              Here&apos;s why everyone is talking about Detect-AI Pro — watch
+              Here&apos;s why everyone is talking about Text Humanica — watch
               the video and see how we rank among the best humanizers out there.
             </p>
           </div>
