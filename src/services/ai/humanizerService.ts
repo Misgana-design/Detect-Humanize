@@ -36,10 +36,6 @@ const AI_RETRY_ATTEMPTS = 3;
 // sentence-length targets in the prompt, so temperature no longer needs to do it.
 const REWRITE_TEMPERATURE = 0.65;
 
-// FIX 1: Timeout for the fidelity-auditor call (a short compare-and-list task,
-// so it gets a much tighter budget than the rewrite calls).
-const VERIFY_TIMEOUT_MS = 30_000;
-
 // ── System instruction (processed once, not repeated per request) ────────────
 // Kept separate from the user prompt to reduce per-request token count.
 //
@@ -139,21 +135,13 @@ SENTENCE STRUCTURE (required):
 
 // ── Prompt builders ───────────────────────────────────────────────────────────
 
-function buildFreePrompt(
-  text: string,
-  tone: Tone,
-  language: SupportedLanguage,
-  fidelityFeedback?: string,
-): string {
+function buildFreePrompt(text: string, tone: Tone, language: SupportedLanguage): string {
   const languageLabel = getLanguagePromptLabel(language);
-  // FIX 1: `fidelityFeedback` is only present on the regeneration call — it
-  // carries the auditor's list of meaning-altered claims to fix.
-  const feedbackBlock = fidelityFeedback ? `\n${fidelityFeedback}\n` : "";
   return `You are an expert writing editor. Rewrite the text below so it reads as genuinely human-written while preserving all original meaning.
 
 TONE: ${TONE_RULES[tone]}
 LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
-${UNIVERSAL_BYPASS_RULES}${feedbackBlock}
+${UNIVERSAL_BYPASS_RULES}
 Text:
 """
 ${text}
@@ -163,21 +151,13 @@ Return ONLY valid JSON: { "humanizedText": "...", "changes": ["change 1", "chang
 The changes array must describe what you changed and why it reduces AI detection probability.`;
 }
 
-function buildPaidPrompt(
-  text: string,
-  tone: Tone,
-  language: SupportedLanguage,
-  fidelityFeedback?: string,
-): string {
+function buildPaidPrompt(text: string, tone: Tone, language: SupportedLanguage): string {
   const languageLabel = getLanguagePromptLabel(language);
-  // FIX 1: `fidelityFeedback` is only present on the regeneration call — it
-  // carries the auditor's list of meaning-altered claims to fix.
-  const feedbackBlock = fidelityFeedback ? `\n${fidelityFeedback}\n` : "";
   return `You are an expert writing editor and AI detection specialist. Rewrite the text below so it is completely undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
 
 TONE: ${TONE_RULES[tone]}
 LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
-${UNIVERSAL_BYPASS_RULES}${feedbackBlock}
+${UNIVERSAL_BYPASS_RULES}
 Work through three mental passes before writing your output:
 PASS 1 — DIAGNOSE: Identify every AI signal: forbidden transitions, uniform sentence length, predictable word choices, missing human markers.
 PASS 2 — REWRITE: Fix every issue. Apply all bypass targets above.
@@ -283,154 +263,6 @@ function parseHumanizerResult(raw: string | undefined, label: string): Humanizer
   }
 }
 
-// ── FIX 1: Fidelity verification pass ────────────────────────────────────────
-// Before this fix, the only output check was "is it valid JSON?" — meaning
-// drift was completely silent. Now a second LLM call audits the rewrite
-// against the original and lists every claim that was added, dropped, or
-// altered. If it finds any, the rewrite is regenerated once with that
-// feedback and audited again. The audit is deliberately non-fatal: if the
-// auditor call itself fails (timeout, 429, etc.) we return the unverified
-// rewrite instead of throwing away a good result — or worse, falling back
-// to the regex-only local humanizer.
-
-interface FidelityReport {
-  ok: boolean;
-  issues: string[];
-}
-
-function buildVerificationPrompt(original: string, rewrite: string): string {
-  return `You are a factual-fidelity auditor. Compare the ORIGINAL text with the REWRITE and flag ONLY meaning differences:
-- facts, statistics, numbers, names, or dates that were added but are not in the original
-- facts, statistics, numbers, names, or dates that were dropped, weakened, or blurred
-- changes to causality, certainty, scope, negation, or attribution
-
-IGNORE differences in wording, sentence structure, tone, register, and rhythm — a rewrite that says the same thing differently is acceptable and is NOT an issue.
-
-Return ONLY valid JSON: { "ok": true|false, "issues": ["...", "..."] }
-Set ok to true only when issues is empty.
-
-ORIGINAL:
-"""
-${original}
-"""
-
-REWRITE:
-"""
-${rewrite}
-"""`;
-}
-
-function parseFidelityReport(raw: string | undefined, label: string): FidelityReport {
-  if (!raw) throw new Error(`Empty response from AI model during ${label}.`);
-
-  let cleaned = raw.trim();
-  if (cleaned.startsWith("```json")) {
-    cleaned = cleaned.replace(/^```json\s*/, "").replace(/\s*```$/, "");
-  } else if (cleaned.startsWith("```")) {
-    cleaned = cleaned.replace(/^```\s*/, "").replace(/\s*```$/, "");
-  }
-
-  const match = cleaned.match(/\{[\s\S]*\}/);
-  if (match) cleaned = match[0];
-
-  try {
-    const parsed = JSON.parse(cleaned) as Partial<FidelityReport>;
-    if (typeof parsed.ok !== "boolean" || !Array.isArray(parsed.issues)) {
-      throw new Error("Response did not match the expected shape.");
-    }
-    return {
-      ok: parsed.ok,
-      issues: parsed.issues.filter((i): i is string => typeof i === "string"),
-    };
-  } catch (error) {
-    throw new Error(`AI returned invalid JSON during ${label}: ${errorMessage(error)}`);
-  }
-}
-
-async function verifyFidelity(
-  original: string,
-  rewrite: string,
-  model: string,
-  label: string,
-): Promise<FidelityReport> {
-  const response = await generateContentWithRetry(
-    {
-      model,
-      contents: buildVerificationPrompt(original, rewrite),
-      // Low temperature: this is a judgment task, not a generation task —
-      // we want a consistent verdict, not creative interpretation.
-      config: { temperature: 0.2 },
-    },
-    `${label} fidelity audit`,
-    VERIFY_TIMEOUT_MS,
-  );
-  return parseFidelityReport(response.text, `${label} fidelity audit`);
-}
-
-interface VerifyAndRepairConfig {
-  originalText: string;
-  firstResult: HumanizerResult;
-  model: string;
-  temperature: number;
-  timeoutMs: number;
-  label: string;
-  buildPrompt: (fidelityFeedback?: string) => string;
-}
-
-async function verifyAndRepair(cfg: VerifyAndRepairConfig): Promise<HumanizerResult> {
-  let report: FidelityReport;
-  try {
-    report = await verifyFidelity(cfg.originalText, cfg.firstResult.humanizedText, cfg.model, cfg.label);
-  } catch (error) {
-    // Auditor unavailable — keep the rewrite rather than failing the request.
-    console.warn(`[humanizer] Fidelity audit skipped (${cfg.label}):`, errorMessage(error));
-    return cfg.firstResult;
-  }
-
-  if (report.ok) return cfg.firstResult;
-
-  console.warn(`[humanizer] Fidelity audit failed (${cfg.label}):`, report.issues);
-
-  // FIX 1: one regeneration pass, with the auditor's issues pasted into the
-  // prompt so the model fixes specific problems instead of guessing.
-  const feedback =
-    "A fidelity auditor compared your previous rewrite with the original and found these meaning errors. " +
-    "Fix ALL of them while keeping every humanization rule:\n" +
-    report.issues.map((issue) => `- ${issue}`).join("\n");
-
-  let retried: HumanizerResult;
-  try {
-    const response = await generateContentWithRetry(
-      {
-        model: cfg.model,
-        contents: cfg.buildPrompt(feedback),
-        config: {
-          systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
-          temperature: cfg.temperature,
-        },
-      },
-      `${cfg.label} fidelity retry`,
-      cfg.timeoutMs,
-    );
-    retried = parseHumanizerResult(response.text, `${cfg.label} fidelity retry`);
-  } catch (error) {
-    // Retry failed — the first rewrite is still the best we have.
-    console.warn(`[humanizer] Fidelity retry failed, keeping first rewrite:`, errorMessage(error));
-    return cfg.firstResult;
-  }
-
-  try {
-    const secondReport = await verifyFidelity(cfg.originalText, retried.humanizedText, cfg.model, cfg.label);
-    if (!secondReport.ok) {
-      console.warn(`[humanizer] Fidelity issues remain after retry (${cfg.label}):`, secondReport.issues);
-    }
-  } catch (error) {
-    console.warn(`[humanizer] Second fidelity audit skipped (${cfg.label}):`, errorMessage(error));
-  }
-
-  return retried;
-}
-
 function applyLocalFallback(text: string, tone: Tone): HumanizerResult {
   const replacements: Array<[RegExp, string]> = [
     [/\bMoreover,\s*/gi,                  "Also, "],
@@ -495,8 +327,6 @@ export class HumanizerService {
     const model = tier === "free" || tier === "basic" ? MODELS.FREE : MODELS.PRO;
 
     // Single call — no chunking. Chunking re-enabled once Pro model latency is resolved.
-    // FIX 1: each tier below now follows its rewrite call with a fidelity audit
-    // (a second, short LLM call) and at most one regeneration if the audit fails.
     return tier === "free"
       ? this.rewriteFree(text, tone, model, language)
       : this.rewritePaid(text, tone, model, language);
@@ -510,15 +340,11 @@ export class HumanizerService {
     model: string,
     language: SupportedLanguage,
   ): Promise<HumanizerResult> {
-    const buildPrompt = (fidelityFeedback?: string) =>
-      buildFreePrompt(text, tone, language, fidelityFeedback);
-
-    let result: HumanizerResult;
     try {
       const response = await generateContentWithRetry(
         {
           model,
-          contents: buildPrompt(),
+          contents: buildFreePrompt(text, tone, language),
           config: {
             systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
             // FIX 3: was 0.8 — see REWRITE_TEMPERATURE for why.
@@ -528,22 +354,11 @@ export class HumanizerService {
         "free-tier rewrite",
         TIMEOUT_FREE_MS,
       );
-      result = parseHumanizerResult(response.text, "free-tier rewrite");
+      return parseHumanizerResult(response.text, "free-tier rewrite");
     } catch (error) {
       console.error("[humanizer] Free tier failed, using local fallback:", errorMessage(error));
       return applyLocalFallback(text, tone);
     }
-
-    // FIX 1: audit the rewrite against the original; regenerate once if drifted.
-    return verifyAndRepair({
-      originalText: text,
-      firstResult: result,
-      model,
-      temperature: REWRITE_TEMPERATURE,
-      timeoutMs: TIMEOUT_FREE_MS,
-      label: "free-tier rewrite",
-      buildPrompt,
-    });
   }
 
   // ── Paid tier: Pro model, 3-pass prompt, 90s timeout ────────────────────────
@@ -556,15 +371,11 @@ export class HumanizerService {
     model: string,
     language: SupportedLanguage,
   ): Promise<HumanizerResult> {
-    const buildPrompt = (fidelityFeedback?: string) =>
-      buildPaidPrompt(text, tone, language, fidelityFeedback);
-
-    let result: HumanizerResult;
     try {
       const response = await generateContentWithRetry(
         {
           model,
-          contents: buildPrompt(),
+          contents: buildPaidPrompt(text, tone, language),
           config: {
             systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
             // FIX 3: was 0.92 — see REWRITE_TEMPERATURE for why.
@@ -574,21 +385,10 @@ export class HumanizerService {
         "paid-tier rewrite",
         TIMEOUT_PAID_MS,
       );
-      result = parseHumanizerResult(response.text, "paid-tier rewrite");
+      return parseHumanizerResult(response.text, "paid-tier rewrite");
     } catch (error) {
       console.error("[humanizer] Paid tier failed, using local fallback:", errorMessage(error));
       return applyLocalFallback(text, tone);
     }
-
-    // FIX 1: audit the rewrite against the original; regenerate once if drifted.
-    return verifyAndRepair({
-      originalText: text,
-      firstResult: result,
-      model,
-      temperature: REWRITE_TEMPERATURE,
-      timeoutMs: TIMEOUT_PAID_MS,
-      label: "paid-tier rewrite",
-      buildPrompt,
-    });
   }
 }
