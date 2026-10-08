@@ -21,12 +21,12 @@ export interface HumanizerResult {
 type GenerateContentParams = Parameters<typeof client.models.generateContent>[0];
 
 // ── Per-call timeouts (ms) ────────────────────────────────────────────────────
-// Free:  75s  (Flash model, single-pass prompt)
-// Paid:  175s (Pro model, 3-pass prompt — Vercel allows 300s on Pro plan)
-const TIMEOUT_FREE_MS  = 75_000;
-const TIMEOUT_PAID_MS  = 175_000;
+// Free:  30s  (2.5-flash, no thinking)
+// Paid:  60s  (2.5-pro, no thinking)
+const TIMEOUT_FREE_MS  = 30_000;
+const TIMEOUT_PAID_MS  = 60_000;
 
-const AI_RETRY_ATTEMPTS = 3;
+const AI_RETRY_ATTEMPTS = 2;
 
 // ── FIX 3: Rewrite temperature lowered (0.8 free / 0.92 paid → 0.65) ─────────
 // The old comment claimed high temperature "maximises perplexity and burstiness",
@@ -347,8 +347,9 @@ export class HumanizerService {
           contents: buildFreePrompt(text, tone, language),
           config: {
             systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
-            // FIX 3: was 0.8 — see REWRITE_TEMPERATURE for why.
             temperature: REWRITE_TEMPERATURE,
+            // Disable dynamic thinking — not needed for rewriting, adds latency.
+            thinkingConfig: { thinkingBudget: 0 },
           },
         },
         "free-tier rewrite",
@@ -378,8 +379,9 @@ export class HumanizerService {
           contents: buildPaidPrompt(text, tone, language),
           config: {
             systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
-            // FIX 3: was 0.92 — see REWRITE_TEMPERATURE for why.
             temperature: REWRITE_TEMPERATURE,
+            // Disable dynamic thinking — not needed for rewriting, adds latency.
+            thinkingConfig: { thinkingBudget: 0 },
           },
         },
         "paid-tier rewrite",
