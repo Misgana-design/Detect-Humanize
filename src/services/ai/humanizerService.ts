@@ -24,7 +24,7 @@ type GenerateContentParams = Parameters<typeof client.models.generateContent>[0]
 // Free:  30s  (2.5-flash, no thinking)
 // Paid:  60s  (2.5-pro, no thinking)
 const TIMEOUT_FREE_MS  = 30_000;
-const TIMEOUT_PAID_MS  = 60_000;
+const TIMEOUT_PAID_MS  = 90_000;
 
 const AI_RETRY_ATTEMPTS = 2;
 
