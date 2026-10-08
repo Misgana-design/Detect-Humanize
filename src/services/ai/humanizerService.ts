@@ -380,8 +380,9 @@ export class HumanizerService {
           config: {
             systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
             temperature: REWRITE_TEMPERATURE,
-            // Disable dynamic thinking — not needed for rewriting, adds latency.
-            thinkingConfig: { thinkingBudget: 0 },
+            // gemini-2.5-pro does not support thinkingBudget: 0 — thinking
+            // cannot be fully disabled on Pro; leave thinkingConfig unset
+            // so the model uses its default (low) thinking budget.
           },
         },
         "paid-tier rewrite",
