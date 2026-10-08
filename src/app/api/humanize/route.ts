@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { getPlanDefinition } from "@/lib/billing/plans";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { HumanizerService, Tone, HumanizerTier } from "@/services/ai/humanizerService";
-import { runWithPriority } from "@/lib/queue/humanizeQueue";
 import { normalizeLanguage } from "@/lib/languages";
 
 export const maxDuration = 180;
@@ -153,7 +152,6 @@ export async function POST(req: Request) {
       aiResult = cachedResult.result;
       isCached = true;
     } else {
-      // Determine humanizer tier: free → 1-stage Flash, basic → 3-stage Flash, pro+ → 3-stage Pro
       const humanizerTier: HumanizerTier =
         plan.tier === "free"
           ? "free"
@@ -161,13 +159,8 @@ export async function POST(req: Request) {
             ? "basic"
             : "pro";
 
-      const isPaid = plan.tier !== "free";
-
-      // Run through priority queue — paid users get high priority
-      aiResult = await runWithPriority(
-        () => HumanizerService.rewrite(text, tone, humanizerTier, language),
-        isPaid,
-      );
+      // Call the humanizer directly — priority queue is a no-op on serverless
+      aiResult = await HumanizerService.rewrite(text, tone, humanizerTier, language);
     }
 
     if (
