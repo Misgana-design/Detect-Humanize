@@ -91,6 +91,6 @@ export const humanizerSchema = {
 };
 
 export const MODELS = {
-  FREE: "gemini-3-flash-preview",
-  PRO: "gemini-3.1-pro-preview",
+  FREE: "gemini-2.5-flash",
+  PRO:  "gemini-2.5-pro",
 };
