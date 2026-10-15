@@ -8,8 +8,7 @@ export type Tone =
   | "formal"
   | "creative"
   | "friendly"
-  | "storytelling"
-  | "gptzero";
+  | "storytelling";
 
 export type HumanizerTier = "free" | "basic" | "pro";
 
@@ -65,65 +64,8 @@ REQUIRED — always include:
 - At least one paragraph that is a single sentence
 - Mid-sentence dash — used to break predictable syntax`;
 
-// ── GPTZero tone: full standalone prompt ─────────────────────────────────────
-// This tone uses its own complete system instruction and prompt builders that
-// replace the standard bypass rules entirely. The prompt is designed to
-// reproduce the writing style of an intermediate English learner, targeting
-// GPTZero's detection patterns specifically.
-
-// GPTZERO_SYSTEM_INSTRUCTION: establishes the persona and the single overriding
-// content-preservation rule. No output-format instruction here — that lives in
-// the user prompt (buildGPTZeroPrompt) to avoid the contradiction where the old
-// system instruction said "return only rewritten text" while the user prompt
-// demanded JSON.
-const GPTZERO_SYSTEM_INSTRUCTION = `You are a writing-style transformation specialist. Rewrite formal or polished text into the style of an explanatory essay written by an intermediate English learner — conversational, clear, and moderately imperfect.
-
-CONTENT PRESERVATION (overrides everything else): Keep every fact, argument, statistic, name, and example exactly as stated. Change how things are said, never what is said. Do not add or remove information. Maintain approximately the same length.
-
-The imperfections below are intentional. Do not auto-correct them.`;
-
-// GPTZERO_TRANSFORMATION_RULES: injected into the user prompt so the model sees
-// the concrete mechanics right before the text it must rewrite.
-const GPTZERO_TRANSFORMATION_RULES = `
-VOICE: Conversational and explanatory, not academic. Use "we," "our society," "us" where natural. Serious and informative — not casual, slangy, or incoherent.
-
-VOCABULARY: Swap formal expressions for common ones (e.g. "utilize" → "use", "consequently" → "as a result", "profoundly transformed" → "significantly changed", "individuals" → "people"). Occasionally leave a word that is slightly awkward, redundant, or less idiomatic than a native writer would choose. Mix natural and imperfect expressions — do not make every sentence awkward.
-
-SENTENCE STRUCTURE: Mix short and moderately long sentences. Break up long academic sentences. Allow some repetition in sentence openings (e.g. several sentences beginning with "Technology" or "It"). Never make every sentence the same length or structure. Vary sentence rhythm to raise burstiness — this is important for bypassing GPTZero.
-
-TRANSITIONS: Use explicit connectors more than polished writing would: "Additionally," "Moreover," "Furthermore," "On the one hand ... On the other hand," "As a result," "Therefore," "Finally," "So." Occasionally repeat a transition or use one that is slightly unnecessary.
-
-DELIBERATE IMPERFECTIONS (required — do not fix these):
-- Occasional wrong or unnatural article, preposition, or adjective pattern (e.g. "not absolute good nor absolute bad")
-- Occasional awkward noun phrase or collocation (e.g. "rapid misinformation spread" instead of "the rapid spread of misinformation")
-- Sometimes omit the serial comma before the last item in a list
-- Occasional redundancy or duplicated emphasis within a paragraph
-- Occasional sentence whose link to the previous one is clear but slightly rough
-
-Distribute imperfections unevenly. Vary the types — do not repeat one error pattern. Keep a low-to-moderate density: several noticeable issues in a medium essay, never so many that comprehension suffers. No spelling mistakes. Do not break subject-verb agreement repeatedly.
-
-STRUCTURE: Preserve the original paragraph sequence and overall organisation. Use formulaic topic sentences where appropriate ("Another important aspect is...", "One of the most significant benefits is..."). For essays, keep introduction, body, and conclusion. Introductions may open with "Today," "In modern society," or "One of the most important...". Conclusions may use "In conclusion," "Finally," or "So, we need to..."
-
-Before writing, silently: (1) identify key ideas and structure, (2) simplify vocabulary, (3) reshape sentences for mixed rhythm, (4) add transitions, (5) insert controlled imperfections, (6) verify imperfections are spread unevenly and do not obscure meaning.`;
-
-function buildGPTZeroPrompt(text: string, language: SupportedLanguage): string {
-  const languageLabel = getLanguagePromptLabel(language);
-  return `Rewrite the text below following the transformation rules in your system instructions.
-
-LANGUAGE: Write the output in ${languageLabel}. Keep the same language as the input if that is the requested language. Preserve native idioms and punctuation conventions.
-${GPTZERO_TRANSFORMATION_RULES}
-
-Text:
-"""
-${text}
-"""
-
-Return ONLY valid JSON: { "humanizedText": "...", "changes": ["change 1", "change 2", "change 3"] }
-The changes array must name the 3 most impactful style transformations made.`;
-}
-
 // ── Tone-specific instruction blocks ─────────────────────────────────────────
-const TONE_RULES: Record<Exclude<Tone, "gptzero">, string> = {
+const TONE_RULES: Record<Tone, string> = {
   casual:
     "Write the way a smart person texts a friend — relaxed, direct, occasionally " +
     "colloquial. Contractions everywhere. Short punchy sentences are fine.",
@@ -194,8 +136,6 @@ SENTENCE STRUCTURE (required):
 // ── Prompt builders ───────────────────────────────────────────────────────────
 
 function buildFreePrompt(text: string, tone: Tone, language: SupportedLanguage): string {
-  // GPTZero uses its own standalone prompt — guard against accidental use here
-  if (tone === "gptzero") return buildGPTZeroPrompt(text, language);
   const languageLabel = getLanguagePromptLabel(language);
   return `You are an expert writing editor. Rewrite the text below so it reads as genuinely human-written while preserving all original meaning.
 
@@ -212,8 +152,6 @@ The changes array must describe what you changed and why it reduces AI detection
 }
 
 function buildPaidPrompt(text: string, tone: Tone, language: SupportedLanguage): string {
-  // GPTZero uses its own standalone prompt — guard against accidental use here
-  if (tone === "gptzero") return buildGPTZeroPrompt(text, language);
   const languageLabel = getLanguagePromptLabel(language);
   return `You are an expert writing editor and AI detection specialist. Rewrite the text below so it is completely undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
 
@@ -408,10 +346,7 @@ export class HumanizerService {
           model,
           contents: buildFreePrompt(text, tone, language),
           config: {
-            systemInstruction:
-              tone === "gptzero"
-                ? GPTZERO_SYSTEM_INSTRUCTION
-                : HUMANIZER_SYSTEM_INSTRUCTION,
+            systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
             temperature: REWRITE_TEMPERATURE,
             // Disable dynamic thinking — not needed for rewriting, adds latency.
             thinkingConfig: { thinkingBudget: 0 },
@@ -443,10 +378,7 @@ export class HumanizerService {
           model,
           contents: buildPaidPrompt(text, tone, language),
           config: {
-            systemInstruction:
-              tone === "gptzero"
-                ? GPTZERO_SYSTEM_INSTRUCTION
-                : HUMANIZER_SYSTEM_INSTRUCTION,
+            systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
             temperature: REWRITE_TEMPERATURE,
             // gemini-2.5-pro does not support thinkingBudget: 0 — thinking
             // cannot be fully disabled on Pro; leave thinkingConfig unset
