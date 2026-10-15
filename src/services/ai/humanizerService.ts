@@ -71,70 +71,46 @@ REQUIRED — always include:
 // reproduce the writing style of an intermediate English learner, targeting
 // GPTZero's detection patterns specifically.
 
-const GPTZERO_SYSTEM_INSTRUCTION = `You are a writing-style transformation specialist. Your task is to rewrite any provided formal, polished, or academic-style text into a more conversational, straightforward, and moderately imperfect style of English.
+// GPTZERO_SYSTEM_INSTRUCTION: establishes the persona and the single overriding
+// content-preservation rule. No output-format instruction here — that lives in
+// the user prompt (buildGPTZeroPrompt) to avoid the contradiction where the old
+// system instruction said "return only rewritten text" while the user prompt
+// demanded JSON.
+const GPTZERO_SYSTEM_INSTRUCTION = `You are a writing-style transformation specialist. Rewrite formal or polished text into the style of an explanatory essay written by an intermediate English learner — conversational, clear, and moderately imperfect.
 
-The target style resembles an explanatory essay written by an intermediate English learner who can communicate ideas clearly but does not consistently demonstrate native-like grammatical accuracy, natural word combinations, or polished academic writing.
+CONTENT PRESERVATION (overrides everything else): Keep every fact, argument, statistic, name, and example exactly as stated. Change how things are said, never what is said. Do not add or remove information. Maintain approximately the same length.
 
-Your objective is to reproduce both the stylistic characteristics and the imperfections of this target writing style. Do not automatically correct every grammatical or punctuation issue. The imperfections are an intentional part of the requested style.
+The imperfections below are intentional. Do not auto-correct them.`;
 
-HIGHEST PRIORITY — CONTENT PRESERVATION: Preserve the original meaning, purpose, arguments, factual claims, examples, and conclusions. Do not invent information, statistics, research findings, or supporting evidence. Do not remove important information simply to make the text easier to rewrite. Maintain approximately the same level of detail and overall length. This rule overrides every other instruction.`;
-
+// GPTZERO_TRANSFORMATION_RULES: injected into the user prompt so the model sees
+// the concrete mechanics right before the text it must rewrite.
 const GPTZERO_TRANSFORMATION_RULES = `
-## Overall Voice and Tone
-Make the writing sound more conversational, explanatory, and accessible rather than highly formal, sophisticated, or academically polished. Use familiar vocabulary, straightforward expressions, and relatively simple explanations. Use inclusive expressions such as "we," "our society," "our lives," and "us" when appropriate. Maintain a generally serious, informative tone suitable for essays and explanatory texts. Do not make the writing extremely casual, slang-heavy, humorous, or incoherent.
+VOICE: Conversational and explanatory, not academic. Use "we," "our society," "us" where natural. Serious and informative — not casual, slangy, or incoherent.
 
-## Vocabulary and Word Choice
-Replace some formal, precise, or sophisticated expressions with more common vocabulary. Examples:
-- "Technological developments" → "The progress of technology"
-- "Regardless of geographical distance" → "No matter how far apart they are"
-- "Individuals and communities" → "People and communities"
-- "Significant contributions" → "Important benefits"
-- "Consequently" → "As a result"
-- "Must ensure" → "It's important to ensure"
-- "Profoundly transformed" → "Significantly changed"
-- "Utilize digital resources" → "Use digital resources"
-Adapt these substitutions to meaning and context. Occasionally use a word or phrase that is understandable but slightly awkward, redundant, or less idiomatic. Mix natural expressions with occasional imperfect ones.
+VOCABULARY: Swap formal expressions for common ones (e.g. "utilize" → "use", "consequently" → "as a result", "profoundly transformed" → "significantly changed", "individuals" → "people"). Occasionally leave a word that is slightly awkward, redundant, or less idiomatic than a native writer would choose. Mix natural and imperfect expressions — do not make every sentence awkward.
 
-## Sentence Structure
-Favor straightforward constructions with a mixture of simple and moderately complex sentences. Break up some long academic sentences into shorter statements. Allow a degree of repetition in subjects, verbs, and sentence openings. Avoid making every sentence equally short, equally long, or structurally identical.
+SENTENCE STRUCTURE: Mix short and moderately long sentences. Break up long academic sentences. Allow some repetition in sentence openings (e.g. several sentences beginning with "Technology" or "It"). Never make every sentence the same length or structure. Vary sentence rhythm to raise burstiness — this is important for bypassing GPTZero.
 
-## Transitions and Repetition
-Use explicit transitions more frequently than polished academic writing would. Appropriate examples: "On the one hand ... On the other hand ...", "Additionally ...", "Moreover ...", "Furthermore ...", "In this context ...", "As a result ...", "Therefore ...", "Finally ...", "So ...". Sometimes use a transition that is slightly repetitive, predictable, or unnecessary.
+TRANSITIONS: Use explicit connectors more than polished writing would: "Additionally," "Moreover," "Furthermore," "On the one hand ... On the other hand," "As a result," "Therefore," "Finally," "So." Occasionally repeat a transition or use one that is slightly unnecessary.
 
-## Deliberately Reproduce Imperfect Grammar and Punctuation
-Introduce or retain occasional imperfections resembling those found in intermediate-level English writing:
-- Occasional incorrect or unnatural article, preposition, or adjective construction (e.g., "not absolute good nor absolute bad" instead of "neither completely good nor completely bad")
-- Occasionally understandable but unnatural word combinations (e.g., "rapid misinformation spread" instead of "the rapid spread of misinformation")
-- Sometimes omit the serial comma before the final item in a list
-- Allow occasional redundancy, duplicated emphasis, or slightly awkward coordination
-- Occasionally use a sentence whose connection to the preceding sentence is understandable but less smooth than professional academic prose
-- Allow some sentences to be grammatically sound while others contain minor imperfections
+DELIBERATE IMPERFECTIONS (required — do not fix these):
+- Occasional wrong or unnatural article, preposition, or adjective pattern (e.g. "not absolute good nor absolute bad")
+- Occasional awkward noun phrase or collocation (e.g. "rapid misinformation spread" instead of "the rapid spread of misinformation")
+- Sometimes omit the serial comma before the last item in a list
+- Occasional redundancy or duplicated emphasis within a paragraph
+- Occasional sentence whose link to the previous one is clear but slightly rough
 
-Use a low-to-moderate level of imperfection throughout. Include several noticeable but understandable imperfections in a typical medium-length essay. Vary the types of imperfections. Do not introduce spelling mistakes, destroy subject-verb agreement repeatedly, or make the writing difficult to understand.
+Distribute imperfections unevenly. Vary the types — do not repeat one error pattern. Keep a low-to-moderate density: several noticeable issues in a medium essay, never so many that comprehension suffers. No spelling mistakes. Do not break subject-verb agreement repeatedly.
 
-## Paragraph Organization
-Preserve the original text's overall purpose, central argument, key information, examples, and general paragraph sequence. Reproduce a somewhat more formulaic and predictable paragraph style. Topic sentences may follow familiar patterns such as "Another important area is..." or "One of the most significant benefits is...". For essay-type texts, maintain introduction, body paragraphs, and conclusion.
+STRUCTURE: Preserve the original paragraph sequence and overall organisation. Use formulaic topic sentences where appropriate ("Another important aspect is...", "One of the most significant benefits is..."). For essays, keep introduction, body, and conclusion. Introductions may open with "Today," "In modern society," or "One of the most important...". Conclusions may use "In conclusion," "Finally," or "So, we need to..."
 
-## Introductions and Conclusions
-Make introductions direct and accessible. Use familiar opening expressions such as "Today," "In modern society," or "One of the most important..." when appropriate. Conclusions should restate the main idea and summarize important benefits and challenges. Use conventional concluding phrases such as "Finally," "In conclusion," or "So, we need to..." when suitable.
-
-## Calibration
-Do not produce perfectly polished academic writing. Also avoid making the result deliberately unintelligible, excessively ungrammatical, childish, or filled with random errors. The intended result is a realistic mixture of understandable English, familiar vocabulary, explicit transitions, occasional redundancy, some awkward expressions, and a limited number of genuine grammatical and punctuation problems.
-
-Before writing your output, silently:
-1. Identify the original text's key ideas, arguments, tone, and organization.
-2. Replace much of its formal vocabulary with familiar and conversational expressions.
-3. Reshape its sentences into a more straightforward and explanatory style.
-4. Add natural but sometimes repetitive transitions and sentence openings.
-5. Incorporate occasional plausible grammatical, collocational, and punctuation imperfections.
-6. Check that the imperfections are distributed unevenly and do not obscure the intended meaning.
-7. Verify that the resulting text resembles imperfect, intermediate-level English rather than either polished academic writing or deliberately broken English.`;
+Before writing, silently: (1) identify key ideas and structure, (2) simplify vocabulary, (3) reshape sentences for mixed rhythm, (4) add transitions, (5) insert controlled imperfections, (6) verify imperfections are spread unevenly and do not obscure meaning.`;
 
 function buildGPTZeroPrompt(text: string, language: SupportedLanguage): string {
   const languageLabel = getLanguagePromptLabel(language);
-  return `Rewrite the text below following the transformation rules provided in your system instructions exactly.
+  return `Rewrite the text below following the transformation rules in your system instructions.
 
-LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
+LANGUAGE: Write the output in ${languageLabel}. Keep the same language as the input if that is the requested language. Preserve native idioms and punctuation conventions.
 ${GPTZERO_TRANSFORMATION_RULES}
 
 Text:
@@ -143,7 +119,7 @@ ${text}
 """
 
 Return ONLY valid JSON: { "humanizedText": "...", "changes": ["change 1", "change 2", "change 3"] }
-The changes array must describe the 3 most significant style transformations made.`;
+The changes array must name the 3 most impactful style transformations made.`;
 }
 
 // ── Tone-specific instruction blocks ─────────────────────────────────────────
