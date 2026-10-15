@@ -24,6 +24,7 @@ const TONES: ToneOption[] = [
   { value: "creative",     label: "Creative",      proOnly: true  },
   { value: "friendly",     label: "Friendly",      proOnly: true  },
   { value: "storytelling", label: "Storytelling",  proOnly: true  },
+  { value: "gptzero",      label: "GPTZero",       proOnly: true  },
 ];
 
 const FREE_STAGES = [
