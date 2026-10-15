@@ -23,6 +23,7 @@ const VALID_TONES = new Set<Tone>([
   "creative",
   "friendly",
   "storytelling",
+  "gptzero",
 ]);
 
 async function parseHumanizeBody(req: Request): Promise<HumanizeRequestBody> {
