@@ -31,7 +31,6 @@ const VALID_TONES = new Set<Tone>([
   "creative",
   "friendly",
   "storytelling",
-  "gptzero",
 ]);
 
 interface BatchItem {
