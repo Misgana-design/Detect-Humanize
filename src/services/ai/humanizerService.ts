@@ -8,7 +8,8 @@ export type Tone =
   | "formal"
   | "creative"
   | "friendly"
-  | "storytelling";
+  | "storytelling"
+  | "gptzero";
 
 export type HumanizerTier = "free" | "basic" | "pro";
 
@@ -64,8 +65,89 @@ REQUIRED — always include:
 - At least one paragraph that is a single sentence
 - Mid-sentence dash — used to break predictable syntax`;
 
+// ── GPTZero tone: full standalone prompt ─────────────────────────────────────
+// This tone uses its own complete system instruction and prompt builders that
+// replace the standard bypass rules entirely. The prompt is designed to
+// reproduce the writing style of an intermediate English learner, targeting
+// GPTZero's detection patterns specifically.
+
+const GPTZERO_SYSTEM_INSTRUCTION = `You are a writing-style transformation specialist. Your task is to rewrite any provided formal, polished, or academic-style text into a more conversational, straightforward, and moderately imperfect style of English.
+
+The target style resembles an explanatory essay written by an intermediate English learner who can communicate ideas clearly but does not consistently demonstrate native-like grammatical accuracy, natural word combinations, or polished academic writing.
+
+Your objective is to reproduce both the stylistic characteristics and the imperfections of this target writing style. Do not automatically correct every grammatical or punctuation issue. The imperfections are an intentional part of the requested style.
+
+HIGHEST PRIORITY — CONTENT PRESERVATION: Preserve the original meaning, purpose, arguments, factual claims, examples, and conclusions. Do not invent information, statistics, research findings, or supporting evidence. Do not remove important information simply to make the text easier to rewrite. Maintain approximately the same level of detail and overall length. This rule overrides every other instruction.`;
+
+const GPTZERO_TRANSFORMATION_RULES = `
+## Overall Voice and Tone
+Make the writing sound more conversational, explanatory, and accessible rather than highly formal, sophisticated, or academically polished. Use familiar vocabulary, straightforward expressions, and relatively simple explanations. Use inclusive expressions such as "we," "our society," "our lives," and "us" when appropriate. Maintain a generally serious, informative tone suitable for essays and explanatory texts. Do not make the writing extremely casual, slang-heavy, humorous, or incoherent.
+
+## Vocabulary and Word Choice
+Replace some formal, precise, or sophisticated expressions with more common vocabulary. Examples:
+- "Technological developments" → "The progress of technology"
+- "Regardless of geographical distance" → "No matter how far apart they are"
+- "Individuals and communities" → "People and communities"
+- "Significant contributions" → "Important benefits"
+- "Consequently" → "As a result"
+- "Must ensure" → "It's important to ensure"
+- "Profoundly transformed" → "Significantly changed"
+- "Utilize digital resources" → "Use digital resources"
+Adapt these substitutions to meaning and context. Occasionally use a word or phrase that is understandable but slightly awkward, redundant, or less idiomatic. Mix natural expressions with occasional imperfect ones.
+
+## Sentence Structure
+Favor straightforward constructions with a mixture of simple and moderately complex sentences. Break up some long academic sentences into shorter statements. Allow a degree of repetition in subjects, verbs, and sentence openings. Avoid making every sentence equally short, equally long, or structurally identical.
+
+## Transitions and Repetition
+Use explicit transitions more frequently than polished academic writing would. Appropriate examples: "On the one hand ... On the other hand ...", "Additionally ...", "Moreover ...", "Furthermore ...", "In this context ...", "As a result ...", "Therefore ...", "Finally ...", "So ...". Sometimes use a transition that is slightly repetitive, predictable, or unnecessary.
+
+## Deliberately Reproduce Imperfect Grammar and Punctuation
+Introduce or retain occasional imperfections resembling those found in intermediate-level English writing:
+- Occasional incorrect or unnatural article, preposition, or adjective construction (e.g., "not absolute good nor absolute bad" instead of "neither completely good nor completely bad")
+- Occasionally understandable but unnatural word combinations (e.g., "rapid misinformation spread" instead of "the rapid spread of misinformation")
+- Sometimes omit the serial comma before the final item in a list
+- Allow occasional redundancy, duplicated emphasis, or slightly awkward coordination
+- Occasionally use a sentence whose connection to the preceding sentence is understandable but less smooth than professional academic prose
+- Allow some sentences to be grammatically sound while others contain minor imperfections
+
+Use a low-to-moderate level of imperfection throughout. Include several noticeable but understandable imperfections in a typical medium-length essay. Vary the types of imperfections. Do not introduce spelling mistakes, destroy subject-verb agreement repeatedly, or make the writing difficult to understand.
+
+## Paragraph Organization
+Preserve the original text's overall purpose, central argument, key information, examples, and general paragraph sequence. Reproduce a somewhat more formulaic and predictable paragraph style. Topic sentences may follow familiar patterns such as "Another important area is..." or "One of the most significant benefits is...". For essay-type texts, maintain introduction, body paragraphs, and conclusion.
+
+## Introductions and Conclusions
+Make introductions direct and accessible. Use familiar opening expressions such as "Today," "In modern society," or "One of the most important..." when appropriate. Conclusions should restate the main idea and summarize important benefits and challenges. Use conventional concluding phrases such as "Finally," "In conclusion," or "So, we need to..." when suitable.
+
+## Calibration
+Do not produce perfectly polished academic writing. Also avoid making the result deliberately unintelligible, excessively ungrammatical, childish, or filled with random errors. The intended result is a realistic mixture of understandable English, familiar vocabulary, explicit transitions, occasional redundancy, some awkward expressions, and a limited number of genuine grammatical and punctuation problems.
+
+Before writing your output, silently:
+1. Identify the original text's key ideas, arguments, tone, and organization.
+2. Replace much of its formal vocabulary with familiar and conversational expressions.
+3. Reshape its sentences into a more straightforward and explanatory style.
+4. Add natural but sometimes repetitive transitions and sentence openings.
+5. Incorporate occasional plausible grammatical, collocational, and punctuation imperfections.
+6. Check that the imperfections are distributed unevenly and do not obscure the intended meaning.
+7. Verify that the resulting text resembles imperfect, intermediate-level English rather than either polished academic writing or deliberately broken English.`;
+
+function buildGPTZeroPrompt(text: string, language: SupportedLanguage): string {
+  const languageLabel = getLanguagePromptLabel(language);
+  return `Rewrite the text below following the transformation rules provided in your system instructions exactly.
+
+LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
+${GPTZERO_TRANSFORMATION_RULES}
+
+Text:
+"""
+${text}
+"""
+
+Return ONLY valid JSON: { "humanizedText": "...", "changes": ["change 1", "change 2", "change 3"] }
+The changes array must describe the 3 most significant style transformations made.`;
+}
+
 // ── Tone-specific instruction blocks ─────────────────────────────────────────
-const TONE_RULES: Record<Tone, string> = {
+const TONE_RULES: Record<Exclude<Tone, "gptzero">, string> = {
   casual:
     "Write the way a smart person texts a friend — relaxed, direct, occasionally " +
     "colloquial. Contractions everywhere. Short punchy sentences are fine.",
@@ -136,6 +218,8 @@ SENTENCE STRUCTURE (required):
 // ── Prompt builders ───────────────────────────────────────────────────────────
 
 function buildFreePrompt(text: string, tone: Tone, language: SupportedLanguage): string {
+  // GPTZero uses its own standalone prompt — guard against accidental use here
+  if (tone === "gptzero") return buildGPTZeroPrompt(text, language);
   const languageLabel = getLanguagePromptLabel(language);
   return `You are an expert writing editor. Rewrite the text below so it reads as genuinely human-written while preserving all original meaning.
 
@@ -152,6 +236,8 @@ The changes array must describe what you changed and why it reduces AI detection
 }
 
 function buildPaidPrompt(text: string, tone: Tone, language: SupportedLanguage): string {
+  // GPTZero uses its own standalone prompt — guard against accidental use here
+  if (tone === "gptzero") return buildGPTZeroPrompt(text, language);
   const languageLabel = getLanguagePromptLabel(language);
   return `You are an expert writing editor and AI detection specialist. Rewrite the text below so it is completely undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
 
@@ -346,7 +432,10 @@ export class HumanizerService {
           model,
           contents: buildFreePrompt(text, tone, language),
           config: {
-            systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
+            systemInstruction:
+              tone === "gptzero"
+                ? GPTZERO_SYSTEM_INSTRUCTION
+                : HUMANIZER_SYSTEM_INSTRUCTION,
             temperature: REWRITE_TEMPERATURE,
             // Disable dynamic thinking — not needed for rewriting, adds latency.
             thinkingConfig: { thinkingBudget: 0 },
@@ -378,7 +467,10 @@ export class HumanizerService {
           model,
           contents: buildPaidPrompt(text, tone, language),
           config: {
-            systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
+            systemInstruction:
+              tone === "gptzero"
+                ? GPTZERO_SYSTEM_INSTRUCTION
+                : HUMANIZER_SYSTEM_INSTRUCTION,
             temperature: REWRITE_TEMPERATURE,
             // gemini-2.5-pro does not support thinkingBudget: 0 — thinking
             // cannot be fully disabled on Pro; leave thinkingConfig unset
