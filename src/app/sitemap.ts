@@ -3,10 +3,12 @@ import { siteConfig } from "@/lib/site";
 import { blogPosts, toolPages, useCasePages } from "@/lib/seo-content";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
+  const now = new Date("2026-10-01");
+  const yearly = new Date("2026-10-01");
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: siteConfig.url,                    lastModified: now, changeFrequency: "weekly",  priority: 1.0 },
+    { url: `${siteConfig.url}/humanize`,      lastModified: now, changeFrequency: "weekly",  priority: 0.9 },
     { url: `${siteConfig.url}/pricing`,       lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: `${siteConfig.url}/detectors`,     lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${siteConfig.url}/faq`,           lastModified: now, changeFrequency: "monthly", priority: 0.7 },
@@ -14,9 +16,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteConfig.url}/blog`,          lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
     { url: `${siteConfig.url}/tools`,         lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${siteConfig.url}/use-cases`,     lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${siteConfig.url}/terms`,         lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
-    { url: `${siteConfig.url}/privacy`,       lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
-    { url: `${siteConfig.url}/cookies`,       lastModified: now, changeFrequency: "yearly",  priority: 0.2 },
+    { url: `${siteConfig.url}/terms`,         lastModified: yearly, changeFrequency: "yearly",  priority: 0.3 },
+    { url: `${siteConfig.url}/privacy`,       lastModified: yearly, changeFrequency: "yearly",  priority: 0.3 },
+    { url: `${siteConfig.url}/cookies`,       lastModified: yearly, changeFrequency: "yearly",  priority: 0.2 },
   ];
 
   const blogRoutes: MetadataRoute.Sitemap = blogPosts.map((post) => ({
