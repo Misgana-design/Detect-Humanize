@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { HomePageClient } from "@/components/home/HomePageClient";
 import { StructuredData } from "@/components/seo/StructuredData";
 import {
-  buildBreadcrumbJsonLd,
   buildMetadata,
   buildSoftwareApplicationJsonLd,
 } from "@/lib/seo";
@@ -27,9 +26,6 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function HomePage() {
   return (
     <>
-      <StructuredData
-        data={buildBreadcrumbJsonLd([{ name: "Home", path: "/" }])}
-      />
       <StructuredData data={buildSoftwareApplicationJsonLd()} />
       <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
         <HomePageClient />
