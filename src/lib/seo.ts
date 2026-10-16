@@ -7,6 +7,9 @@ type MetadataOptions = {
   path?: string;
   keywords?: string[];
   noIndex?: boolean;
+  author?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
 };
 
 export function absoluteUrl(path = "/") {
@@ -19,6 +22,9 @@ export function buildMetadata({
   path = "/",
   keywords = [],
   noIndex = false,
+  author,
+  publishedTime,
+  modifiedTime,
 }: MetadataOptions): Metadata {
   const fullTitle = `${title} | ${siteConfig.name}`;
   const url = absoluteUrl(path);
@@ -29,13 +35,18 @@ export function buildMetadata({
     title: fullTitle,
     description,
     keywords: [...siteConfig.keywords, ...keywords],
-    authors: [{ name: siteConfig.name, url: siteConfig.url }],
+    authors: [{ name: author || siteConfig.name, url: siteConfig.url }],
     creator: siteConfig.name,
     publisher: siteConfig.name,
     category: "AI writing software",
     alternates: {
       canonical: url,
     },
+    verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+      ? {
+          google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+        }
+      : undefined,
     icons: {
       icon: [
         { url: siteConfig.favicon, sizes: "any" },
@@ -44,22 +55,42 @@ export function buildMetadata({
       shortcut: siteConfig.favicon,
       apple: siteConfig.logo,
     },
-    openGraph: {
-      type: "website",
-      locale: siteConfig.locale,
-      title: fullTitle,
-      description,
-      url,
-      siteName: siteConfig.name,
-      images: [
-        {
-          url: absoluteUrl(siteConfig.ogImage),
-          width: 1200,
-          height: 630,
-          alt: fullTitle,
+    openGraph: publishedTime
+      ? {
+          type: "article",
+          locale: siteConfig.locale,
+          title: fullTitle,
+          description,
+          url,
+          siteName: siteConfig.name,
+          publishedTime,
+          modifiedTime,
+          authors: [author || siteConfig.name],
+          images: [
+            {
+              url: absoluteUrl(siteConfig.ogImage),
+              width: 1200,
+              height: 630,
+              alt: fullTitle,
+            },
+          ],
+        }
+      : {
+          type: "website",
+          locale: siteConfig.locale,
+          title: fullTitle,
+          description,
+          url,
+          siteName: siteConfig.name,
+          images: [
+            {
+              url: absoluteUrl(siteConfig.ogImage),
+              width: 1200,
+              height: 630,
+              alt: fullTitle,
+            },
+          ],
         },
-      ],
-    },
     twitter: {
       card: "summary_large_image",
       title: fullTitle,
@@ -93,6 +124,15 @@ export function buildBreadcrumbJsonLd(
   };
 }
 
+export function buildPersonJsonLd(name: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name,
+    url: siteConfig.url,
+  };
+}
+
 export function buildOrganizationJsonLd() {
   return {
     "@context": "https://schema.org",
@@ -100,7 +140,7 @@ export function buildOrganizationJsonLd() {
     name: siteConfig.name,
     url: siteConfig.url,
     logo: absoluteUrl(siteConfig.logo),
-    sameAs: [siteConfig.url],
+    sameAs: siteConfig.socials.length > 0 ? siteConfig.socials : [siteConfig.url],
   };
 }
 
