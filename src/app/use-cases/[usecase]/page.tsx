@@ -177,6 +177,43 @@ export default async function UseCasePage({ params }: Props) {
             ))}
         </div>
       </div>
+
+      {/* Cross-links to tools and blog */}
+      <div className="mt-12">
+        <h2 className="mb-5 text-lg font-bold text-slate-900">Keep reading</h2>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/tools/vs-turnitin"
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:text-indigo-600"
+          >
+            Text Humanica vs Turnitin
+          </Link>
+          <Link
+            href="/tools/vs-gptzero"
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:text-indigo-600"
+          >
+            Text Humanica vs GPTZero
+          </Link>
+          <Link
+            href="/blog/ai-detector-for-students"
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:text-indigo-600"
+          >
+            AI detectors for students
+          </Link>
+          <Link
+            href="/blog/how-to-humanize-ai-text"
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:text-indigo-600"
+          >
+            How to humanize AI text
+          </Link>
+          <Link
+            href="/humanize"
+            className="rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100"
+          >
+            Try the humanizer free
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
