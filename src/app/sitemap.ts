@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/site";
 import { blogPosts, toolPages, useCasePages } from "@/lib/seo-content";
+import { pseoSlugs } from "@/lib/pseo-slugs";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date("2026-10-01");
@@ -42,5 +43,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...blogRoutes, ...toolRoutes, ...useCaseRoutes];
+  const pseoRoutes: MetadataRoute.Sitemap = pseoSlugs.map((slug) => ({
+    url: `${siteConfig.url}/tools/pseo/${slug}`,
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
+
+  return [...staticRoutes, ...blogRoutes, ...toolRoutes, ...useCaseRoutes, ...pseoRoutes];
 }
