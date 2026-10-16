@@ -174,6 +174,43 @@ export default async function ToolComparisonPage({ params }: Props) {
             ))}
         </div>
       </div>
+
+      {/* Cross-links to blog and use cases */}
+      <div className="mt-12">
+        <h2 className="mb-5 text-lg font-bold text-slate-900">Keep reading</h2>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/blog/best-ai-detector-and-humanizer"
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:text-indigo-600"
+          >
+            Best AI detector and humanizer tools
+          </Link>
+          <Link
+            href="/blog/bypass-gptzero"
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:text-indigo-600"
+          >
+            How to bypass GPTZero
+          </Link>
+          <Link
+            href="/blog/ai-detector-accuracy"
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:text-indigo-600"
+          >
+            AI detector accuracy explained
+          </Link>
+          <Link
+            href="/use-cases/for-academic-writing"
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:text-indigo-600"
+          >
+            For academic writing
+          </Link>
+          <Link
+            href="/humanize"
+            className="rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100"
+          >
+            Try the humanizer free
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
