@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { siteConfig } from "./site";
-
+// metadata
 type MetadataOptions = {
   title: string;
   description: string;
