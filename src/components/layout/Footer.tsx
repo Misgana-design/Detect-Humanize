@@ -5,7 +5,8 @@ import { Brand } from "./Brand";
 
 const footerLinks = {
   Product: [
-    { href: "/#humanizer", label: "Humanizer" },
+    { href: "/humanize",  label: "Humanizer" },
+    { href: "/detectors", label: "AI Detector" },
     { href: "/pricing",   label: "Pricing"            },
   ],
   Resources: [
