@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import React from "react";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
-import { buildBreadcrumbJsonLd, buildMetadata, absoluteUrl } from "@/lib/seo";
+import { buildBreadcrumbJsonLd, buildMetadata, absoluteUrl, buildPersonJsonLd, buildFaqJsonLd as buildFaqJsonLdBase } from "@/lib/seo";
 import { blogPosts } from "@/lib/seo-content";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { siteConfig } from "@/lib/site";
@@ -22,7 +23,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: post.description,
     path: `/blog/${post.slug}`,
     keywords: post.keywords,
+    author: siteConfig.author,
+    publishedTime: post.publishedAt,
+    modifiedTime: post.updatedAt,
   });
+}
+
+function renderInline(text: string): React.ReactNode {
+  const linkRegex = /\[([^\]]+)\]\(([^)\s]+)\)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = linkRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(<span key={`t-${key++}`}>{text.slice(lastIndex, match.index)}</span>);
+    }
+    const href = match[2];
+    if (href.startsWith("/") || href.startsWith("https://texthumanica.com")) {
+      const url = href.startsWith("/") ? href : href.replace("https://texthumanica.com", "");
+      parts.push(
+        <Link key={`l-${key++}`} href={url} className="text-indigo-600 hover:text-indigo-700 underline">
+          {match[1]}
+        </Link>
+      );
+    } else {
+      parts.push(<a key={`a-${key++}`} href={href} className="text-indigo-600 hover:text-indigo-700 underline" target="_blank" rel="noopener noreferrer">{match[1]}</a>);
+    }
+    lastIndex = linkRegex.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    parts.push(<span key={`t-${key++}`}>{text.slice(lastIndex)}</span>);
+  }
+  return parts.length > 1 ? <>{parts}</> : parts[0] || text;
 }
 
 function buildArticleJsonLd(post: (typeof blogPosts)[0]) {
@@ -33,25 +66,13 @@ function buildArticleJsonLd(post: (typeof blogPosts)[0]) {
     description: post.description,
     datePublished: post.publishedAt,
     dateModified: post.updatedAt,
-    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
+    author: buildPersonJsonLd(siteConfig.author),
     publisher: {
       "@type": "Organization",
       name: siteConfig.name,
       logo: { "@type": "ImageObject", url: absoluteUrl(siteConfig.logo) },
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": absoluteUrl(`/blog/${post.slug}`) },
-  };
-}
-
-function buildFaqJsonLd(faq: { q: string; a: string }[]) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faq.map((item) => ({
-      "@type": "Question",
-      name: item.q,
-      acceptedAnswer: { "@type": "Answer", text: item.a },
-    })),
   };
 }
 
@@ -73,7 +94,11 @@ export default async function BlogPostPage({ params }: Props) {
       />
       <StructuredData data={buildArticleJsonLd(post)} />
       {post.faq.length > 0 && (
-        <StructuredData data={buildFaqJsonLd(post.faq)} />
+        <StructuredData
+          data={buildFaqJsonLdBase(
+            post.faq.map((f) => ({ question: f.q, answer: f.a })),
+          )}
+        />
       )}
 
       {/* Back link */}
@@ -114,7 +139,43 @@ export default async function BlogPostPage({ params }: Props) {
             <h2 className="mb-3 text-xl font-bold tracking-tight text-slate-900">
               {section.heading}
             </h2>
-            <p className="text-base leading-8 text-slate-600">{section.body}</p>
+            <p className="text-base leading-8 text-slate-600">{renderInline(section.body)}</p>
+            {section.bullets && section.bullets.length > 0 && (
+              <ul className="mt-4 list-disc space-y-2 pl-6 text-base leading-8 text-slate-600">
+                {section.bullets.map((b, i) => (
+                  <li key={i}>{renderInline(b)}</li>
+                ))}
+              </ul>
+            )}
+            {section.table && (
+              <div className="mt-6 overflow-x-auto">
+                <table className="w-full text-sm text-slate-700 border border-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      {section.table.headers.map((h, i) => (
+                        <th key={i} className="border border-slate-200 px-3 py-2 text-left font-semibold">
+                          {renderInline(h)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {section.table.rows.map((row, ri) => (
+                      <tr key={ri} className={ri % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
+                        {row.map((c, ci) => (
+                          <td key={ci} className="border border-slate-200 px-3 py-2 align-top">
+                            {renderInline(c)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {section.table.caption && (
+                  <p className="mt-2 text-xs text-slate-500">{renderInline(section.table.caption)}</p>
+                )}
+              </div>
+            )}
           </section>
         ))}
       </article>
