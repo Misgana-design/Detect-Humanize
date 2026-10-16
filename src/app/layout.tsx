@@ -8,6 +8,7 @@ import Footer from "@/components/layout/Footer";
 import { CookieBanner } from "@/components/layout/CookieBanner";
 import SaleBanner from "@/components/layout/SaleBanner";
 import { StructuredData } from "@/components/seo/StructuredData";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { buildMetadata, buildOrganizationJsonLd } from "@/lib/seo";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -37,6 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${dmSans.variable}`}>
       <body className={inter.className}>
+        <GoogleAnalytics />
         <StructuredData data={buildOrganizationJsonLd()} />
         <Providers>
           <div className="flex min-h-screen flex-col">
