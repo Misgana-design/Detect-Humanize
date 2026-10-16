@@ -36,7 +36,7 @@ export function Brand({
     >
       {/* Your custom logo image */}
       <Image
-        src="/logo-icon.png"
+        src="/logo-icon.webp"
         alt="Text Humanica logo"
         width={s.icon}
         height={s.icon}
