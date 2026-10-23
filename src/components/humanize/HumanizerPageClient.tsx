@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, ArrowRight, Check, Copy, Download, FileText, Lock, Sparkles, Zap } from "lucide-react";
 import { TextUploadField } from "@/components/forms/TextUploadField";
-import { useHumanizer } from "@/hooks/useHumanizer";
+import { useHumanizer, type DetectorTarget } from "@/hooks/useHumanizer";
 import { useProfile } from "@/hooks/userProfile";
 import { type Tone } from "@/services/ai/humanizerService";
 import { exportHtmlDoc, exportMarkdown, exportPlainText } from "@/lib/clientExports";
@@ -142,6 +142,7 @@ export function HumanizerWorkspace({
   });
   const [documentId] = useState<string | null>(() => resolveInitialDocId());
   const [copied, setCopied] = useState(false);
+  const [detectorTarget, setDetectorTarget] = useState<DetectorTarget>("other");
 
   const { mutate, data, isPending, error } = useHumanizer();
   const { data: profile } = useProfile();
@@ -178,7 +179,7 @@ export function HumanizerWorkspace({
     }
   };
 
-  const handleHumanize = () => mutate({ text, tone, language, documentId });
+  const handleHumanize = () => mutate({ text, tone, language, documentId, detectorTarget });
 
   const handleExport = (format: "txt" | "md" | "doc") => {
     if (!data?.humanizedText) return;
@@ -287,6 +288,66 @@ export function HumanizerWorkspace({
               >
                 {isLocked && <Lock size={11} className="shrink-0" />}
                 {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Detector target selector ── */}
+      <div
+        className={`mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${
+          isHomeVariant ? "shadow-indigo-100/60" : ""
+        }`}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-sm font-semibold text-slate-700">
+            Bypass Target
+          </span>
+          <span className="text-xs text-slate-400">
+            Choose which AI detector to optimise against
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              {
+                value: "other" as DetectorTarget,
+                label: "Other Detectors",
+                description: "Turnitin, Copyleaks, Winston AI & more",
+              },
+              {
+                value: "gptzero" as DetectorTarget,
+                label: "GPTZero",
+                description: "Optimised for GPTZero's scoring model",
+              },
+            ] as const
+          ).map((opt) => {
+            const isActive = detectorTarget === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => setDetectorTarget(opt.value)}
+                className={`flex flex-col rounded-xl border px-4 py-2.5 text-left transition-all hover:cursor-pointer ${
+                  isActive
+                    ? "border-indigo-300 bg-indigo-600 shadow-md shadow-indigo-100"
+                    : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-100"
+                }`}
+              >
+                <span
+                  className={`text-sm font-semibold ${
+                    isActive ? "text-white" : "text-slate-700"
+                  }`}
+                >
+                  {opt.label}
+                </span>
+                <span
+                  className={`mt-0.5 text-xs ${
+                    isActive ? "text-indigo-200" : "text-slate-400"
+                  }`}
+                >
+                  {opt.description}
+                </span>
               </button>
             );
           })}
@@ -433,50 +494,21 @@ export function HumanizerWorkspace({
             {data && !isPending && (
               <div className="flex h-full min-h-0 flex-col">
                 {/* Result header */}
-                <div
-                  className={`shrink-0 border-b border-slate-100 px-4 py-3 ${data.fallback ? "bg-linear-to-r from-amber-50 to-yellow-50" : "bg-linear-to-r from-emerald-50 to-teal-50"}`}
-                >
+                <div className="shrink-0 border-b border-slate-100 bg-linear-to-r from-emerald-50 to-teal-50 px-4 py-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {data.fallback ? (
-                        <>
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400 shadow-sm shadow-amber-200">
-                            <AlertCircle size={13} className="text-white" />
-                          </div>
-                          <span className="text-sm font-bold text-amber-800">
-                            Backup Humanizer Used
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 shadow-sm shadow-emerald-200">
-                            <Sparkles size={13} className="text-white" />
-                          </div>
-                          <span className="text-sm font-bold text-emerald-800">
-                            Humanized Output
-                          </span>
-                        </>
-                      )}
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 shadow-sm shadow-emerald-200">
+                        <Sparkles size={13} className="text-white" />
+                      </div>
+                      <span className="text-sm font-bold text-emerald-800">
+                        Humanized Output
+                      </span>
                     </div>
-                    <div
-                      className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${data.fallback ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}
-                    >
+                    <div className="flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
                       <Zap size={10} className="fill-current" />
-                      {data.fallback
-                        ? "Local fallback"
-                        : isFree
-                          ? "1-pass"
-                          : "3-pass Pro"}
+                      {isFree ? "1-pass" : "3-pass Pro"}
                     </div>
                   </div>
-                  {data.fallback && (
-                    <p className="mt-2 text-xs leading-5 text-amber-700">
-                      The AI service was temporarily unavailable. A basic
-                      rewrite was applied — transitions simplified and
-                      contractions added. For full humanization, try again in a
-                      moment.
-                    </p>
-                  )}
                 </div>
 
                 {/* Scrollable content */}
