@@ -348,7 +348,7 @@ export function HumanizerWorkspace({
                       You&apos;ve used your free quota
                     </p>
                     <p className="mt-1 text-sm leading-6 text-slate-600">
-                      The Free plan includes 1,000 words per month. Upgrade to
+                      The Free plan includes 500 words per month. Upgrade to
                       Basic, Pro, or Ultra for up to 45,000 words per month and
                       unlock every tone.
                     </p>
