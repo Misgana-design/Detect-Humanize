@@ -83,6 +83,12 @@ export async function GET(request: Request) {
         },
         { onConflict: "id" },
       );
+
+      // Show pricing modal on first signup via OAuth
+      const isNewUser = intent === "signup" || isFreshOAuthUser(user.created_at);
+      if (isNewUser && next === DEFAULT_AUTH_REDIRECT) {
+        return NextResponse.redirect(new URL("/dashboard?new_signup=1", request.url));
+      }
     }
   }
 
