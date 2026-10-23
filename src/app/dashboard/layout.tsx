@@ -1,4 +1,6 @@
 import { Sidebar } from "@/components/dashboard/Sidebar";
+import { NewSignupPricingModal } from "@/components/pricing/PricingModal";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { buildMetadata } from "@/lib/seo";
 
@@ -28,6 +30,11 @@ export default function DashboardLayout({
           {children}
         </div>
       </main>
+
+      {/* Show pricing modal once after signup — Suspense required for useSearchParams */}
+      <Suspense>
+        <NewSignupPricingModal />
+      </Suspense>
     </div>
   );
 }
