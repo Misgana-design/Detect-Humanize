@@ -49,7 +49,7 @@ export async function signup(formData: FormData) {
 
   const { name: fullName, email, password } = parsed.data;
 
-  let redirectPath = "/dashboard";
+  let redirectPath = "/dashboard?new_signup=1";
 
   try {
     const serviceSupabase = createServiceSupabaseClient();
