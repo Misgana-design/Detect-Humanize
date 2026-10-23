@@ -29,7 +29,7 @@ const COMPARE_ROWS: CompareRow[] = [
   { category: "Workflow", feature: "Draft recovery",         values: { free: true, basic: true, pro: true, ultra: true, pro_weekly: true } },
   // Quotas
   { category: "Quotas", feature: "Words per input",          values: { free: "500", basic: "500", pro: "1,500", ultra: "2,500", pro_weekly: "1,000" } },
-  { category: "Quotas", feature: "Word quota",               values: { free: "1,000/mo", basic: "4,000/mo", pro: "20,000/mo", ultra: "45,000/mo", pro_weekly: "5,000/wk" } },
+  { category: "Quotas", feature: "Word quota",               values: { free: "500/mo", basic: "4,000/mo", pro: "20,000/mo", ultra: "45,000/mo", pro_weekly: "5,000/wk" } },
   // Exports
   { category: "Exports", feature: "Copy for Google Docs",    values: { free: false, basic: true, pro: true, ultra: true, pro_weekly: true } },
   { category: "Exports", feature: "PDF export",              values: { free: false, basic: true, pro: true, ultra: true, pro_weekly: true } },
