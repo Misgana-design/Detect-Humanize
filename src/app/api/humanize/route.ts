@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { getPlanDefinition } from "@/lib/billing/plans";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { HumanizerService, Tone, HumanizerTier } from "@/services/ai/humanizerService";
+import { GptzeroHumanizerService } from "@/services/ai/gptzeroHumanizerService";
 import { normalizeLanguage } from "@/lib/languages";
+import type { DetectorTarget } from "@/hooks/useHumanizer";
 
 export const maxDuration = 180;
 export const runtime = "nodejs";
@@ -13,7 +15,10 @@ type HumanizeRequestBody = {
   tone?: unknown;
   language?: unknown;
   documentId?: unknown;
+  detectorTarget?: unknown;
 };
+
+const VALID_DETECTOR_TARGETS = new Set<DetectorTarget>(["other", "gptzero"]);
 
 const VALID_TONES = new Set<Tone>([
   "casual",
@@ -81,6 +86,11 @@ export async function POST(req: Request) {
       typeof body.documentId === "string" && body.documentId.trim()
         ? body.documentId
         : undefined;
+    const detectorTarget: DetectorTarget =
+      typeof body.detectorTarget === "string" &&
+      VALID_DETECTOR_TARGETS.has(body.detectorTarget as DetectorTarget)
+        ? (body.detectorTarget as DetectorTarget)
+        : "other";
     const wordCount = text?.trim() ? text.trim().split(/\s+/).length : 0;
 
     if (!text || text.trim() === "") {
@@ -159,8 +169,11 @@ export async function POST(req: Request) {
             ? "basic"
             : "pro";
 
-      // Call the humanizer directly — priority queue is a no-op on serverless
-      aiResult = await HumanizerService.rewrite(text, tone, humanizerTier, language);
+      // Route to the correct humanizer strategy based on the detector target.
+      aiResult =
+        detectorTarget === "gptzero"
+          ? await GptzeroHumanizerService.rewrite(text, tone, humanizerTier, language)
+          : await HumanizerService.rewrite(text, tone, humanizerTier, language);
     }
 
     if (
