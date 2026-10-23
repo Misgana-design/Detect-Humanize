@@ -3,11 +3,14 @@ import type { HumanizerResult, Tone } from "@/services/ai/humanizerService";
 import { readJsonResponse } from "@/lib/http/apiClient";
 import type { SupportedLanguage } from "@/lib/languages";
 
+export type DetectorTarget = "other" | "gptzero";
+
 interface HumanizerPayload {
   text: string;
   tone: Tone;
   language?: SupportedLanguage;
-  documentId?: string | null; // Add this!
+  documentId?: string | null;
+  detectorTarget?: DetectorTarget;
 }
 
 export function useHumanizer() {
@@ -19,11 +22,12 @@ export function useHumanizer() {
       tone,
       language,
       documentId,
-    }: HumanizerPayload): Promise<HumanizerResult & { cached?: boolean; fallback?: boolean }> => {
+      detectorTarget = "other",
+    }: HumanizerPayload): Promise<HumanizerResult & { cached?: boolean }> => {
       const res = await fetch("/api/humanize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, tone, language, documentId }),
+        body: JSON.stringify({ text, tone, language, documentId, detectorTarget }),
       });
 
       if (res.status === 401) {
@@ -33,7 +37,7 @@ export function useHumanizer() {
 
       try {
         return await readJsonResponse<
-          HumanizerResult & { cached?: boolean; fallback?: boolean }
+          HumanizerResult & { cached?: boolean }
         >(res, "Failed to humanize text. Please try again.");
       } catch (error) {
         // Surface the HTTP status (e.g. 402 → quota exceeded) so the UI can
