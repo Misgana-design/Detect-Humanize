@@ -73,23 +73,23 @@ Respond with valid JSON only, in the shape the user's message specifies.`;
 // the model's built-in understanding of the label is sufficient.
 // Constraints are only added where the bare label leaves room for real mistakes.
 const TONE_CONSTRAINTS: Record<Tone, string | null> = {
-  casual:        null,
-  professional:  null,
-  friendly:      null,
-  creative:      null,
+  casual: null,
+  professional: null,
+  friendly: null,
+  creative: null,
   academic:
-    "Preserve all technical terms, citations, and hedging language exactly as written. " +
-    "No contractions, no fragments.",
-  formal:
-    "No contractions, no fragments. Elevated but not archaic vocabulary.",
+    "Preserve all technical terms, citations, and hedging language exactly as written. ",
+  formal: "No contractions, no fragments. Elevated but not archaic vocabulary.",
   storytelling:
     "Do not invent scenes, characters, events, or anecdotes not present in the source.",
 };
 
 // ── Edit level rules ─────────────────────────────────────────────────────────
 const LEVEL_RULES: Record<EditLevel, string> = {
-  light: "Fix errors and tighten wording only. Keep the original sentence structure.",
-  medium: "Fix errors, tighten wording, and also improve flow and word choice throughout.",
+  light:
+    "Fix errors and tighten wording only. Keep the original sentence structure.",
+  medium:
+    "Fix errors, tighten wording, and also improve flow and word choice throughout.",
   heavy:
     "Fix errors, improve flow and word choice, and also restructure sentences and paragraphs " +
     "where it clearly improves clarity.",
