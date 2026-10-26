@@ -144,6 +144,20 @@ export function HumanizerWorkspace({
   const [copied, setCopied] = useState(false);
   const [detectorTarget, setDetectorTarget] = useState<DetectorTarget>("other");
 
+  // When switching to the GPTZero target, lock the tone to academic (the prompt
+  // is engineered for that register). Restore the previous tone on switch back.
+  const prevToneRef = useRef<Tone>(tone);
+
+  const handleDetectorTargetChange = (target: DetectorTarget) => {
+    if (target === "gptzero") {
+      prevToneRef.current = tone;
+      setTone("academic");
+    } else {
+      setTone(prevToneRef.current);
+    }
+    setDetectorTarget(target);
+  };
+
   const { mutate, data, isPending, error } = useHumanizer();
   const { data: profile } = useProfile();
 
@@ -270,23 +284,30 @@ export function HumanizerWorkspace({
         </div>
         <div className="flex flex-wrap gap-2">
           {TONES.map((t) => {
-            const isLocked = isToneLocked(t);
+            const isPlanLocked = isToneLocked(t);
+            const isGptzeroLocked = detectorTarget === "gptzero" && t.value !== "academic";
+            const isDisabled = isPlanLocked || isGptzeroLocked;
             const isActive = tone === t.value;
+            const title = isGptzeroLocked
+              ? "This tone is not available for the GPTZero target."
+              : isPlanLocked
+                ? "Upgrade to unlock this tone"
+                : undefined;
             return (
               <button
                 key={t.value}
-                onClick={() => !isLocked && setTone(t.value)}
-                disabled={isLocked}
-                title={isLocked ? "Upgrade to unlock this tone" : undefined}
+                onClick={() => !isDisabled && setTone(t.value)}
+                disabled={isDisabled}
+                title={title}
                 className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
                   isActive
                     ? "bg-slate-900 text-white shadow-md hover:cursor-pointer"
-                    : isLocked
+                    : isDisabled
                       ? "cursor-not-allowed bg-slate-100 text-slate-400"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:cursor-pointer"
                 }`}
               >
-                {isLocked && <Lock size={11} className="shrink-0" />}
+                {isDisabled && !isActive && <Lock size={11} className="shrink-0" />}
                 {t.label}
               </button>
             );
@@ -327,7 +348,7 @@ export function HumanizerWorkspace({
             return (
               <button
                 key={opt.value}
-                onClick={() => setDetectorTarget(opt.value)}
+                onClick={() => handleDetectorTargetChange(opt.value)}
                 className={`flex flex-col rounded-xl border px-4 py-2.5 text-left transition-all hover:cursor-pointer ${
                   isActive
                     ? "border-indigo-300 bg-indigo-600 shadow-md shadow-indigo-100"
