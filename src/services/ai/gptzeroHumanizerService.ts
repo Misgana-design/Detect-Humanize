@@ -68,37 +68,22 @@ HIGHEST PRIORITY: PRESERVE MEANING. Every fact, argument, and qualifier in the o
 
 Respond with valid JSON only, in the shape the user's message specifies.`;
 
-// ── Tone rules ───────────────────────────────────────────────────────────────
-// Only the selected tone's rule is injected into each prompt.
-const TONE_RULES: Record<Tone, string> = {
-  casual:
-    "Relaxed and direct, like a thoughtful person writing to a friend. Contractions are fine. " +
-    "Short sentences are fine. Avoid slang the source did not hint at.",
-
-  professional:
-    "Polished, plain and precise, suited to business communication. Contractions sparingly. " +
-    "No slang, and no jargon that was not in the original.",
-
+// ── Tone constraints ──────────────────────────────────────────────────────────
+// Common tones (casual, professional, friendly, creative) are left as null —
+// the model's built-in understanding of the label is sufficient.
+// Constraints are only added where the bare label leaves room for real mistakes.
+const TONE_CONSTRAINTS: Record<Tone, string | null> = {
+  casual:        null,
+  professional:  null,
+  friendly:      null,
+  creative:      null,
   academic:
-    "Formal scholarly register. Third person where the source uses it. No contractions, " +
-    "no colloquialisms, no sentence fragments. Keep technical terms, citations and hedging " +
-    "language exactly as the source states them.",
-
+    "Preserve all technical terms, citations, and hedging language exactly as written. " +
+    "No contractions, no fragments.",
   formal:
-    "Strictly formal register suited to official or legal-style writing. No contractions, " +
-    "no colloquialisms, no fragments. Elevated but not archaic vocabulary.",
-
-  creative:
-    "Vivid wording and rhythm, with fresh imagery where it fits. Imagery must express what " +
-    "the source already says, not add new facts.",
-
-  friendly:
-    "Warm, approachable and encouraging, like a knowledgeable friend explaining something. " +
-    "Contractions throughout. Light humour is fine if it suits the subject.",
-
+    "No contractions, no fragments. Elevated but not archaic vocabulary.",
   storytelling:
-    "Narrative voice with momentum. Active verbs and concrete wording, with pacing shaped by " +
-    "sentence length. Do not invent scenes, characters or events that the source does not contain.",
+    "Do not invent scenes, characters, events, or anecdotes not present in the source.",
 };
 
 // ── Edit level rules ─────────────────────────────────────────────────────────
@@ -118,11 +103,12 @@ function buildPrompt(
   level: EditLevel,
 ): string {
   const languageLabel = getLanguagePromptLabel(language);
+  const toneConstraint = TONE_CONSTRAINTS[tone];
 
   return `You are a writing editor. Rewrite the SOURCE TEXT below so it is clear, natural and well written, in the requested tone and language, while keeping exactly the same meaning.
 
 SETTINGS
-- Tone: ${tone}
+- Tone: ${tone}${toneConstraint ? `\n- Tone constraints: ${toneConstraint}` : ""}
 - Language: ${languageLabel} (if this matches the source language, keep the source language; use native idioms and punctuation conventions, and do not impose English sentence patterns on other languages)
 - Edit level: ${level}
 
@@ -147,7 +133,6 @@ RULES TO FOLLOW
 - Keep the strength of every claim ("may" stays "may", "always" stays "always").
 
 4. Tone and voice (apply at the edit level chosen above)
-- Tone guidance: ${TONE_RULES[tone]}
 - If the source has a recognizable personal voice, keep it unless the requested tone says otherwise.
 - Edit level guidance: ${LEVEL_RULES[level]}
 
