@@ -62,39 +62,22 @@ Patterns: rhetorical questions you answer yourself, backtracking phrases ("Actua
 REQUIRED — always include:
 - At least one mid-sentence dash — used to break predictable syntax`;
 
-// ── Tone-specific instruction blocks ─────────────────────────────────────────
-const TONE_RULES: Record<Tone, string> = {
-  casual:
-    "Write the way a smart person texts a friend — relaxed, direct, occasionally " +
-    "colloquial. Contractions everywhere. Short punchy sentences are fine.",
-
-  professional:
-    "Maintain a polished, confident register suitable for business communication. " +
-    "Avoid slang. Use contractions sparingly. Vocabulary should be precise but not " +
-    "academic. No jargon unless it was in the original.",
-
+// ── Tone constraints ──────────────────────────────────────────────────────────
+// Common tones (casual, professional, friendly, creative) are left as null —
+// the model's built-in understanding of the label is sufficient.
+// Constraints are only added where the bare label leaves room for real mistakes.
+const TONE_CONSTRAINTS: Record<Tone, string | null> = {
+  casual:        null,
+  professional:  null,
+  friendly:      null,
+  creative:      null,
   academic:
-    "Preserve formal academic register. Third person where the original uses it. " +
-    "No contractions. Technical vocabulary from the source text must be kept. " +
-    "Sentence structure should be varied but never colloquial.",
-
+    "Preserve all technical terms, citations, and hedging language exactly as written. " +
+    "No contractions, no fragments.",
   formal:
-    "Strict formal register. No contractions. No colloquialisms. Vocabulary should " +
-    "be elevated but not archaic. Suitable for legal, governmental, or official documents.",
-
-  creative:
-    "Lean into vivid, sensory language. Use metaphor and unexpected word choices. " +
-    "Rhythm matters — read it aloud in your head. Short sentences for impact, long " +
-    "ones for flow. Break grammar rules deliberately when it serves the voice.",
-
-  friendly:
-    "Warm, approachable, encouraging tone. Write like a knowledgeable friend " +
-    "explaining something. Contractions throughout. Occasional light humour is fine.",
-
+    "No contractions, no fragments. Elevated but not archaic vocabulary.",
   storytelling:
-    "Narrative voice. Build tension with sentence length — short for drama, long for " +
-    "immersion. Use active verbs. Ground abstract ideas in concrete scenes or moments. " +
-    "The reader should feel pulled forward.",
+    "Do not invent scenes, characters, events, or anecdotes not present in the source.",
 };
 
 // ── Universal bypass rules ────────────────────────────────────────────────────
@@ -103,7 +86,6 @@ const TONE_RULES: Record<Tone, string> = {
 // `includeStyleDevices` flag and injected only for non-strict tones.
 function buildUniversalBypassRules(tone: Tone): string {
   const includeStyleDevices = !STRICT_TONES.has(tone);
-
   const styleDevices = includeStyleDevices
     ? `
 - At least one sentence fragment. Like this.
@@ -144,9 +126,10 @@ function buildFreePrompt(
   language: SupportedLanguage,
 ): string {
   const languageLabel = getLanguagePromptLabel(language);
+  const toneConstraint = TONE_CONSTRAINTS[tone];
   return `You are an expert writing editor. Rewrite the text below so it reads as genuinely human-written while preserving all original meaning.
 
-TONE: ${TONE_RULES[tone]}
+TONE: ${tone}${toneConstraint ? `\nTONE CONSTRAINTS: ${toneConstraint}` : ""}
 LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
 ${buildUniversalBypassRules(tone)}
 Text:
@@ -164,9 +147,10 @@ function buildPaidPrompt(
   language: SupportedLanguage,
 ): string {
   const languageLabel = getLanguagePromptLabel(language);
+  const toneConstraint = TONE_CONSTRAINTS[tone];
   return `You are an expert writing editor and AI detection specialist. Rewrite the text below so it is completely undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
 
-TONE: ${TONE_RULES[tone]}
+TONE: ${tone}${toneConstraint ? `\nTONE CONSTRAINTS: ${toneConstraint}` : ""}
 LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
 ${buildUniversalBypassRules(tone)}
 Work through three mental passes before writing your output:
