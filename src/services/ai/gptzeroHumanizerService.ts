@@ -1,12 +1,6 @@
 import { client, MODELS, humanizerSchema } from "./geminiClient";
-import {
-  getLanguagePromptLabel,
-  type SupportedLanguage,
-} from "@/lib/languages";
+import type { SupportedLanguage } from "@/lib/languages";
 import type { Tone, HumanizerTier, HumanizerResult } from "./humanizerService";
-
-/** How much the text is changed: light = proofread only, heavy = full restructure. */
-export type EditLevel = "light" | "medium" | "heavy";
 
 type GenerateContentParams = Parameters<
   typeof client.models.generateContent
@@ -18,134 +12,96 @@ const TIMEOUT_PAID_MS = 60_000;
 
 const AI_RETRY_ATTEMPTS = 2;
 
-// Academic and formal tones need lower variance — precision matters more than flair.
-const STRICT_TONES = new Set<Tone>(["academic", "formal"]);
-
-function temperatureFor(tone: Tone): number {
-  return STRICT_TONES.has(tone) ? 0.4 : 0.7;
-}
+// The prompt is engineered for a formal academic register — a fixed moderate
+// temperature keeps output consistent without suppressing vocabulary variation.
+const TEMPERATURE = 0.45;
 
 // ── Tier configuration ───────────────────────────────────────────────────────
-// Model, edit level, timeout and thinking behaviour are chosen together so the
-// tier mapping lives in one place.
-// NOTE: basic intentionally uses the free model with heavy editing.
+// NOTE: basic intentionally uses the free model with the paid timeout.
 const TIER_CONFIG: Record<
   HumanizerTier,
-  {
-    model: string;
-    level: EditLevel;
-    timeoutMs: number;
-    disableThinking: boolean;
-  }
+  { model: string; timeoutMs: number; disableThinking: boolean }
 > = {
-  free: {
-    model: MODELS.FREE,
-    level: "medium",
-    timeoutMs: TIMEOUT_FREE_MS,
-    disableThinking: true,
-  },
-  basic: {
-    model: MODELS.FREE,
-    level: "heavy",
-    timeoutMs: TIMEOUT_PAID_MS,
-    disableThinking: true,
-  },
-  pro: {
-    model: MODELS.PRO,
-    level: "heavy",
-    timeoutMs: TIMEOUT_PAID_MS,
-    // gemini-2.5-pro does not support thinkingBudget: 0, so leave it unset.
-    disableThinking: false,
-  },
+  free:  { model: MODELS.FREE, timeoutMs: TIMEOUT_FREE_MS, disableThinking: true  },
+  basic: { model: MODELS.FREE, timeoutMs: TIMEOUT_PAID_MS, disableThinking: true  },
+  pro:   { model: MODELS.PRO,  timeoutMs: TIMEOUT_PAID_MS, disableThinking: false },
 };
 
 // ── System instruction ───────────────────────────────────────────────────────
-// Kept short on purpose — detailed rules live in the user prompt below.
-// MEANING PRESERVATION is stated first so it carries the most weight.
-const REWRITER_SYSTEM_INSTRUCTION = `You are a skilled writing editor. You rewrite text so it is clear, natural, and in the requested tone and language.
+// Aligned with the prompt's purpose: formal paraphrase that preserves content
+// exactly. No mention of tone or naturalness — the prompt handles all of that.
+const REWRITER_SYSTEM_INSTRUCTION = `You are an expert editor. Your sole task is to rewrite text as a close, polished paraphrase that preserves the original content exactly — every idea, fact, name, number, and argument — while changing the wording and sentence construction throughout.
 
-HIGHEST PRIORITY: PRESERVE MEANING. Every fact, argument, and qualifier in the original must survive. Never add information, examples, anecdotes, opinions, or personal experience that are not in the original. Never drop or weaken a key point. You change how things are said, never what is said. This rule overrides every other instruction.
+You never add new information, examples, opinions, or commentary. You never omit any point from the original. You only change how things are expressed, never what is expressed.
 
 Respond with valid JSON only, in the shape the user's message specifies.`;
 
-// ── Tone constraints ──────────────────────────────────────────────────────────
-// Common tones (casual, professional, friendly, creative) are left as null —
-// the model's built-in understanding of the label is sufficient.
-// Constraints are only added where the bare label leaves room for real mistakes.
-const TONE_CONSTRAINTS: Record<Tone, string | null> = {
-  casual: null,
-  professional: null,
-  friendly: null,
-  creative: null,
-  academic:
-    "Preserve all technical terms, citations, and hedging language exactly as written. ",
-  formal: "No contractions, no fragments. Elevated but not archaic vocabulary.",
-  storytelling:
-    "Do not invent scenes, characters, events, or anecdotes not present in the source.",
-};
-
-// ── Edit level rules ─────────────────────────────────────────────────────────
-const LEVEL_RULES: Record<EditLevel, string> = {
-  light:
-    "Fix errors and tighten wording only. Keep the original sentence structure.",
-  medium:
-    "Fix errors, tighten wording, and also improve flow and word choice throughout.",
-  heavy:
-    "Fix errors, improve flow and word choice, and also restructure sentences and paragraphs " +
-    "where it clearly improves clarity.",
-};
-
 // ── Prompt builder ────────────────────────────────────────────────────────────
-function buildPrompt(
-  text: string,
-  tone: Tone,
-  language: SupportedLanguage,
-  level: EditLevel,
-): string {
-  const languageLabel = getLanguagePromptLabel(language);
-  const toneConstraint = TONE_CONSTRAINTS[tone];
+// Tone is accepted in the signature to satisfy the shared service interface but
+// is intentionally not injected into the prompt — the prompt is already
+// engineered for a formal academic register and an explicit tone instruction
+// would undermine it.
+function buildPrompt(text: string): string {
+  return `You are an expert editor who rewrites essays into a slightly more formal, polished register while preserving their content exactly.
 
-  return `You are a writing editor. Rewrite the SOURCE TEXT below so it is clear, natural and well written, in the requested tone and language, while keeping exactly the same meaning.
+TASK
+Rewrite the text below so it reads like a close, polished paraphrase of the original. Keep the same ideas, structure, and order, but change the wording and sentence construction throughout.
 
-SETTINGS
-- Tone: ${tone}${toneConstraint ? `\n- Tone constraints: ${toneConstraint}` : ""}
-- Language: ${languageLabel} (if this matches the source language, keep the source language; use native idioms and punctuation conventions, and do not impose English sentence patterns on other languages)
-- Edit level: ${level}
+WHAT TO PRESERVE
+- The same number of paragraphs, in the same order.
+- Every idea, example, list item, and conclusion. Add nothing new and omit nothing.
+- The overall length (within roughly ±5% of the original word count).
+- The original meaning, facts, and argument.
+- Any names, numbers, and technical terms (do not paraphrase these).
 
-RULES TO FOLLOW
+WHAT TO CHANGE
+1. Vocabulary: Replace common words with more formal or elevated synonyms where natural.
+   - essential -> vital; important benefits -> key advantages
+   - helps -> fosters / enables / empowers
+   - reduce -> alleviate; improve -> enhance / elevate
+   - create -> foster / cultivate; shows -> demonstrates
+   - Use words like "instrumental," "instilling," "crucial," "nurturing," and "prospects" where they fit.
 
-1. Structure
-- Keep the same overall order of ideas and the same paragraph breaks, unless the edit level is "heavy" and merging or reordering clearly improves the logic.
-- Keep every point, example and list item. Do not add new ideas or drop any.
-- Keep the title, headings, lists and formatting as they are.
+2. Transitions: Swap the original's connectors for alternatives
+   (Furthermore -> Additionally/Moreover; In addition -> Furthermore; Despite X -> However, there are...; Therefore -> Therefore/As a result).
 
-2. Vocabulary
-- Replace vague, repetitive or overused words with precise, natural ones (e.g., "a lot of" -> "many", "plays a major role in" -> "shapes").
-- Cut filler and stock phrases that add no meaning (e.g., "it is important to note that").
-- Keep technical terms, names, numbers, dates, quotations, citations, URLs and code exactly as written.
-- Match the spelling convention of the source (British or American) consistently.
+3. Sentence structure: Restructure about half of the sentences. Change active/passive voice, reorder clauses, turn verbs into noun phrases (or the reverse), and open sentences differently (e.g., "Technology has changed..." -> "With the advent of technology, ...").
 
-3. Sentence-level changes
-- Simplify tangled sentences and fix awkward or unclear phrasing.
-- Vary sentence length and structure so the text reads smoothly, without forcing variety for its own sake.
-- Prefer active voice and concrete wording where it reads better.
-- Use transitions that match the logic between ideas.
-- Keep the strength of every claim ("may" stays "may", "always" stays "always").
+4. Hedging: Where the original makes flat, categorical statements about problems or risks, soften them with "may," "some," or "can" (e.g., "Students lack access to..." -> "Students may not have access to...").
 
-4. Tone and voice (apply at the edit level chosen above)
-- If the source has a recognizable personal voice, keep it unless the requested tone says otherwise.
-- Edit level guidance: ${LEVEL_RULES[level]}
+5. Light compression: Where the original lists items in a long clause (e.g., "encourage their children, provide emotional support, and cooperate with teachers"), you may merge or tighten phrasing as long as no item is lost.
 
-5. Constraints
-- Do not add facts, examples, opinions, anecdotes or first-person experience that are not in the source.
-- Keep the length within about 10 percent of the original, unless the edit removes real redundancy.
-- If the source contains a likely typo, fix it unless it could be a name or technical term, in which case leave it unchanged.
-- Do not add commentary, explanations or notes inside the rewritten text.
+6. Conclusion: Rephrase the closing sentences (e.g., "investing in" -> "prioritizing"; "characterized by" -> "filled with") while keeping the same message.
+
+WHAT TO AVOID
+- Do not copy any sentence verbatim, except for very short stock phrases (e.g., "Every child deserves the opportunity to learn").
+- Do not repeat the same elevated word more than three times in the whole text; vary your synonyms.
+- Do not make the tone flowery, dramatic, or promotional. It should stay academic and clear.
+- Do not add commentary, headings, bullet points, or explanations.
+
+FORMATTING
+- If the original title uses Markdown (e.g., "# Title"), output the title as plain text with no symbols.
+- Output only the rewritten text. No preface, no notes.
+
+SELF-CHECK (do silently before answering)
+- Same paragraph count and order as the original?
+- Every idea and example still present?
+- No new claims introduced?
+- Most sentences meaningfully reworded?
+
+EXAMPLE
+Input:
+"# Education and Society
+Education plays an essential role in society. Schools help students develop critical thinking skills. Despite its importance, students in some areas lack access to qualified teachers and proper resources. Therefore, investing in education is crucial for national development."
+
+Output:
+"Education and Society
+Education plays a vital role in society. Schools enable students to develop critical thinking skills. However, there are challenges: in some regions, students may not have access to qualified teachers or adequate resources. As a result, prioritizing education is crucial for national development."
 
 OUTPUT: Only valid JSON, in this shape:
-{ "humanizedText": "<the rewritten text only>", "changes": ["<2 to 4 short notes for the user on what was improved, such as clarity, tone, flow or concision>"] }
+{ "humanizedText": "<the rewritten text only>", "changes": ["<2 to 4 short notes on what was improved: vocabulary, transitions, sentence structure, or hedging>"] }
 
-SOURCE TEXT:
+TEXT TO REWRITE:
 """
 ${text}
 """`;
@@ -291,15 +247,17 @@ function checkMeaningPreservation(
 
 export class GptzeroHumanizerService {
   /**
-   * Rewrites text using an editorial-brief strategy tuned for GPTZero bypass.
-   * `level` overrides the tier's default edit level when provided.
+   * Rewrites text using the engineered academic paraphrase prompt.
+   * The `tone` parameter is accepted to satisfy the shared service interface
+   * but is not injected into the prompt — the prompt's register is fixed.
+   * The `language` parameter is similarly accepted but not used: the prompt
+   * produces output in the same language as the input naturally.
    */
   static async rewrite(
     text: string,
-    tone: Tone,
+    _tone: Tone,
     tier: HumanizerTier = "free",
-    language: SupportedLanguage = "auto",
-    level?: EditLevel,
+    _language: SupportedLanguage = "auto",
   ): Promise<HumanizerResult> {
     const cfg = TIER_CONFIG[tier];
     const label = `gptzero-${tier}-tier rewrite`;
@@ -307,13 +265,12 @@ export class GptzeroHumanizerService {
     const response = await generateContentWithRetry(
       {
         model: cfg.model,
-        contents: buildPrompt(text, tone, language, level ?? cfg.level),
+        contents: buildPrompt(text),
         config: {
           systemInstruction: REWRITER_SYSTEM_INSTRUCTION,
-          temperature: temperatureFor(tone),
+          temperature: TEMPERATURE,
           responseMimeType: "application/json",
           responseSchema: humanizerSchema,
-          // Flash models can skip thinking to cut latency.
           ...(cfg.disableThinking
             ? { thinkingConfig: { thinkingBudget: 0 } }
             : {}),
