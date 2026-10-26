@@ -73,6 +73,13 @@ WHAT TO CHANGE
 
 6. Conclusion: Rephrase the closing sentences (e.g., "investing in" -> "prioritizing"; "characterized by" -> "filled with") while keeping the same message.
 
+7. Human imperfection: Introduce 1–2 subtle punctuation imperfections per paragraph — the kind real student writers produce, not random noise. Choose from:
+   - Drop the comma after a short introductory phrase (e.g., "In some regions students may not..." instead of "In some regions, students may not...").
+   - Use a comma splice between two closely related independent clauses (e.g., "Education is vital, it shapes societies.").
+   - Omit the comma before a coordinating conjunction joining two short clauses (e.g., "Schools enable learning and they build character.").
+   - Vary serial comma use — include it in some lists, drop it in others within the same text.
+   Keep these sparse and inconsistent across paragraphs so they read as natural oversight, not a pattern. Never introduce spelling errors, wrong words, or apostrophe mistakes.
+
 WHAT TO AVOID
 - Do not copy any sentence verbatim, except for very short stock phrases (e.g., "Every child deserves the opportunity to learn").
 - Do not repeat the same elevated word more than three times in the whole text; vary your synonyms.
@@ -88,6 +95,7 @@ SELF-CHECK (do silently before answering)
 - Every idea and example still present?
 - No new claims introduced?
 - Most sentences meaningfully reworded?
+- At least 1 subtle punctuation imperfection present per paragraph, but no spelling or word-choice errors?
 
 EXAMPLE
 Input:
@@ -96,7 +104,7 @@ Education plays an essential role in society. Schools help students develop crit
 
 Output:
 "Education and Society
-Education plays a vital role in society. Schools enable students to develop critical thinking skills. However, there are challenges: in some regions, students may not have access to qualified teachers or adequate resources. As a result, prioritizing education is crucial for national development."
+Education plays a vital role in society. Schools enable students to develop critical thinking skills and they help build responsible citizens. However, there are challenges: in some regions, students may not have access to qualified teachers or adequate resources. As a result, prioritizing education is crucial for national development."
 
 OUTPUT: Only valid JSON, in this shape:
 { "humanizedText": "<the rewritten text only>", "changes": ["<2 to 4 short notes on what was improved: vocabulary, transitions, sentence structure, or hedging>"] }
