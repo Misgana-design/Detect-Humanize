@@ -233,6 +233,13 @@ export default async function PseoToolPage({ params }: Props) {
               </li>
             ))}
           </ul>
+          <p className="mt-4 text-sm text-slate-500">
+            See all{" "}
+            <Link href="/detectors" className="text-indigo-600 hover:underline">
+              AI detectors we help you bypass
+            </Link>{" "}
+            — bypass rates tested and updated regularly.
+          </p>
         </section>
 
         {/* FAQ */}

@@ -139,7 +139,7 @@ export function buildOrganizationJsonLd() {
     "@type": "Organization",
     name: siteConfig.name,
     url: siteConfig.url,
-    logo: absoluteUrl(siteConfig.logo),
+    logo: { "@type": "ImageObject", url: absoluteUrl(siteConfig.logo) },
     sameAs: siteConfig.socials.length > 0 ? siteConfig.socials : [siteConfig.url],
   };
 }

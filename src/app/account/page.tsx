@@ -7,7 +7,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: "Manage Account",
     description:
-      "Manage your profile details, Google sign-in identity, and password settings.",
+      "Manage your Text Humanica profile: update your display name, Google sign-in identity, password settings, and API key access.",
     path: "/account",
     noIndex: true,
   });
@@ -22,6 +22,8 @@ export default function AccountPage() {
           { name: "Manage Account", path: "/account" },
         ])}
       />
+      {/* H1 for SEO — visually hidden, preserves visual design */}
+      <h1 className="sr-only">Manage Account</h1>
       <AccountPageClient />
     </>
   );

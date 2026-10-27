@@ -1227,7 +1227,11 @@ export function slugToKeyword(slug: string): string {
 
 export function slugToTitle(slug: string): string {
   const kw = slugToKeyword(slug);
-  return `${kw} — Free AI Humanizer | Text Humanica`;
+  // Keep full title under 60 chars. Suffix "| Free AI Humanizer" = 21 chars incl. space.
+  // That leaves 39 chars for the keyword before truncation is needed.
+  const MAX_KW = 39;
+  const shortKw = kw.length > MAX_KW ? kw.slice(0, MAX_KW - 1) + "…" : kw;
+  return `${shortKw} | Free AI Humanizer`;
 }
 
 export function slugToDescription(slug: string): string {

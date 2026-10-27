@@ -375,7 +375,7 @@ export function HumanizerWorkspace({
         </div>
       </div>
 
-      <div className="grid items-start gap-5 md:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2">
         {/* ── Input ── */}
         <div className="flex flex-col space-y-4">
           <TextUploadField
@@ -447,13 +447,10 @@ export function HumanizerWorkspace({
           )}
 
           {quotaExceeded && !isFree && (
-            <div className="space-y-3">
-              <div className="rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-700">
-                You&apos;ve hit your {plan.name} quota for this period. Top up
-                below to keep going — extra credits apply on top of your plan
-                and never expire.
-              </div>
-              <ExtraCreditsCard />
+            <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-700">
+              You&apos;ve hit your {plan.name} quota for this period. Top up with
+              a credit pack to keep going — extra credits apply on top of your
+              plan and never expire.
             </div>
           )}
 
@@ -487,7 +484,7 @@ export function HumanizerWorkspace({
         </div>
 
         {/* ── Output — fixed height, internal scroll ── */}
-        <div className="flex flex-col space-y-4">
+        <div className="flex min-h-0 flex-col space-y-4 self-stretch">
           <div
             className={`flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${PANEL_HEIGHT}`}
           >
@@ -600,13 +597,20 @@ export function HumanizerWorkspace({
           </div>
 
           {/* Copy button when no result yet */}
-          {(!data || isPending) && (
+          {(!data || isPending) && !quotaExceeded && (
             <button
               disabled
               className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-400 opacity-50"
             >
               <Copy size={16} /> Copy Result
             </button>
+          )}
+
+          {/* Extra credits — fills the empty column space when quota is exhausted */}
+          {quotaExceeded && !isFree && (
+            <div className="flex-1">
+              <ExtraCreditsCard layout="stack" />
+            </div>
           )}
           {data && !isPending && (
             <section className="space-y-4">

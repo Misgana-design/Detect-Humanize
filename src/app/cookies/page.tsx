@@ -5,7 +5,7 @@ import { StructuredData } from "@/components/seo/StructuredData";
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: "Cookie Policy",
-    description: "Learn how Text Humanica uses cookies and how to manage your preferences.",
+    description: "Learn how Text Humanica uses cookies, what data we store, and how to manage or disable your cookie preferences at any time from your browser.",
     path: "/cookies",
   });
 }

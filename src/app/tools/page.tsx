@@ -7,7 +7,7 @@ import { StructuredData } from "@/components/seo/StructuredData";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    title: "Text Humanica vs Other AI Detectors & Humanizers",
+    title: "AI Humanizer vs Detectors & Humanizers",
     description:
       "How does Text Humanica compare to GPTZero, Turnitin, Originality.ai, Grammarly, QuillBot, and Undetectable AI? Side-by-side comparisons with real accuracy data.",
     path: "/tools",

@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: "AI Humanizer — Rewrite AI Text Naturally",
     description:
-      "Humanize AI text, bypass GPTZero-style flags, and manage your writing workflow in one polished AI workspace.",
+      "Humanize AI text, bypass GPTZero-style flags, and manage your entire writing workflow in one polished AI workspace. Free plan available, no credit card required.",
     path: "/",
   });
 }

@@ -11,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: "AI Humanizer for Natural Writing",
     description:
-      "Humanize AI text and rewrite ChatGPT drafts into natural, polished, plagiarism-free writing.",
+      "Humanize AI text from ChatGPT, Claude, or Gemini into natural, polished writing that bypasses GPTZero, Turnitin, and Originality.ai detection.",
     path: "/",
     keywords: [
       "humanize ChatGPT text",

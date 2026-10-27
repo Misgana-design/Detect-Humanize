@@ -64,8 +64,8 @@ function buildArticleJsonLd(post: (typeof blogPosts)[0]) {
     "@type": "Article",
     headline: post.title,
     description: post.description,
-    datePublished: post.publishedAt,
-    dateModified: post.updatedAt,
+    datePublished: post.publishedAt.includes("T") ? post.publishedAt : `${post.publishedAt}T00:00:00Z`,
+    dateModified: post.updatedAt.includes("T") ? post.updatedAt : `${post.updatedAt}T00:00:00Z`,
     author: buildPersonJsonLd(siteConfig.author),
     publisher: {
       "@type": "Organization",
