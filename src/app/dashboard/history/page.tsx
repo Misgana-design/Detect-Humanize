@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { jsPDF } from "jspdf";
 import { formatDistanceToNow } from "date-fns";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
-  ArrowLeft,
   BarChart3,
   Check,
+  ChevronDown,
   Clock,
   Copy,
   Download,
@@ -37,29 +37,46 @@ type HistoryDocument = {
 
 type ToneCounts = Record<string, number>;
 
-// ── Comparison panel ──────────────────────────────────────────────────────────
+const countWords = (text: string | null | undefined) =>
+  text && text.trim() ? text.trim().split(/\s+/).length : 0;
 
-function ComparisonPanel({
+// ── History card ─────────────────────────────────────────────────────────────
+
+function HistoryCard({
   doc,
   isPaidUser,
   isFree,
   onReHumanize,
-  onBack,
+  onDelete,
+  defaultExpanded = false,
 }: {
   doc: HistoryDocument;
   isPaidUser: boolean | null | undefined;
   isFree: boolean;
   onReHumanize: (doc: HistoryDocument) => void;
-  onBack: () => void;
+  onDelete: (docId: string) => void;
+  defaultExpanded?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [copiedPlain, setCopiedPlain] = useState(false);
+  const [copiedInput, setCopiedInput] = useState(false);
   const [copiedDocs, setCopiedDocs] = useState(false);
+
+  const previewText = doc.humanized_content || doc.original_content;
+  const wordCount = countWords(doc.humanized_content) || countWords(doc.original_content);
 
   const handleCopyPlain = async () => {
     if (!doc.humanized_content) return;
     await navigator.clipboard.writeText(doc.humanized_content);
     setCopiedPlain(true);
     setTimeout(() => setCopiedPlain(false), 2000);
+  };
+
+  const handleCopyInput = async () => {
+    if (!doc.original_content) return;
+    await navigator.clipboard.writeText(doc.original_content);
+    setCopiedInput(true);
+    setTimeout(() => setCopiedInput(false), 2000);
   };
 
   const handleCopyForDocs = () => {
@@ -111,217 +128,225 @@ function ComparisonPanel({
     if (format === "doc") exportHtmlDoc(payload);
   };
 
+  const toggle = () => setExpanded((prev) => !prev);
+
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      {/* Panel header */}
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3 sm:px-5">
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Back button — mobile only */}
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1 rounded-lg p-1 text-slate-500 hover:bg-slate-200 lg:hidden"
-            aria-label="Back to list"
-          >
-            <ArrowLeft size={16} />
-          </button>
-          <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
-            Comparison Mode
+    <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      {/* ── Collapsed header (click to expand/collapse) ── */}
+      <button
+        onClick={toggle}
+        aria-expanded={expanded}
+        className="w-full px-4 py-4 pr-24 text-left transition hover:bg-slate-50 sm:px-5 sm:pr-24"
+      >
+        <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+            {wordCount} words
+          </span>
+          <span className="text-sm text-slate-500">
+            {new Date(doc.created_at).toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
           </span>
           {doc.tone_used && (
-            <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold capitalize text-indigo-700">
+            <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold capitalize text-indigo-700">
               {doc.tone_used}
             </span>
           )}
         </div>
-        <span className="text-xs text-slate-400">
-          {new Date(doc.created_at).toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </span>
-      </div>
+        <p className="line-clamp-2 text-sm leading-relaxed text-slate-600">
+          {previewText || "Untitled scan"}
+        </p>
+      </button>
 
-      {/* Action bar */}
-      {doc.humanized_content ? (
-        <div className="border-b border-slate-100 bg-white px-4 py-3 sm:px-5">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">            <button
-              onClick={handleCopyPlain}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:cursor-pointer"
-            >
-              {copiedPlain ? (
-                <>
-                  <Check size={12} className="text-emerald-500" /> Copied!
-                </>
-              ) : (
-                <>
-                  <Copy size={12} /> Copy Text
-                </>
-              )}
-            </button>
+      {/* Delete — sibling of the toggle button so no nested interactives */}
+      <button
+        onClick={() => {
+          if (confirm("Delete this scan?")) onDelete(doc.id);
+        }}
+        aria-label="Delete document"
+        className="absolute right-12 top-4 z-10 rounded-lg p-1.5 text-slate-300 opacity-100 transition hover:bg-red-50 hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100"
+      >
+        <Trash2 size={16} />
+      </button>
 
-            <button
-              onClick={() => isPaidUser && onReHumanize(doc)}
-              disabled={!isPaidUser}
-              title={!isPaidUser ? "Upgrade to Basic or above" : undefined}
-              className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                !isPaidUser
-                  ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
-                  : "bg-slate-900 text-white hover:bg-black hover:cursor-pointer"
-              }`}
-            >
-              {!isPaidUser ? (
-                <>
-                  <Lock size={12} /> Re-Humanize
-                </>
-              ) : (
-                <>
-                  <Sparkles size={12} /> Re-Humanize
-                </>
-              )}
-            </button>
+      {/* "Show more" chevron toggle */}
+      <button
+        onClick={toggle}
+        aria-expanded={expanded}
+        aria-label={expanded ? "Show less" : "Show more"}
+        title={expanded ? "Show less" : "Show more"}
+        className={`absolute right-3 top-4 z-10 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 ${
+          expanded ? "rotate-180" : ""
+        }`}
+      >
+        <ChevronDown size={18} />
+      </button>
 
-            <button
-              onClick={() => isPaidUser && handleCopyForDocs()}
-              disabled={!isPaidUser}
-              title={!isPaidUser ? "Upgrade to Basic or above" : undefined}
-              className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                !isPaidUser
-                  ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
-                  : copiedDocs
-                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700 hover:cursor-pointer"
-              }`}
-            >
-              {!isPaidUser ? (
-                <>
-                  <Lock size={12} /> Docs
-                </>
-              ) : copiedDocs ? (
-                <>
-                  <Check size={12} /> Copied!
-                </>
-              ) : (
-                <>
-                  <FileText size={12} /> Copy for Docs
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={() => isPaidUser && handleDownloadPdf()}
-              disabled={!isPaidUser}
-              title={!isPaidUser ? "Upgrade to Basic or above" : undefined}
-              className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                !isPaidUser
-                  ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
-                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:cursor-pointer"
-              }`}
-            >
-              {!isPaidUser ? (
-                <>
-                  <Lock size={12} /> PDF
-                </>
-              ) : (
-                <>
-                  <Download size={12} /> PDF
-                </>
-              )}
-            </button>
-            {(["txt", "md", "doc"] as const).map((format) => (
+      {/* ── Expanded content ── */}
+      {expanded && (
+        <div className="border-t border-slate-100">
+          {/* Original */}
+          <div className="px-4 py-4 sm:px-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h4 className="text-sm font-bold text-slate-900">Original:</h4>
               <button
-                key={format}
-                onClick={() => isPaidUser && handleExportText(format)}
-                disabled={!isPaidUser}
-                title={!isPaidUser ? "Upgrade to Basic or above" : undefined}
-                className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold uppercase transition ${
-                  !isPaidUser
-                    ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
-                    : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:cursor-pointer"
-                }`}
+                onClick={handleCopyInput}
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:cursor-pointer"
               >
-                <Download size={12} /> {format}
+                {copiedInput ? (
+                  <>
+                    <Check size={12} className="text-emerald-500" /> Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy size={12} /> Copy Input
+                  </>
+                )}
               </button>
-            ))}
+            </div>
+            <div className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm leading-relaxed text-slate-600 sm:max-h-80">
+              {doc.original_content}
+            </div>
           </div>
 
-          {!isPaidUser && (
-            <p className="mt-2 text-center text-[11px] text-slate-400">
-              <a
-                href="/pricing"
-                className="font-semibold text-indigo-600 hover:underline"
-              >
-                Upgrade to Basic or above
-              </a>{" "}
-              to unlock Re-Humanize, Copy for Docs, and PDF export.
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className="border-b border-slate-100 bg-amber-50 px-4 py-3 sm:px-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles size={14} className="text-amber-600" />
-              <p className="text-xs font-semibold text-amber-800">
-                Not yet humanized
-              </p>
-            </div>
-            {isFree ? (
-              <a
-                href="/pricing"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-white px-3 py-1.5 text-xs font-bold text-amber-700 transition hover:bg-amber-50"
-              >
-                <Lock size={11} /> Upgrade to Humanize
-              </a>
+          {/* Humanized */}
+          <div className="border-t border-slate-100 px-4 py-4 sm:px-5">
+            {doc.humanized_content ? (
+              <>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
+                    <Sparkles size={13} className="text-indigo-500" /> Humanized:
+                  </h4>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={handleCopyPlain}
+                      className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:cursor-pointer"
+                    >
+                      {copiedPlain ? (
+                        <>
+                          <Check size={12} className="text-emerald-500" /> Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={12} /> Copy Text
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => isPaidUser && handleCopyForDocs()}
+                      disabled={!isPaidUser}
+                      title={!isPaidUser ? "Upgrade to Basic or above" : undefined}
+                      className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                        !isPaidUser
+                          ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
+                          : copiedDocs
+                            ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "bg-indigo-600 text-white hover:bg-indigo-700 hover:cursor-pointer"
+                      }`}
+                    >
+                      {!isPaidUser ? (
+                        <>
+                          <Lock size={12} /> Docs
+                        </>
+                      ) : copiedDocs ? (
+                        <>
+                          <Check size={12} /> Copied!
+                        </>
+                      ) : (
+                        <>
+                          <FileText size={12} /> Copy for Docs
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => isPaidUser && onReHumanize(doc)}
+                      disabled={!isPaidUser}
+                      title={!isPaidUser ? "Upgrade to Basic or above" : undefined}
+                      className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                        !isPaidUser
+                          ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
+                          : "bg-slate-900 text-white hover:bg-black hover:cursor-pointer"
+                      }`}
+                    >
+                      {!isPaidUser ? <Lock size={12} /> : <Sparkles size={12} />} Re-Humanize
+                    </button>
+
+                    <button
+                      onClick={() => isPaidUser && handleDownloadPdf()}
+                      disabled={!isPaidUser}
+                      title={!isPaidUser ? "Upgrade to Basic or above" : undefined}
+                      className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                        !isPaidUser
+                          ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
+                          : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:cursor-pointer"
+                      }`}
+                    >
+                      {!isPaidUser ? <Lock size={12} /> : <Download size={12} />} PDF
+                    </button>
+
+                    {(["txt", "md", "doc"] as const).map((format) => (
+                      <button
+                        key={format}
+                        onClick={() => isPaidUser && handleExportText(format)}
+                        disabled={!isPaidUser}
+                        title={!isPaidUser ? "Upgrade to Basic or above" : undefined}
+                        className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold uppercase transition ${
+                          !isPaidUser
+                            ? "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
+                            : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:cursor-pointer"
+                        }`}
+                      >
+                        <Download size={12} /> {format}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {!isPaidUser && (
+                  <p className="mb-3 text-[11px] text-slate-400">
+                    <a href="/pricing" className="font-semibold text-indigo-600 hover:underline">
+                      Upgrade to Basic or above
+                    </a>{" "}
+                    to unlock Copy for Docs, PDF export, and Re-Humanize.
+                  </p>
+                )}
+
+                <div className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-xl border border-slate-100 bg-white p-4 text-sm leading-relaxed text-slate-800 shadow-inner sm:max-h-80">
+                  {doc.humanized_content}
+                </div>
+              </>
             ) : (
-              <button
-                onClick={() => onReHumanize(doc)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm shadow-indigo-100 transition hover:bg-indigo-700"
-              >
-                <Sparkles size={11} /> Humanize this text
-              </button>
+              <div className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={14} className="text-amber-600" />
+                  <p className="text-xs font-semibold text-amber-800">Not yet humanized</p>
+                </div>
+                {isFree ? (
+                  <a
+                    href="/pricing"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-white px-3 py-1.5 text-xs font-bold text-amber-700 transition hover:bg-amber-50"
+                  >
+                    <Lock size={11} /> Upgrade to Humanize
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => onReHumanize(doc)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm shadow-indigo-100 transition hover:bg-indigo-700"
+                  >
+                    <Sparkles size={11} /> Humanize this text
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
       )}
-
-      {/* Side-by-side text — stacks on mobile, side-by-side on md+ */}
-      <div className="grid divide-y divide-slate-100 md:grid-cols-2 md:divide-x md:divide-y-0">
-        {/* Original */}
-        <div className="flex flex-col p-4">
-          <h4 className="mb-2 text-[10px] font-black uppercase tracking-widest text-rose-500">
-            Original AI Text
-          </h4>
-          <div className="max-h-64 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm leading-relaxed text-slate-600 md:max-h-96">
-            {doc.original_content}
-          </div>
-        </div>
-
-        {/* Humanized */}
-        <div className="flex flex-col p-4">
-          <h4 className="mb-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-600">
-            <Sparkles size={10} /> Humanized Version
-          </h4>
-
-          {doc.humanized_content ? (
-            <div className="max-h-64 overflow-y-auto rounded-xl border border-slate-100 bg-white p-4 text-sm leading-relaxed text-slate-800 shadow-inner md:max-h-96">
-              {doc.humanized_content}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-400">
-                <Sparkles size={20} />
-              </div>
-              <p className="text-sm font-semibold text-slate-700">
-                No humanized version yet
-              </p>
-              <p className="mt-1 text-xs text-slate-400">
-                Use the button above to humanize this text.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
@@ -331,7 +356,6 @@ function ComparisonPanel({
 export default function HistoryPage() {
   const supabase = createClient();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { data: profile } = useProfile();
 
@@ -342,10 +366,6 @@ export default function HistoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "humanized">("all");
   const [toneFilter, setToneFilter] = useState("all");
-  // On mobile: "list" shows the document list, "detail" shows the comparison panel
-  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
-
-  const selectedId = searchParams.get("doc");
 
   const { data: documents = [], isLoading } = useQuery<HistoryDocument[]>({
     queryKey: ["user-history"],
@@ -358,23 +378,6 @@ export default function HistoryPage() {
       return (data ?? []) as HistoryDocument[];
     },
   });
-
-  const selectedDoc = documents.find((d) => d.id === selectedId) ?? null;
-
-  useEffect(() => {
-    if (!isLoading && documents.length > 0 && !selectedId) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("doc", documents[0].id);
-      router.replace(`/dashboard/history?${params.toString()}`);
-    }
-  }, [isLoading, documents, selectedId, router, searchParams]);
-
-  const selectDoc = (id: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("doc", id);
-    router.push(`/dashboard/history?${params.toString()}`);
-    setMobileView("detail");
-  };
 
   const { mutate: clearHistory, isPending: isClearing } = useMutation({
     mutationFn: async () => {
@@ -389,7 +392,6 @@ export default function HistoryPage() {
       queryClient.invalidateQueries({ queryKey: ["user-history"] });
       setIsConfirming(false);
       router.replace("/dashboard/history");
-      setMobileView("list");
     },
   });
 
@@ -398,12 +400,8 @@ export default function HistoryPage() {
       const { error } = await supabase.from("documents").delete().eq("id", docId);
       if (error) throw error;
     },
-    onSuccess: (_, docId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-history"] });
-      if (selectedId === docId) {
-        router.replace("/dashboard/history");
-        setMobileView("list");
-      }
     },
   });
 
@@ -425,8 +423,9 @@ export default function HistoryPage() {
     const q = searchTerm.toLowerCase();
     const matchesSearch =
       doc.title?.toLowerCase().includes(q) ||
-      doc.original_content.toLowerCase().includes(q);
-            const matchesStatus =
+      doc.original_content.toLowerCase().includes(q) ||
+      doc.humanized_content?.toLowerCase().includes(q);
+    const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "humanized" ? Boolean(doc.humanized_content) : !doc.humanized_content);
     const matchesTone = toneFilter === "all" || (doc.tone_used || "casual") === toneFilter;
@@ -462,10 +461,44 @@ export default function HistoryPage() {
     <div className="space-y-5 text-slate-900 sm:space-y-6">
       {/* Header */}
       <header>
-        <h1 className="text-xl font-bold sm:text-2xl">Document History</h1>
-        <p className="text-sm text-slate-500">
-          Review and compare your past humanized scans.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold sm:text-2xl">Document History</h1>
+            <p className="text-sm text-slate-500">
+              Review your past humanized scans.
+            </p>
+          </div>
+          {documents.length > 0 && (
+            <div className="pt-1">
+              {!isConfirming ? (
+                <button
+                  onClick={() => setIsConfirming(true)}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-red-500 transition hover:bg-red-50"
+                >
+                  <Trash2 size={13} /> Clear all history
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 rounded-xl border border-red-100 bg-white p-2 shadow">
+                  <AlertCircle size={14} className="shrink-0 text-red-500" />
+                  <span className="text-xs font-semibold text-red-600">Sure?</span>
+                  <button
+                    onClick={() => clearHistory()}
+                    disabled={isClearing}
+                    className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {isClearing ? "Deleting..." : "Yes"}
+                  </button>
+                  <button
+                    onClick={() => setIsConfirming(false)}
+                    className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         <div className="relative mt-4 w-full sm:w-64">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -538,150 +571,63 @@ export default function HistoryPage() {
         ))}
       </div>
 
-      {/* ── Main area ── */}
-      {/* Desktop: side-by-side. Mobile: toggle between list and detail */}
-      <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
-
-        {/* Document list — hidden on mobile when viewing detail */}
-        <aside
-          className={`flex flex-col gap-2 ${
-            mobileView === "detail" ? "hidden lg:flex" : "flex"
-          }`}
-        >
-          {filteredDocuments.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-12 text-center">
-              <Search size={20} className="mb-3 text-slate-300" />
-              <p className="text-xs font-bold text-slate-900">No matches found</p>
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="mt-3 text-xs font-semibold text-indigo-600 underline underline-offset-4"
-                >
-                  Clear search
-                </button>
-              )}
-            </div>
-          ) : (
-            <>
-              {visibleDocuments.map((doc) => (
-                <div key={doc.id} className="group relative">
-                  <button
-                    onClick={() => selectDoc(doc.id)}
-                    className={`w-full rounded-xl border p-4 pr-10 text-left transition-all ${
-                      selectedId === doc.id
-                        ? "border-indigo-300 bg-indigo-50 shadow-sm ring-1 ring-indigo-300"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                    }`}
-                  >
-                    <p className="truncate text-sm font-semibold text-slate-900">
-                      {doc.title || "Untitled Scan"}
-                    </p>
-                    <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-slate-400">
-                      <span className="capitalize">{doc.tone_used || "casual"}</span>
-                      <span>{formatDistanceToNow(new Date(doc.created_at))} ago</span>
-                    </div>
-                    {doc.humanized_content && (
-                      <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                        <Sparkles size={9} /> Humanized
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm("Delete this scan?")) deleteDocument(doc.id);
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-300 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-500"
-                    aria-label="Delete document"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              ))}
-
-              {isFree && documents.length > FREE_DOC_LIMIT && (
-                <a
-                  href="/pricing"
-                  className="flex flex-col items-center gap-1.5 rounded-xl border border-dashed border-indigo-200 bg-indigo-50 px-4 py-4 text-center transition hover:bg-indigo-100"
-                >
-                  <Lock size={14} className="text-indigo-400" />
-                  <p className="text-xs font-bold text-indigo-700">
-                    {documents.length - FREE_DOC_LIMIT} more document
-                    {documents.length - FREE_DOC_LIMIT !== 1 ? "s" : ""} hidden
-                  </p>
-                  <p className="text-[11px] text-indigo-500">
-                    Upgrade to see full history
-                  </p>
-                </a>
-              )}
-              {isFree && documents.length <= FREE_DOC_LIMIT && documents.length > 0 && (
-                <a
-                  href="/pricing"
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-center transition hover:bg-slate-100"
-                >
-                  <Lock size={12} className="text-slate-400" />
-                  <p className="text-xs text-slate-500">
-                    Free plan: last 3 docs only.{" "}
-                    <span className="font-semibold text-indigo-600">Upgrade</span>
-                  </p>
-                </a>
-              )}
-            </>
+      {/* ── Document list — vertical stack of expandable cards ── */}
+      {filteredDocuments.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-12 text-center">
+          <Search size={20} className="mb-3 text-slate-300" />
+          <p className="text-xs font-bold text-slate-900">No matches found</p>
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="mt-3 text-xs font-semibold text-indigo-600 underline underline-offset-4"
+            >
+              Clear search
+            </button>
           )}
-
-          {documents.length > 0 && (
-            <div className="pt-1">
-              {!isConfirming ? (
-                <button
-                  onClick={() => setIsConfirming(true)}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-red-500 transition hover:bg-red-50"
-                >
-                  <Trash2 size={13} /> Clear all history
-                </button>
-              ) : (
-                <div className="flex items-center gap-2 rounded-xl border border-red-100 bg-white p-2 shadow">
-                  <AlertCircle size={14} className="shrink-0 text-red-500" />
-                  <span className="text-xs font-semibold text-red-600">Sure?</span>
-                  <button
-                    onClick={() => clearHistory()}
-                    disabled={isClearing}
-                    className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50"
-                  >
-                    {isClearing ? "Deleting..." : "Yes"}
-                  </button>
-                  <button
-                    onClick={() => setIsConfirming(false)}
-                    className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </aside>
-
-        {/* Comparison panel — hidden on mobile when viewing list */}
-        <main
-          className={`min-h-0 ${
-            mobileView === "list" ? "hidden lg:block" : "block"
-          }`}
-        >
-          {selectedDoc ? (
-            <ComparisonPanel
-              doc={selectedDoc}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {visibleDocuments.map((doc, index) => (
+            <HistoryCard
+              key={doc.id}
+              doc={doc}
               isPaidUser={isPaidUser}
               isFree={isFree}
               onReHumanize={handleReHumanize}
-              onBack={() => setMobileView("list")}
+              onDelete={deleteDocument}
+              defaultExpanded={index === 0}
             />
-          ) : (
-            <div className="flex h-64 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 text-sm text-slate-400">
-              Select a document from the list to view comparison
-            </div>
+          ))}
+
+          {isFree && documents.length > FREE_DOC_LIMIT && (
+            <a
+              href="/pricing"
+              className="flex flex-col items-center gap-1.5 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50 px-4 py-4 text-center transition hover:bg-indigo-100"
+            >
+              <Lock size={14} className="text-indigo-400" />
+              <p className="text-xs font-bold text-indigo-700">
+                {documents.length - FREE_DOC_LIMIT} more document
+                {documents.length - FREE_DOC_LIMIT !== 1 ? "s" : ""} hidden
+              </p>
+              <p className="text-[11px] text-indigo-500">
+                Upgrade to see full history
+              </p>
+            </a>
           )}
-        </main>
-      </div>
+          {isFree && documents.length <= FREE_DOC_LIMIT && documents.length > 0 && (
+            <a
+              href="/pricing"
+              className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-center transition hover:bg-slate-100"
+            >
+              <Lock size={12} className="text-slate-400" />
+              <p className="text-xs text-slate-500">
+                Free plan: last 3 docs only.{" "}
+                <span className="font-semibold text-indigo-600">Upgrade</span>
+              </p>
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 }
