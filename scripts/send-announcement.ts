@@ -59,7 +59,7 @@ function buildEmail(firstName: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>50% off — Back to School at Text Humanica</title>
+  <title>Quick question about Text Humanica (2 min)</title>
 </head>
 <body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:40px 16px;">
@@ -76,101 +76,46 @@ function buildEmail(firstName: string): string {
             </td>
           </tr>
 
-          <!-- Hero card — dark -->
+          <!-- Main card -->
           <tr>
-            <td style="background:#0d1a2d;border-radius:20px;overflow:hidden;">
-              <!-- Top accent bar -->
-              <div style="height:4px;background:linear-gradient(90deg,#f59e0b,#fbbf24);"></div>
-              <div style="padding:40px 40px 36px;">
+            <td style="background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+              <div style="padding:36px 40px;">
 
-                <!-- Badge -->
-                <p style="margin:0 0 16px;">
-                  <span style="display:inline-block;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;padding:4px 12px;border-radius:999px;">
-                    🎓 Back to School Sale
-                  </span>
+                <!-- Greeting -->
+                <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#1e293b;">
+                  Hi ${firstName},
                 </p>
 
-                <!-- Headline -->
-                <h1 style="margin:0 0 16px;font-size:28px;font-weight:800;color:#ffffff;line-height:1.25;">
-                  Hi ${firstName}, ace the semester with <span style="color:#fbbf24;">half off</span> every plan
-                </h1>
-
-                <p style="margin:0 0 24px;font-size:15px;line-height:1.75;color:#94a3b8;">
-                  Fresh term, fresh deal &mdash; all Text Humanica plans are <strong style="color:#ffffff;">50% off</strong> for the next 15 days. No code needed: the discount applies automatically at checkout.
+                <!-- Intro -->
+                <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#334155;">
+                  Thanks for trying Text Humanica. I&rsquo;m the solo founder, and I&rsquo;m trying to make it actually useful.
                 </p>
 
-                <!-- Discount callout -->
-                <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;width:100%;">
+                <!-- Question -->
+                <p style="margin:0 0 20px;font-size:16px;line-height:1.7;color:#334155;">
+                  Could you reply with one line: <strong>what were you trying to humanize, and what stopped you from upgrading?</strong> (Price, output quality, word limits, something else?)
+                </p>
+
+                <!-- Incentive callout -->
+                <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;width:100%;">
                   <tr>
-                    <td style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px 24px;">
-                      <table cellpadding="0" cellspacing="0" width="100%">
-                        <tr>
-                          <td style="width:64px;vertical-align:middle;padding-right:16px;">
-                            <div style="width:60px;height:60px;border-radius:50%;border:2px dashed #b8972a;background:rgba(184,151,42,0.1);text-align:center;line-height:60px;font-size:18px;font-weight:900;color:#ffffff;">
-                              50%
-                            </div>
-                          </td>
-                          <td style="vertical-align:middle;">
-                            <p style="margin:0 0 4px;font-size:16px;font-weight:700;color:#ffffff;">50% off all plans</p>
-                            <p style="margin:0;font-size:13px;color:#94a3b8;">Basic &bull; Pro &bull; Ultra &bull; Pro Weekly &mdash; all included</p>
-                          </td>
-                        </tr>
-                      </table>
+                    <td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px 20px;">
+                      <p style="margin:0;font-size:15px;line-height:1.6;color:#166534;">
+                        🎁 <strong>Everyone who replies gets a free 2,000-word credit</strong> as a thank you.
+                      </p>
                     </td>
                   </tr>
                 </table>
 
-                <!-- What's covered -->
-                <p style="margin:0 0 12px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;">What you get</p>
-                <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
-                  <tr>
-                    <td style="padding:4px 0;font-size:14px;color:#cbd5e1;">
-                      <span style="color:#4ade80;margin-right:8px;">✓</span> Up to 45,000 words/month humanized
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:4px 0;font-size:14px;color:#cbd5e1;">
-                      <span style="color:#4ade80;margin-right:8px;">✓</span> Multi-pass humanizer engine for natural output
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:4px 0;font-size:14px;color:#cbd5e1;">
-                      <span style="color:#4ade80;margin-right:8px;">✓</span> All tones, PDF/DOC exports, and comparison mode
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:4px 0;font-size:14px;color:#cbd5e1;">
-                      <span style="color:#4ade80;margin-right:8px;">✓</span> Cancel anytime — no lock-in
-                    </td>
-                  </tr>
-                </table>
-
-                <!-- CTA -->
-                <a href="${SITE_URL}pricing" style="display:inline-block;background:#f59e0b;color:#0f172a;text-decoration:none;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:800;">
-                  Claim 50% off &rarr;
-                </a>
-
-                <p style="margin:20px 0 0;font-size:12px;color:#475569;line-height:1.6;">
-                  ⏳ Offer ends September 30, 2026. Discount applied automatically &mdash; no code needed.
+                <!-- Sign-off -->
+                <p style="margin:0 0 4px;font-size:16px;line-height:1.7;color:#334155;">
+                  Thanks,
                 </p>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Spacer -->
-          <tr><td style="height:16px;"></td></tr>
-
-          <!-- Secondary card — light -->
-          <tr>
-            <td style="background:#ffffff;border-radius:20px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.05);">
-              <div style="padding:28px 36px;">
-                <p style="margin:0 0 8px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6366f1;">Already on a plan?</p>
-                <p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#475569;">
-                  If you&rsquo;re already subscribed, the best way to take advantage of this deal is to upgrade to a higher tier at the discounted rate before the sale ends.
+                <!-- TODO: Replace "Your name" with your actual name before running the script -->
+                <p style="margin:0;font-size:16px;line-height:1.7;color:#334155;">
+                  [Your name]
                 </p>
-                <a href="${SITE_URL}pricing" style="font-size:14px;font-weight:700;color:#6366f1;text-decoration:none;">
-                  View all plans &rarr;
-                </a>
+
               </div>
             </td>
           </tr>
@@ -179,7 +124,8 @@ function buildEmail(firstName: string): string {
           <tr>
             <td style="padding-top:24px;text-align:center;">
               <p style="margin:0;font-size:12px;color:#94a3b8;">
-                You received this because you have an account at Text Humanica.
+                You received this because you have an account at
+                <a href="${SITE_URL}" style="color:#94a3b8;">Text Humanica</a>.
               </p>
               <p style="margin:8px 0 0;font-size:12px;color:#cbd5e1;">
                 &copy; ${new Date().getFullYear()} Text Humanica. All rights reserved.
@@ -260,7 +206,7 @@ async function main() {
       await resend.emails.send({
         from: `Text Humanica <${FROM}>`,
         to: user.email,
-        subject: "🎓 50% off all plans — Back to School at Text Humanica",
+        subject: "Quick question about Text Humanica (2 min)",
         html: buildEmail(firstName),
       });
       sentLog.add(user.email);
