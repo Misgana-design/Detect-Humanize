@@ -468,12 +468,6 @@ export function HomePageClient() {
     <div className="relative overflow-hidden bg-slate-50">
       <div className="pointer-events-none absolute left-1/2 top-0 -z-10 h-176 w-full -translate-x-1/2 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.18),transparent_40%),linear-gradient(to_bottom,rgba(248,250,252,1),rgba(238,242,255,1))]" />
 
-      {/* Announcement bar */}
-      <div className="border-b border-indigo-100 bg-indigo-50 py-2.5 text-center text-xs font-medium text-indigo-700">
-        Humanize AI-assisted drafts for GPTZero, Originality.ai, Turnitin, and
-        more.
-      </div>
-
       {/* Hero */}
       <section className="pb-16 pt-16">
         <div className="container mx-auto px-4">
