@@ -10,7 +10,15 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { History, Layers3, Settings2, Zap, BarChartBig, Menu, X } from "lucide-react";
+import {
+  History,
+  Layers3,
+  Settings2,
+  Zap,
+  BarChartBig,
+  Menu,
+  X,
+} from "lucide-react";
 import { Brand } from "@/components/layout/Brand";
 
 export function Sidebar() {
@@ -35,29 +43,40 @@ export function Sidebar() {
   });
 
   const navItems = [
-    { name: "Overview",       href: "/dashboard",         icon: <BarChartBig size={18} /> },
-    { name: "History",        href: "/dashboard/history", icon: <History size={18} />     },
-    { name: "Bulk",           href: "/dashboard/bulk",    icon: <Layers3 size={18} />     },
-    { name: "Manage Account", href: "/account",           icon: <Settings2 size={18} />   },
+    { name: "Overview", href: "/dashboard", icon: <BarChartBig size={18} /> },
+    {
+      name: "History",
+      href: "/dashboard/history",
+      icon: <History size={18} />,
+    },
+    { name: "Bulk", href: "/dashboard/bulk", icon: <Layers3 size={18} /> },
+    { name: "Manage Account", href: "/account", icon: <Settings2 size={18} /> },
   ];
 
-  const plan          = getPlanDefinition(profile?.subscription_tier);
-  const wordsUsed     = profile?.words_used || 0;
-  const remainingWords = getRemainingWords(profile?.subscription_tier, wordsUsed, profile?.extra_credits);
-  const isPaid        = !!profile?.subscription_tier && profile.subscription_tier !== "free";
-  const percentage    = plan.wordQuota === null
-    ? 0
-    : Math.min((wordsUsed / plan.wordQuota) * 100, 100);
-  const usageLabel    = plan.wordQuota === null
-    ? wordsUsed.toLocaleString()
-    : `${wordsUsed.toLocaleString()} / ${plan.wordQuota.toLocaleString()}`;
-  const creditsLabel  = remainingWords === null ? "No cap" : remainingWords.toLocaleString();
+  const plan = getPlanDefinition(profile?.subscription_tier);
+  const wordsUsed = profile?.words_used || 0;
+  const remainingWords = getRemainingWords(
+    profile?.subscription_tier,
+    wordsUsed,
+    profile?.extra_credits,
+  );
+  const isPaid =
+    !!profile?.subscription_tier && profile.subscription_tier !== "free";
+  const percentage =
+    plan.wordQuota === null
+      ? 0
+      : Math.min((wordsUsed / plan.wordQuota) * 100, 100);
+  const usageLabel =
+    plan.wordQuota === null
+      ? wordsUsed.toLocaleString()
+      : `${wordsUsed.toLocaleString()} / ${plan.wordQuota.toLocaleString()}`;
+  const creditsLabel =
+    remainingWords === null ? "No cap" : remainingWords.toLocaleString();
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
       {/* Brand + close button (mobile only) */}
       <div className="mb-10 flex items-center justify-between px-4 pt-4">
-        
         <button
           onClick={() => setMobileOpen(false)}
           className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 lg:hidden"

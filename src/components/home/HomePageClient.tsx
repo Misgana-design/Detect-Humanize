@@ -5,9 +5,20 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowRight, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight,
-  FileText, Lock, ShieldCheck, Sparkles, Star,
-  Upload, Users, Zap, Quote,
+  ArrowRight,
+  CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Lock,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Upload,
+  Users,
+  Zap,
+  Quote,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
@@ -16,77 +27,150 @@ import { PricingCardsSection } from "@/components/pricing/PricingCardsSection";
 import { siteConfig, testimonials, trustedByLogos } from "@/lib/site";
 
 const steps = [
-  { n: "1", title: "Paste or upload", desc: "Drop in a draft or import a document in seconds." },
-  { n: "2", title: "Humanize instantly", desc: "Rewrite AI-heavy phrasing with natural rhythm, tone, and variation." },
-  { n: "3", title: "Refine and export", desc: "Save reports, compare versions, and keep your workflow moving." },
+  {
+    n: "1",
+    title: "Paste or upload",
+    desc: "Drop in a draft or import a document in seconds.",
+  },
+  {
+    n: "2",
+    title: "Humanize instantly",
+    desc: "Rewrite AI-heavy phrasing with natural rhythm, tone, and variation.",
+  },
+  {
+    n: "3",
+    title: "Refine and export",
+    desc: "Save reports, compare versions, and keep your workflow moving.",
+  },
 ];
 
 const homeFaqEntries = [
-  { question: "Will the humanized text pass GPTZero and Turnitin?", answer: "Our 3-stage humanizer is specifically engineered to maximize burstiness and perplexity  the two metrics AI detectors rely on. Pro and above plans use our full pipeline which has been tested against GPTZero, Originality.ai, and Turnitin. Results vary by text length and original content." },
-  { question: "What file types can I upload?", answer: "TXT, MD, RTF, DOCX, and PDF files up to 10MB are supported. Text is extracted automatically and pre-filled into the editor." },
-  { question: "Is my text stored or shared?", answer: "Your documents are stored in your private account and are never shared or used to train AI models. You can delete any document from your history at any time." },
-  { question: "Can I try it for free?", answer: "Yes. The free plan gives you 1,000 words per month with humanization included. No credit card required." },
+  {
+    question: "Will the humanized text pass GPTZero and Turnitin?",
+    answer:
+      "Our 3-stage humanizer is specifically engineered to maximize burstiness and perplexity  the two metrics AI detectors rely on. Pro and above plans use our full pipeline which has been tested against GPTZero, Originality.ai, and Turnitin. Results vary by text length and original content.",
+  },
+  {
+    question: "What file types can I upload?",
+    answer:
+      "TXT, MD, RTF, DOCX, and PDF files up to 10MB are supported. Text is extracted automatically and pre-filled into the editor.",
+  },
+  {
+    question: "Is my text stored or shared?",
+    answer:
+      "Your documents are stored in your private account and are never shared or used to train AI models. You can delete any document from your history at any time.",
+  },
+  {
+    question: "Can I try it for free?",
+    answer:
+      "Yes. The free plan gives you 1,000 words per month with humanization included. No credit card required.",
+  },
 ];
 
 const stats = [
-  { value: "400k+", label: "Active users", icon: <Users className="h-5 w-5" /> },
-  { value: "3-stage", label: "Humanizer pipeline", icon: <Sparkles className="h-5 w-5" /> },
-  { value: "4.9 / 5", label: "Average rating", icon: <Star className="h-5 w-5 fill-current" /> },
-  { value: "< 10s", label: "Average analysis time", icon: <Zap className="h-5 w-5" /> },
+  {
+    value: "400k+",
+    label: "Active users",
+    icon: <Users className="h-5 w-5" />,
+  },
+  {
+    value: "3-stage",
+    label: "Humanizer pipeline",
+    icon: <Sparkles className="h-5 w-5" />,
+  },
+  {
+    value: "4.9 / 5",
+    label: "Average rating",
+    icon: <Star className="h-5 w-5 fill-current" />,
+  },
+  {
+    value: "< 10s",
+    label: "Average analysis time",
+    icon: <Zap className="h-5 w-5" />,
+  },
 ];
 
 const SIMULATION_PAIRS = [
   {
     label: "Academic Essay",
     ai: "Furthermore, it is important to note that climate change represents one of the most significant challenges facing humanity in the contemporary era. Moreover, the scientific consensus indicates that immediate action is required to mitigate its effects.",
-    human: "Climate change is arguably the defining challenge of our time. Scientists agree we need to act now  and the window for meaningful action is narrowing faster than most people realize.",
+    human:
+      "Climate change is arguably the defining challenge of our time. Scientists agree we need to act now  and the window for meaningful action is narrowing faster than most people realize.",
   },
   {
     label: "Blog Post",
     ai: "In conclusion, artificial intelligence has the potential to transform numerous industries. It is worth noting that organizations that fail to adopt AI technologies may find themselves at a competitive disadvantage in the near future.",
-    human: "AI is reshaping entire industries  and companies that ignore it risk falling behind. The gap between early adopters and laggards is already widening, and it will only get harder to close.",
+    human:
+      "AI is reshaping entire industries  and companies that ignore it risk falling behind. The gap between early adopters and laggards is already widening, and it will only get harder to close.",
   },
   {
     label: "Marketing Copy",
     ai: "Our product offers a comprehensive solution that addresses the needs of modern businesses. Additionally, our platform provides users with a seamless experience that enhances productivity and efficiency.",
-    human: "We built this for teams that are tired of juggling five tools to do one job. Everything you need is in one place  and it actually works the way you expect it to.",
+    human:
+      "We built this for teams that are tired of juggling five tools to do one job. Everything you need is in one place  and it actually works the way you expect it to.",
   },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Academic:   "bg-indigo-100 text-indigo-700",
-  SEO:        "bg-amber-100 text-amber-700",
-  Agency:     "bg-violet-100 text-violet-700",
-  Education:  "bg-sky-100 text-sky-700",
-  Freelance:  "bg-rose-100 text-rose-700",
-  Marketing:  "bg-emerald-100 text-emerald-700",
-  Business:   "bg-slate-100 text-slate-700",
+  Academic: "bg-indigo-100 text-indigo-700",
+  SEO: "bg-amber-100 text-amber-700",
+  Agency: "bg-violet-100 text-violet-700",
+  Education: "bg-sky-100 text-sky-700",
+  Freelance: "bg-rose-100 text-rose-700",
+  Marketing: "bg-emerald-100 text-emerald-700",
+  Business: "bg-slate-100 text-slate-700",
 };
 
-function HomeFaqItem({ question, answer }: { question: string; answer: string }) {
+function HomeFaqItem({
+  question,
+  answer,
+}: {
+  question: string;
+  answer: string;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border-b border-slate-100 last:border-0">
-      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between gap-4 py-5 text-left hover:cursor-pointer" aria-expanded={open}>
-        <span className="text-base font-semibold text-slate-900">{question}</span>
-        <ChevronDown className={`h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between gap-4 py-5 text-left hover:cursor-pointer"
+        aria-expanded={open}
+      >
+        <span className="text-base font-semibold text-slate-900">
+          {question}
+        </span>
+        <ChevronDown
+          className={`h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
       </button>
-      {open && <p className="pb-5 text-sm leading-7 text-slate-600">{answer}</p>}
+      {open && (
+        <p className="pb-5 text-sm leading-7 text-slate-600">{answer}</p>
+      )}
     </div>
   );
 }
 
-function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+function FeatureCard({
+  icon,
+  title,
+  desc,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
   return (
     <article className="group rounded-3xl border border-slate-100 bg-slate-50 p-8 transition-all hover:bg-white hover:shadow-xl hover:shadow-indigo-500/5">
-      <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm transition-transform group-hover:scale-110">{icon}</div>
+      <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm transition-transform group-hover:scale-110">
+        {icon}
+      </div>
       <h3 className="mb-3 text-xl font-bold text-slate-900">{title}</h3>
       <p className="leading-relaxed text-slate-600">{desc}</p>
     </article>
   );
 }
 
-//  Humanizer Simulation 
+//  Humanizer Simulation
 
 function HumanizerSimulation() {
   const [activeIdx, setActiveIdx] = useState(0);
@@ -210,19 +294,31 @@ function HumanizerSimulation() {
   );
 }
 
-//  Testimonials carousel 
+//  Testimonials carousel
 
 function TestimonialsSection() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [page, setPage] = useState(0);
   const CARDS_PER_PAGE = 3;
 
-  const categories = ["All", ...Array.from(new Set(testimonials.map((t) => t.category)))];
-  const filtered = activeCategory === "All" ? testimonials : testimonials.filter((t) => t.category === activeCategory);
+  const categories = [
+    "All",
+    ...Array.from(new Set(testimonials.map((t) => t.category))),
+  ];
+  const filtered =
+    activeCategory === "All"
+      ? testimonials
+      : testimonials.filter((t) => t.category === activeCategory);
   const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE);
-  const visible = filtered.slice(page * CARDS_PER_PAGE, page * CARDS_PER_PAGE + CARDS_PER_PAGE);
+  const visible = filtered.slice(
+    page * CARDS_PER_PAGE,
+    page * CARDS_PER_PAGE + CARDS_PER_PAGE,
+  );
 
-  const handleCategory = (cat: string) => { setActiveCategory(cat); setPage(0); };
+  const handleCategory = (cat: string) => {
+    setActiveCategory(cat);
+    setPage(0);
+  };
 
   return (
     <section className="py-20 bg-linear-to-b from-slate-50 to-white">
@@ -262,8 +358,7 @@ function TestimonialsSection() {
           <AnimatePresence mode="wait">
             {visible.map((t, i) => {
               const catColor =
-                CATEGORY_COLORS[t.category] ??
-                "bg-slate-100 text-slate-600";
+                CATEGORY_COLORS[t.category] ?? "bg-slate-100 text-slate-600";
               return (
                 <motion.article
                   key={t.name + activeCategory + page}
@@ -348,7 +443,7 @@ function TestimonialsSection() {
   );
 }
 
-//  Main component 
+//  Main component
 
 export function HomePageClient() {
   const searchParams = useSearchParams();
@@ -382,7 +477,7 @@ export function HomePageClient() {
       {/* Hero */}
       <section className="pb-16 pt-16">
         <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-4xl text-center">
+          <div className="mx-auto max-w-6xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
               <div className="flex -space-x-1.5">
                 {["MT", "DB", "LA"].map((initials) => (
@@ -409,23 +504,26 @@ export function HomePageClient() {
             </div>
 
             <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 md:text-[4.5rem] md:leading-[1.08]">
-              Humanize AI text.{" "}
+              Turn {""}
               <span className="relative">
                 <span className="relative z-10 animate-pulse text-indigo-600">
-                  Rewrite it
+                  ChatGPT
                 </span>
                 <span className="absolute -bottom-1 left-0 right-0 h-3 -rotate-1 rounded bg-indigo-100" />
               </span>{" "}
-              naturally.
+              drafts into writing that sounds {""}
+              <span className="relative z-10 animate-pulse text-indigo-600">
+                human.
+              </span>
             </h1>
 
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+            <p className="mx-auto mt-6 max-w-4xl text-lg leading-8 text-slate-600">
               A focused workspace for students, researchers, SEO writers, and
               content teams who need AI-assisted drafts to sound natural,
               polished, and publication-ready.
             </p>
 
-            <ul className="mx-auto mt-6 grid max-w-2xl gap-2 text-left sm:grid-cols-3">
+            <ul className="mx-auto mt-6 grid max-w-4xl gap-2 text-left sm:grid-cols-3">
               {[
                 "No credit card required to start",
                 "Results in under 10 seconds",
