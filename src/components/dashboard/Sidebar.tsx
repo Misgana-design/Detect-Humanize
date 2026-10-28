@@ -57,7 +57,7 @@ export function Sidebar() {
     <div className="flex h-full flex-col">
       {/* Brand + close button (mobile only) */}
       <div className="mb-10 flex items-center justify-between px-4 pt-4">
-        <Brand size="sm" />
+        
         <button
           onClick={() => setMobileOpen(false)}
           className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 lg:hidden"
