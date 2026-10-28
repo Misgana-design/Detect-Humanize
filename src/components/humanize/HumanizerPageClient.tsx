@@ -12,7 +12,7 @@ import { type SupportedLanguage } from "@/lib/languages";
 import { LanguageSelect } from "@/components/workspace/LanguageSelect";
 import { QuotaInline } from "@/components/workspace/QuotaInline";
 import { ExtraCreditsCard } from "@/components/billing/ExtraCreditsCard";
-import { getPlanDefinition } from "@/lib/billing/plans";
+import { getPlanDefinition, getRemainingWords } from "@/lib/billing/plans";
 
 type ToneOption = { value: Tone; label: string; proOnly: boolean };
 
@@ -156,7 +156,7 @@ function QuotaExceededModal({
               </h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">
                 {isFree
-                  ? "The Free plan includes 500 words per month. Upgrade or grab a credit pack below to keep humanizing."
+                  ? "The Free plan includes 500 words per month. Upgrade your plan to keep humanizing."
                   : `Your ${planName} plan quota for this period is used up. Extra credits apply on top of your plan and never expire.`}
               </p>
             </div>
@@ -172,7 +172,29 @@ function QuotaExceededModal({
 
         {/* Scrollable body */}
         <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
-          <ExtraCreditsCard layout="stack" />
+          {isFree ? (
+            /* Credit packs are for subscribers — free users upgrade instead. */
+            <div className="rounded-2xl border border-indigo-100 bg-linear-to-br from-white to-indigo-50/50 p-6 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100">
+                <Lock size={22} className="text-indigo-600" />
+              </div>
+              <h3 className="mt-4 text-lg font-bold text-slate-900">
+                Upgrade to keep humanizing
+              </h3>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
+                Basic, Pro, and Ultra include up to 45,000 words per month,
+                every tone, and the full 3-stage pipeline.
+              </p>
+              <a
+                href="/pricing"
+                className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700"
+              >
+                View plans <ArrowRight size={15} />
+              </a>
+            </div>
+          ) : (
+            <ExtraCreditsCard layout="stack" />
+          )}
         </div>
       </div>
     </div>
@@ -280,7 +302,23 @@ export function HumanizerWorkspace({
     }
   };
 
-  const handleHumanize = () => mutate({ text, tone, language, documentId, detectorTarget });
+  const handleHumanize = () => {
+    // Local pre-check: when the remaining quota is already known to be too
+    // small for this input, open the quota modal immediately instead of
+    // firing a request we know will come back as a 402. The server still
+    // verifies authoritatively on every real request — this only removes the
+    // loading flash (and the pointless round-trip) for over-quota users.
+    const remaining = getRemainingWords(
+      profile?.subscription_tier,
+      profile?.words_used,
+      profile?.extra_credits,
+    );
+    if (remaining !== null && wordCount > remaining) {
+      setShowQuotaModal(true);
+      return;
+    }
+    mutate({ text, tone, language, documentId, detectorTarget });
+  };
 
   const handleExport = (format: "txt" | "md" | "doc") => {
     if (!data?.humanizedText) return;
