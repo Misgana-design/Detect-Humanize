@@ -25,6 +25,12 @@ const SITE_URL = "https://www.texthumanica.com/";
 const DAILY_LIMIT = 97; // Stay safely under Resend's 100/day free limit
 const LOG_FILE = path.join(import.meta.dirname, "sent-log.json");
 
+// ── Test mode ─────────────────────────────────────────────────────────────────
+// Run with:  npm run send-announcement -- --test your@email.com
+// Sends a single email to the given address and exits. Does NOT touch the log.
+const TEST_FLAG_IDX = process.argv.indexOf("--test");
+const TEST_EMAIL = TEST_FLAG_IDX !== -1 ? process.argv[TEST_FLAG_IDX + 1] : null;
+
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !RESEND_API_KEY) {
   console.error(
     "❌ Missing required env vars. Make sure .env.local is present.",
@@ -88,7 +94,7 @@ function buildEmail(firstName: string): string {
 
                 <!-- Intro -->
                 <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#334155;">
-                  Thanks for trying Text Humanica. I&rsquo;m the solo founder, and I&rsquo;m trying to make it actually useful.
+                  Thanks for trying Text Humanica. I&rsquo;m the founder, and I&rsquo;m trying to make it actually useful.
                 </p>
 
                 <!-- Question -->
@@ -113,7 +119,7 @@ function buildEmail(firstName: string): string {
                 </p>
                 <!-- TODO: Replace "Your name" with your actual name before running the script -->
                 <p style="margin:0;font-size:16px;line-height:1.7;color:#334155;">
-                  [Your name]
+                  Misgana Woldeselassie
                 </p>
 
               </div>
@@ -144,6 +150,23 @@ function buildEmail(firstName: string): string {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
+  // ── Test mode: send to one address and exit ──────────────────────────────
+  if (TEST_EMAIL) {
+    if (!TEST_EMAIL.includes("@")) {
+      console.error("❌ Usage: npm run send-announcement -- --test your@email.com");
+      process.exit(1);
+    }
+    console.log(`🧪 Test mode — sending to ${TEST_EMAIL} only...`);
+    await resend.emails.send({
+      from: `Text Humanica <${FROM}>`,
+      to: TEST_EMAIL,
+      subject: "Quick question about Text Humanica (2 min)",
+      html: buildEmail("there"),
+    });
+    console.log(`✅ Test email sent to ${TEST_EMAIL}. Check your inbox.`);
+    return;
+  }
+
   console.log("📋 Fetching users from Supabase...");
 
   // Supabase's PostgREST caps results at 1,000 rows by default.

@@ -106,7 +106,7 @@ function DashboardContent() {
       </div>
 
       {/* Banner */}
-      <section className="rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 p-5 text-white shadow-xl shadow-indigo-100 sm:p-6">
+      <section className="rounded-3xl border border-indigo-100 bg-linear-to-r from-indigo-600 via-indigo-500 to-sky-500 p-5 text-white shadow-xl shadow-indigo-100 sm:p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-100">
@@ -121,17 +121,21 @@ function DashboardContent() {
             </p>
           </div>
           <div className="rounded-2xl bg-white/10 px-4 py-3 text-sm sm:shrink-0">
-              <p className="text-indigo-100">Documents</p>
-              <p className="text-xl font-bold">{totalDocs}</p>
-            </div>
+            <p className="text-indigo-100">Documents</p>
+            <p className="text-xl font-bold">{totalDocs}</p>
+          </div>
         </div>
       </section>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-        <StatCard label="Total Documents"  value={totalDocs.toString()} icon={FileText} />
-        <StatCard label="Recent Activity"  value="Active"               icon={Clock} />
-        <StatCard label="Humanizer Status" value="Ready"                icon={Zap} />
+        <StatCard
+          label="Total Documents"
+          value={totalDocs.toString()}
+          icon={FileText}
+        />
+        <StatCard label="Recent Activity" value="Active" icon={Clock} />
+        <StatCard label="Humanizer Status" value="Ready" icon={Zap} />
       </div>
 
       {/* Extra credits — paid subscribers only */}
@@ -160,7 +164,10 @@ function DashboardContent() {
             <tbody className="divide-y divide-slate-100">
               {displayedDocs.map((doc) => {
                 return (
-                  <tr key={doc.id} className="group cursor-pointer transition-colors hover:bg-slate-50/80">
+                  <tr
+                    key={doc.id}
+                    className="group cursor-pointer transition-colors hover:bg-slate-50/80"
+                  >
                     <td className="px-6 py-4">
                       <span className="text-sm font-medium text-slate-900 transition-colors group-hover:text-indigo-600">
                         {doc.title || "Untitled Document"}
@@ -185,7 +192,10 @@ function DashboardContent() {
         <div className="divide-y divide-slate-100 sm:hidden">
           {displayedDocs.map((doc) => {
             return (
-              <div key={doc.id} className="flex items-center justify-between gap-3 px-4 py-4">
+              <div
+                key={doc.id}
+                className="flex items-center justify-between gap-3 px-4 py-4"
+              >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900">
                     {doc.title || "Untitled Document"}
