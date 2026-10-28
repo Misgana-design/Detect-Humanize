@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertCircle, ArrowRight, Check, Copy, Download, FileText, Lock, Sparkles, Zap } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, Coins, Copy, Download, FileText, Lock, Sparkles, X, Zap } from "lucide-react";
 import { TextUploadField } from "@/components/forms/TextUploadField";
 import { useHumanizer, type DetectorTarget } from "@/hooks/useHumanizer";
 import { useProfile } from "@/hooks/userProfile";
@@ -102,6 +102,83 @@ type HumanizerWorkspaceProps = {
   variant?: "page" | "home";
 };
 
+function QuotaExceededModal({
+  isFree,
+  planName,
+  onClose,
+}: {
+  isFree: boolean;
+  planName: string;
+  onClose: () => void;
+}) {
+  // Lock body scroll while the modal is open.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  // Close on Escape.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Word quota exceeded"
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Dialog */}
+      <div className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+        {/* Header with message + X dismiss */}
+        <div className="relative border-b border-indigo-100 bg-linear-to-r from-indigo-50 to-emerald-50 px-6 py-5 pr-14">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100">
+              <AlertCircle size={20} className="text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">
+                You&apos;ve hit your word quota
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                {isFree
+                  ? "The Free plan includes 500 words per month. Upgrade or grab a credit pack below to keep humanizing."
+                  : `Your ${planName} plan quota for this period is used up. Extra credits apply on top of your plan and never expire.`}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Dismiss"
+            className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition hover:bg-white hover:text-slate-600 hover:shadow-sm"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
+          <ExtraCreditsCard layout="stack" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function HumanizerWorkspace({
   initialText = "",
   initialDocumentId = null,
@@ -166,6 +243,16 @@ export function HumanizerWorkspace({
   const plan = getPlanDefinition(profile?.subscription_tier);
   const quotaExceeded =
     !!error && (error as { status?: number }).status === 402;
+
+  // Modal shown when the user is out of quota. Opens automatically on a
+  // humanize attempt that hits the 402, and can be re-opened from the inline
+  // notice while quotaExceeded is still true.
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
+
+  // Auto-open the modal when a humanize attempt fails with 402 (quota hit).
+  useEffect(() => {
+    if (quotaExceeded) setShowQuotaModal(true);
+  }, [quotaExceeded]);
 
   const handleCopy = async () => {
     if (data?.humanizedText) {
@@ -447,11 +534,17 @@ export function HumanizerWorkspace({
           )}
 
           {quotaExceeded && !isFree && (
-            <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-700">
-              You&apos;ve hit your {plan.name} quota for this period. Top up with
-              a credit pack to keep going — extra credits apply on top of your
-              plan and never expire.
-            </div>
+            <button
+              onClick={() => setShowQuotaModal(true)}
+              className="w-full rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-left text-sm font-medium text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
+            >
+              You&apos;ve hit your {plan.name} quota for this period.{" "}
+              <span className="font-semibold underline underline-offset-2">
+                Top up with a credit pack
+              </span>{" "}
+              to keep going — extra credits apply on top of your plan and never
+              expire.
+            </button>
           )}
 
           {error && !quotaExceeded && (
@@ -606,11 +699,27 @@ export function HumanizerWorkspace({
             </button>
           )}
 
-          {/* Extra credits — fills the empty column space when quota is exhausted */}
+          {/* Quota notice — re-opens the credits modal when quota is exhausted */}
           {quotaExceeded && !isFree && (
-            <div className="flex-1">
-              <ExtraCreditsCard layout="stack" />
-            </div>
+            <button
+              onClick={() => setShowQuotaModal(true)}
+              className="flex flex-1 w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/50 p-6 text-center transition hover:border-indigo-300 hover:bg-indigo-50"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-100">
+                <Coins size={20} className="text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-800">
+                  You&apos;ve hit your word quota
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Top up with a credit pack to keep humanizing.
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-700">
+                View credit packs <ArrowRight size={12} />
+              </span>
+            </button>
           )}
           {data && !isPending && (
             <section className="space-y-4">
@@ -625,6 +734,15 @@ export function HumanizerWorkspace({
           )}
         </div>
       </div>
+
+      {/* Quota-exceeded modal */}
+      {showQuotaModal && (
+        <QuotaExceededModal
+          isFree={isFree}
+          planName={plan.name}
+          onClose={() => setShowQuotaModal(false)}
+        />
+      )}
     </div>
   );
 }
