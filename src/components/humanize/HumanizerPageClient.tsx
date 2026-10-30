@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, ArrowRight, Check, Coins, Copy, Download, FileText, Lock, Sparkles, X, Zap } from "lucide-react";
 import { TextUploadField } from "@/components/forms/TextUploadField";
-import { useHumanizer, type DetectorTarget } from "@/hooks/useHumanizer";
+import { useHumanizer } from "@/hooks/useHumanizer";
 import { useProfile } from "@/hooks/userProfile";
 import { type Tone } from "@/services/ai/humanizerService";
 import { exportHtmlDoc, exportMarkdown, exportPlainText } from "@/lib/clientExports";
@@ -241,21 +241,6 @@ export function HumanizerWorkspace({
   });
   const [documentId] = useState<string | null>(() => resolveInitialDocId());
   const [copied, setCopied] = useState(false);
-  const [detectorTarget, setDetectorTarget] = useState<DetectorTarget>("other");
-
-  // When switching to the GPTZero target, lock the tone to academic (the prompt
-  // is engineered for that register). Restore the previous tone on switch back.
-  const prevToneRef = useRef<Tone>(tone);
-
-  const handleDetectorTargetChange = (target: DetectorTarget) => {
-    if (target === "gptzero") {
-      prevToneRef.current = tone;
-      setTone("academic");
-    } else {
-      setTone(prevToneRef.current);
-    }
-    setDetectorTarget(target);
-  };
 
   const { mutate, data, isPending, error } = useHumanizer();
   const { data: profile } = useProfile();
@@ -317,7 +302,7 @@ export function HumanizerWorkspace({
       setShowQuotaModal(true);
       return;
     }
-    mutate({ text, tone, language, documentId, detectorTarget });
+    mutate({ text, tone, language, documentId });
   };
 
   const handleExport = (format: "txt" | "md" | "doc") => {
@@ -409,91 +394,24 @@ export function HumanizerWorkspace({
         </div>
         <div className="flex flex-wrap gap-2">
           {TONES.map((t) => {
-            const isPlanLocked = isToneLocked(t);
-            const isGptzeroLocked = detectorTarget === "gptzero" && t.value !== "academic";
-            const isDisabled = isPlanLocked || isGptzeroLocked;
+            const isLocked = isToneLocked(t);
             const isActive = tone === t.value;
-            const title = isGptzeroLocked
-              ? "This tone is not available for the GPTZero target."
-              : isPlanLocked
-                ? "Upgrade to unlock this tone"
-                : undefined;
             return (
               <button
                 key={t.value}
-                onClick={() => !isDisabled && setTone(t.value)}
-                disabled={isDisabled}
-                title={title}
+                onClick={() => !isLocked && setTone(t.value)}
+                disabled={isLocked}
+                title={isLocked ? "Upgrade to unlock this tone" : undefined}
                 className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
                   isActive
                     ? "bg-slate-900 text-white shadow-md hover:cursor-pointer"
-                    : isDisabled
+                    : isLocked
                       ? "cursor-not-allowed bg-slate-100 text-slate-400"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:cursor-pointer"
                 }`}
               >
-                {isDisabled && !isActive && <Lock size={11} className="shrink-0" />}
+                {isLocked && <Lock size={11} className="shrink-0" />}
                 {t.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── Detector target selector ── */}
-      <div
-        className={`mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${
-          isHomeVariant ? "shadow-indigo-100/60" : ""
-        }`}
-      >
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-700">
-            Bypass Target
-          </span>
-          <span className="text-xs text-slate-400">
-            Choose which AI detector to optimise against
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              {
-                value: "other" as DetectorTarget,
-                label: "Other Detectors",
-                description: "Turnitin, Copyleaks, Winston AI & more",
-              },
-              {
-                value: "gptzero" as DetectorTarget,
-                label: "GPTZero",
-                description: "Optimised for GPTZero's scoring model",
-              },
-            ] as const
-          ).map((opt) => {
-            const isActive = detectorTarget === opt.value;
-            return (
-              <button
-                key={opt.value}
-                onClick={() => handleDetectorTargetChange(opt.value)}
-                className={`flex flex-col rounded-xl border px-4 py-2.5 text-left transition-all hover:cursor-pointer ${
-                  isActive
-                    ? "border-indigo-300 bg-indigo-600 shadow-md shadow-indigo-100"
-                    : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-100"
-                }`}
-              >
-                <span
-                  className={`text-sm font-semibold ${
-                    isActive ? "text-white" : "text-slate-700"
-                  }`}
-                >
-                  {opt.label}
-                </span>
-                <span
-                  className={`mt-0.5 text-xs ${
-                    isActive ? "text-indigo-200" : "text-slate-400"
-                  }`}
-                >
-                  {opt.description}
-                </span>
               </button>
             );
           })}
