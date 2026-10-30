@@ -4,7 +4,6 @@ import { getPlanDefinition } from "@/lib/billing/plans";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { HumanizerService, Tone, HumanizerTier } from "@/services/ai/humanizerService";
 import { GptzeroHumanizerService } from "@/services/ai/gptzeroHumanizerService";
-import { NewPromptTestService } from "@/services/ai/newPromptTestService";
 import { normalizeLanguage } from "@/lib/languages";
 import { logHumanizationFailure } from "@/lib/server/humanizationFailureLog";
 import type { DetectorTarget } from "@/hooks/useHumanizer";
@@ -20,7 +19,7 @@ type HumanizeRequestBody = {
   detectorTarget?: unknown;
 };
 
-const VALID_DETECTOR_TARGETS = new Set<DetectorTarget>(["other", "gptzero", "test"]);
+const VALID_DETECTOR_TARGETS = new Set<DetectorTarget>(["other", "gptzero"]);
 
 const VALID_TONES = new Set<Tone>([
   "casual",
@@ -182,9 +181,7 @@ export async function POST(req: Request) {
       aiResult =
         detectorTarget === "gptzero"
           ? await GptzeroHumanizerService.rewrite(text, tone, humanizerTier, language)
-          : detectorTarget === "test"
-            ? await NewPromptTestService.rewrite(text, humanizerTier)
-            : await HumanizerService.rewrite(text, tone, humanizerTier, language);
+          : await HumanizerService.rewrite(text, tone, humanizerTier, language);
     }
 
     if (
