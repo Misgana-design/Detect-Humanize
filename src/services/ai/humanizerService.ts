@@ -5,6 +5,7 @@ import {
 } from "@/lib/languages";
 
 export type Tone =
+  | "standard"
   | "casual"
   | "professional"
   | "academic"
@@ -67,6 +68,7 @@ REQUIRED — always include:
 // the model's built-in understanding of the label is sufficient.
 // Constraints are only added where the bare label leaves room for real mistakes.
 const TONE_CONSTRAINTS: Record<Tone, string | null> = {
+  standard:      null,
   casual:        null,
   professional:  null,
   friendly:      null,

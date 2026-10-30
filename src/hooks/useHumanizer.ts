@@ -3,7 +3,7 @@ import type { HumanizerResult, Tone } from "@/services/ai/humanizerService";
 import { readJsonResponse } from "@/lib/http/apiClient";
 import type { SupportedLanguage } from "@/lib/languages";
 
-export type DetectorTarget = "other";
+export type DetectorTarget = "other" | "test";
 
 interface HumanizerPayload {
   text: string;

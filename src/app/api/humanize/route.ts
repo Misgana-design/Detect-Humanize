@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getPlanDefinition } from "@/lib/billing/plans";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { HumanizerService, Tone, HumanizerTier } from "@/services/ai/humanizerService";
+import { NewPromptTestService } from "@/services/ai/newPromptTestService";
 import { normalizeLanguage } from "@/lib/languages";
 import { logHumanizationFailure } from "@/lib/server/humanizationFailureLog";
 import type { DetectorTarget } from "@/hooks/useHumanizer";
@@ -18,9 +19,10 @@ type HumanizeRequestBody = {
   detectorTarget?: unknown;
 };
 
-const VALID_DETECTOR_TARGETS = new Set<DetectorTarget>(["other"]);
+const VALID_DETECTOR_TARGETS = new Set<DetectorTarget>(["other", "test"]);
 
 const VALID_TONES = new Set<Tone>([
+  "standard",
   "casual",
   "professional",
   "academic",
@@ -176,7 +178,10 @@ export async function POST(req: Request) {
             ? "basic"
             : "pro";
 
-      aiResult = await HumanizerService.rewrite(text, tone, humanizerTier, language);
+      aiResult =
+        detectorTarget === "test"
+          ? await NewPromptTestService.rewrite(text, humanizerTier)
+          : await HumanizerService.rewrite(text, tone, humanizerTier, language);
     }
 
     if (
