@@ -18,6 +18,7 @@ import { getPlanDefinition } from "@/lib/billing/plans";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { HumanizerService, type Tone, type HumanizerTier } from "@/services/ai/humanizerService";
 import { normalizeLanguage } from "@/lib/languages";
+import { logHumanizationFailure } from "@/lib/server/humanizationFailureLog";
 
 export const maxDuration = 60; // Vercel Pro allows up to 60s
 
@@ -45,6 +46,9 @@ type BatchResultItem =
   | { id?: string; error: string };
 
 export async function POST(req: Request) {
+  // Hoisted so the catch block can attach the user to the failure log.
+  let userId: string | null = null;
+
   try {
     const supabase = await createServerSupabaseClient();
     const {
@@ -57,6 +61,7 @@ export async function POST(req: Request) {
         { status: 401 },
       );
     }
+    userId = user.id;
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -188,6 +193,15 @@ const wordsUsed = profile?.words_used ?? 0;
         } catch (err) {
           const message = err instanceof Error ? err.message : "Processing failed.";
           console.error(`[batch-humanize] item ${item.id ?? "?"} failed:`, message);
+          const itemWords = item.text.trim()
+            ? item.text.trim().split(/\s+/).length
+            : null;
+          await logHumanizationFailure({
+            userId: user.id,
+            source: "batch",
+            message: item.id ? `[${item.id}] ${message}` : message,
+            wordCount: itemWords,
+          });
           return { id: item.id, error: message };
         }
       }),
@@ -214,6 +228,12 @@ const wordsUsed = profile?.words_used ?? 0;
     });
   } catch (error: unknown) {
     console.error("[batch-humanize] Unexpected error:", error);
+    await logHumanizationFailure({
+      userId,
+      source: "batch",
+      message: error instanceof Error ? error.message : String(error),
+      status: 500,
+    });
     return NextResponse.json(
       { error: "Batch processing failed. Please try again." },
       { status: 500 },

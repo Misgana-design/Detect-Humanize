@@ -5,6 +5,7 @@ import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/s
 import { HumanizerService, Tone, HumanizerTier } from "@/services/ai/humanizerService";
 import { GptzeroHumanizerService } from "@/services/ai/gptzeroHumanizerService";
 import { normalizeLanguage } from "@/lib/languages";
+import { logHumanizationFailure } from "@/lib/server/humanizationFailureLog";
 import type { DetectorTarget } from "@/hooks/useHumanizer";
 
 export const maxDuration = 180;
@@ -62,6 +63,12 @@ function getPublicErrorMessage(error: unknown, status: number) {
 }
 
 export async function POST(req: Request) {
+  // Hoisted above the try block so the catch can attach request context
+  // (user, size, detector) to the humanization_failures log row.
+  let userId: string | null = null;
+  let wordCount = 0;
+  let detectorTarget: DetectorTarget = "other";
+
   try {
     const supabase = await createServerSupabaseClient();
     const {
@@ -74,6 +81,7 @@ export async function POST(req: Request) {
         { status: 401 },
       );
     }
+    userId = user.id;
 
     const body = await parseHumanizeBody(req);
     const text = typeof body.text === "string" ? body.text : "";
@@ -86,12 +94,12 @@ export async function POST(req: Request) {
       typeof body.documentId === "string" && body.documentId.trim()
         ? body.documentId
         : undefined;
-    const detectorTarget: DetectorTarget =
+    detectorTarget =
       typeof body.detectorTarget === "string" &&
       VALID_DETECTOR_TARGETS.has(body.detectorTarget as DetectorTarget)
         ? (body.detectorTarget as DetectorTarget)
         : "other";
-    const wordCount = text?.trim() ? text.trim().split(/\s+/).length : 0;
+    wordCount = text?.trim() ? text.trim().split(/\s+/).length : 0;
 
     if (!text || text.trim() === "") {
       return NextResponse.json({ error: "Text is required." }, { status: 400 });
@@ -253,6 +261,18 @@ export async function POST(req: Request) {
     const status = getStatus(error);
     const message = getPublicErrorMessage(error, status);
     console.error("Humanizer API Error:", error);
+
+    // Best-effort: record the failure so it is queryable in SQL
+    // (quota 402s and validation errors never reach this catch —
+    // they return early, so this captures genuine system failures).
+    await logHumanizationFailure({
+      userId,
+      source: "humanize",
+      message: error instanceof Error ? error.message : String(error),
+      status,
+      wordCount: wordCount > 0 ? wordCount : null,
+      detectorTarget,
+    });
 
     return NextResponse.json(
       { error: message },
