@@ -80,14 +80,14 @@ export const faqEntries = [
 ];
 
 export const trustedByLogos = [
-  { name: "Addis Ababa University", src: "/Addis Ababa.jpg" },
-  { name: "Harvard University", src: "/Harvard.png" },
-  { name: "MIT", src: "/MIT.png" },
-  { name: "Stanford University", src: "/Stanford.png" },
-  { name: "University of Oxford", src: "/Oxford.png" },
-  { name: "University of Cambridge", src: "/Cambridge.png" },
-  { name: "ETH Zurich", src: "/ETH zurich.png" },
-  { name: "University of Toronto", src: "/University Of Toronto.png" },
+  { name: "Addis Ababa University", src: "/Addis Ababa.webp" },
+  { name: "Harvard University", src: "/Harvard.webp" },
+  { name: "MIT", src: "/MIT.webp" },
+  { name: "Stanford University", src: "/Stanford.webp" },
+  { name: "University of Oxford", src: "/Oxford.webp" },
+  { name: "University of Cambridge", src: "/Cambridge.webp" },
+  { name: "ETH Zurich", src: "/ETH zurich.webp" },
+  { name: "University of Toronto", src: "/University Of Toronto.webp" },
 ];
 
 export const testimonials = [
