@@ -180,7 +180,7 @@ export async function POST(req: Request) {
 
       aiResult =
         detectorTarget === "test"
-          ? await NewPromptTestService.rewrite(text, humanizerTier)
+          ? await NewPromptTestService.rewrite(text, tone, humanizerTier)
           : await HumanizerService.rewrite(text, tone, humanizerTier, language);
     }
 

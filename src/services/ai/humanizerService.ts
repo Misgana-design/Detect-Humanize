@@ -63,25 +63,6 @@ Patterns: rhetorical questions you answer yourself, backtracking phrases ("Actua
 REQUIRED — always include:
 - At least one mid-sentence dash — used to break predictable syntax`;
 
-// ── Tone constraints ──────────────────────────────────────────────────────────
-// Common tones (casual, professional, friendly, creative) are left as null —
-// the model's built-in understanding of the label is sufficient.
-// Constraints are only added where the bare label leaves room for real mistakes.
-const TONE_CONSTRAINTS: Record<Tone, string | null> = {
-  standard:      null,
-  casual:        null,
-  professional:  null,
-  friendly:      null,
-  creative:      null,
-  academic:
-    "Preserve all technical terms, citations, and hedging language exactly as written. " +
-    "No contractions, no fragments.",
-  formal:
-    "No contractions, no fragments. Elevated but not archaic vocabulary.",
-  storytelling:
-    "Do not invent scenes, characters, events, or anecdotes not present in the source.",
-};
-
 // ── Universal bypass rules ────────────────────────────────────────────────────
 // MEANING PRESERVATION comes first and explicitly overrides the targets below.
 // Style devices that conflict with academic/formal register are gated by the
@@ -128,10 +109,9 @@ function buildFreePrompt(
   language: SupportedLanguage,
 ): string {
   const languageLabel = getLanguagePromptLabel(language);
-  const toneConstraint = TONE_CONSTRAINTS[tone];
   return `You are an expert writing editor. Rewrite the text below so it reads as genuinely human-written while preserving all original meaning.
 
-TONE: ${tone}${toneConstraint ? `\nTONE CONSTRAINTS: ${toneConstraint}` : ""}
+TONE: ${tone}
 LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
 ${buildUniversalBypassRules(tone)}
 Text:
@@ -149,10 +129,9 @@ function buildPaidPrompt(
   language: SupportedLanguage,
 ): string {
   const languageLabel = getLanguagePromptLabel(language);
-  const toneConstraint = TONE_CONSTRAINTS[tone];
   return `You are an expert writing editor and AI detection specialist. Rewrite the text below so it is completely undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
 
-TONE: ${tone}${toneConstraint ? `\nTONE CONSTRAINTS: ${toneConstraint}` : ""}
+TONE: ${tone}
 LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
 ${buildUniversalBypassRules(tone)}
 Work through three mental passes before writing your output:

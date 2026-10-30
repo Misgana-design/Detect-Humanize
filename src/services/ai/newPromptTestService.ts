@@ -5,7 +5,7 @@
  */
 
 import { client, MODELS, humanizerSchema } from "./geminiClient";
-import type { HumanizerTier, HumanizerResult } from "./humanizerService";
+import type { Tone, HumanizerTier, HumanizerResult } from "./humanizerService";
 
 type GenerateContentParams = Parameters<
   typeof client.models.generateContent
@@ -40,8 +40,10 @@ const TEST_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow the use
 // ── Prompt builder ────────────────────────────────────────────────────────────
 // Tone and language are accepted to satisfy the shared interface but are not
 // injected — the prompt defines its own style rules entirely.
-function buildPrompt(text: string): string {
+function buildPrompt(text: string, tone: Tone): string {
   return `You are a text rewriting engine. Rewrite the input text in a specific "heavy paraphrase" style, following the rules below exactly. Output only the rewritten text.
+
+TONE: ${tone}
 
 ## STYLE RULES
 
@@ -234,11 +236,12 @@ function parseResult(raw: string | undefined, label: string): HumanizerResult {
 export class NewPromptTestService {
   /**
    * TEST ONLY — routes through the candidate prompt for evaluation.
-   * Tone and language are accepted to satisfy the shared call-site interface
-   * but are intentionally not passed to the prompt.
+   * Language is accepted to satisfy the shared call-site interface
+   * but is not passed to the prompt — the prompt inherits the source language.
    */
   static async rewrite(
     text: string,
+    tone: Tone,
     tier: HumanizerTier = "free",
   ): Promise<HumanizerResult> {
     const cfg = TIER_CONFIG[tier];
@@ -247,7 +250,7 @@ export class NewPromptTestService {
     const response = await generateContentWithRetry(
       {
         model: cfg.model,
-        contents: buildPrompt(text),
+        contents: buildPrompt(text, tone),
         config: {
           systemInstruction: TEST_SYSTEM_INSTRUCTION,
           temperature: TEMPERATURE,
