@@ -1,25 +1,10 @@
 import { client, MODELS, humanizerSchema } from "./geminiClient";
-import {
-  getLanguagePromptLabel,
-  type SupportedLanguage,
-} from "@/lib/languages";
+import type { SupportedLanguage } from "@/lib/languages";
+import type { Tone, HumanizerTier, HumanizerResult } from "./humanizerTypes";
 
-export type Tone =
-  | "standard"
-  | "casual"
-  | "professional"
-  | "academic"
-  | "formal"
-  | "creative"
-  | "friendly"
-  | "storytelling";
-
-export type HumanizerTier = "free" | "basic" | "pro";
-
-export interface HumanizerResult {
-  humanizedText: string;
-  changes: string[];
-}
+// Re-export so any existing import of these types from humanizerService
+// continues to work without changes.
+export type { Tone, HumanizerTier, HumanizerResult };
 
 type GenerateContentParams = Parameters<
   typeof client.models.generateContent
@@ -33,119 +18,121 @@ const TIMEOUT_PAID_MS = 60_000;
 
 const AI_RETRY_ATTEMPTS = 2;
 
-// Temperature is kept moderate — perplexity/burstiness are enforced by the
-// explicit targets in the prompt, so temperature does not need to carry that load.
-const REWRITE_TEMPERATURE = 0.65;
+// Moderate temperature — lets the prompt's synonym and structure rules drive
+// variation without risking factual drift.
+const TEMPERATURE = 0.6;
 
-// Tones that require strict formal register — style devices like fragments,
-// parentheticals, and conjunction-openers are suppressed for these.
-const STRICT_TONES = new Set<Tone>(["academic", "formal"]);
+// ── Tier configuration ───────────────────────────────────────────────────────
+// Model, timeout, and thinking behaviour chosen together so the tier mapping
+// lives in one place.
+// NOTE: basic intentionally uses the free model with the paid timeout.
+const TIER_CONFIG: Record<
+  HumanizerTier,
+  { model: string; timeoutMs: number; disableThinking: boolean }
+> = {
+  free:  { model: MODELS.FREE, timeoutMs: TIMEOUT_FREE_MS, disableThinking: true  },
+  basic: { model: MODELS.FREE, timeoutMs: TIMEOUT_PAID_MS, disableThinking: true  },
+  pro:   { model: MODELS.PRO,  timeoutMs: TIMEOUT_PAID_MS, disableThinking: false },
+};
 
 // ── System instruction ───────────────────────────────────────────────────────
-// Processed once per request by the model, kept separate from the user prompt
-// to reduce per-request token count.
-//
-// MEANING PRESERVATION is placed first and explicitly overrides every other
-// instruction — instructions at the top carry the most weight in long-context models.
-const HUMANIZER_SYSTEM_INSTRUCTION = `You are an expert writing editor who makes AI-generated text undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
+// Intentionally neutral — lets the prompt's own rules do all the work without
+// the system instruction overriding or contradicting them.
+const HUMANIZER_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow the user's rewriting rules exactly. Preserve the original meaning completely. Respond with valid JSON only.`;
 
-HIGHEST PRIORITY — MEANING PRESERVATION: Every fact, statistic, name, and argument from the original must be preserved exactly. Never add information that is not in the original. Never remove or weaken a key argument. You may only change HOW things are said — never WHAT is said. This rule overrides every other instruction below.
-
-You know these detectors measure two statistics:
-BURSTINESS: variance in sentence length and complexity. AI text scores low — sentences are uniformly similar. Fix: mix 3-word sentences with 30-word ones. Never two similar-length sentences back-to-back.
-PERPLEXITY: unpredictability of word choices. AI text scores low — every word is the obvious choice. Fix: use less expected but equally correct alternatives. Specific concrete nouns over abstractions.
-
-FORBIDDEN — never use these (strongest AI signals):
-Transitions: Furthermore, Moreover, Additionally, In conclusion, It is worth noting, This demonstrates, This highlights, Notably, Significantly, Overall, In summary
-Vocabulary: delve into, it's worth noting, in the realm of, crucial, pivotal, multifaceted, comprehensive, robust, leverage (as verb), utilize
-Patterns: rhetorical questions you answer yourself, backtracking phrases ("Actually let me rephrase"), uniform paragraph length
-
-REQUIRED — always include:
-- At least one mid-sentence dash — used to break predictable syntax`;
-
-// ── Universal bypass rules ────────────────────────────────────────────────────
-// MEANING PRESERVATION comes first and explicitly overrides the targets below.
-// Style devices that conflict with academic/formal register are gated by the
-// `includeStyleDevices` flag and injected only for non-strict tones.
-function buildUniversalBypassRules(tone: Tone): string {
-  const includeStyleDevices = !STRICT_TONES.has(tone);
-  const styleDevices = includeStyleDevices
-    ? `
-- At least one sentence fragment. Like this.
-- At least two sentences starting with: And, But, So, Because, Yet, or Or.
-- At least one parenthetical aside (something that feels genuinely incidental).
-- At least one paragraph that is a single sentence.`
-    : `
-- Vary sentence length deliberately — mix short and long, but never use fragments or colloquial conjunctions.`;
-
-  return `
-MEANING PRESERVATION (absolute — this rule overrides every target below):
-- Every fact, statistic, named entity, and argument from the original must be preserved exactly.
-- Do not add information not in the original. Do not remove key arguments.
-- Change how things are said, never what is said.
-
-BURSTINESS TARGETS (non-negotiable):
-- At least 25% of sentences must be under 8 words.
-- At least 20% of sentences must exceed 25 words.
-- Never two sentences of similar length back-to-back. Alternate: short. Then a longer, more complex one that develops the idea. Short again. Then sprawling.
-
-PERPLEXITY TARGETS (non-negotiable):
-- Replace predictable word choices with less expected but equally correct alternatives.
-  Bad: "It is important to consider" → Good: "Worth pausing on"
-  Bad: "This demonstrates that"     → Good: "Which tells you something"
-  Bad: "In order to achieve"        → Good: "To actually get there"
-- Use specific concrete nouns instead of abstract ones wherever possible.
-- At least one mid-sentence dash — like this — to break predictable syntax.
-
-SENTENCE STRUCTURE (required):${styleDevices}
-`;
-}
-
-// ── Prompt builders ───────────────────────────────────────────────────────────
-
-function buildFreePrompt(
-  text: string,
-  tone: Tone,
-  language: SupportedLanguage,
-): string {
-  const languageLabel = getLanguagePromptLabel(language);
-  return `You are an expert writing editor. Rewrite the text below so it reads as genuinely human-written while preserving all original meaning.
+// ── Prompt builder ────────────────────────────────────────────────────────────
+// Language is accepted to satisfy the shared call-site interface but is not
+// injected — the prompt inherits the source language naturally.
+function buildPrompt(text: string, tone: Tone): string {
+  return `You are a text rewriting engine. Rewrite the input text in a specific "heavy paraphrase" style, following the rules below exactly. Output only the rewritten text.
 
 TONE: ${tone}
-LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
-${buildUniversalBypassRules(tone)}
-Text:
-"""
+
+## STYLE RULES
+
+1. PASSIVE AND INVERTED STRUCTURE
+
+Convert most active sentences to passive voice, or put the action or result first and the doer last (or drop the doer).
+
+- "Students study different subjects" → "Distinct academic fields are learned by pupils"
+- "Technology has transformed education" → "Transformation in educational institutions has occurred through technology"
+
+Aim for roughly 70-80% of sentences to be passive or inverted. Vary the rest with noun-first openers such as "Gaining knowledge stands as...", "Economic progress is heavily guided by...".
+
+2. SYNONYM SWAPS (literal, descriptive, slightly unusual)
+
+Replace common words with longer or more descriptive equivalents, for example:
+
+- smartphones → portable telephones / pocket phones
+- email → electronic letters
+- social media → social networks
+- video conferencing → screen meeting programs
+- students → pupils / learners / knowledge seekers
+- teachers → instructors
+- classrooms → study rooms / instructional rooms
+- textbooks → reading books
+- computers → computing devices
+- jobs/employment → working positions
+- businesses → trade organizations
+- developing countries → growing nations
+- misinformation → untrue rumors
+- privacy → secret personal knowledge
+- inequality → unfairness
+- benefit → blessing / gift
+- society/community → localities / communal life
+- important → vital / essential / of great necessity
+
+Apply the same logic to any other common word: pick a longer, more literal or descriptive alternative. Do not reuse the same replacement every time; vary it.
+
+3. ATTRIBUTION AND HEDGING PHRASES
+
+Insert one vague authority opener in roughly every second or third paragraph, and sometimes mid-paragraph. Rotate among:
+
+"Many people believe that...", "Experts claim that...", "It has been observed that...", "Scholars state that...", "Researchers suggest that..."
+
+Attach them to plain factual statements, even where they are not logically needed. Never use the same one twice in a row.
+
+4. TRANSITIONS AND OPENERS
+
+- Remove or replace "Furthermore", "However", "In conclusion", "Additionally", "Moreover".
+- "As a result" → "Consequently"
+- "Therefore" → "For this reason" / "Because of these conditions"
+- "Despite X, Y" → "Y is encountered, even though X"
+- Do not open paragraphs with generic transitions. Open with the topic as a noun phrase.
+
+5. ABSTRACT, NOMINALIZED PHRASING
+
+Prefer noun-heavy constructions over plain verbs: "stands as a primary blessing", "holds great necessity", "remains vital", "is heavily guided by".
+
+6. TEXTURE
+
+Allow slightly formal, slightly stiff collocations. Do not polish the text into natural, fluent prose. Occasionally use a mildly redundant phrase.
+
+## HARD CONSTRAINTS
+
+- Keep headings exactly as they are.
+- Keep the same number of paragraphs, in the same order.
+- Keep the original meaning and order of ideas. Do not add new facts, examples, or opinions.
+- Keep roughly the same length as the original (within ±10%).
+- Formal register only: no contractions, no first or second person, no slang, no emojis.
+- Do not add commentary, notes, explanations, or a preamble. If the input ends mid-sentence, end the output the same way.
+
+## EXAMPLE
+
+Original:
+"Students can access enormous amounts of information through the internet, digital libraries, and online courses."
+
+Rewritten:
+"Knowledge seekers gather abundant information through the network of computers, digital book collections, and distance lessons."
+
+## INPUT TEXT
+
+<text>
 ${text}
-"""
+</text>
 
 Return ONLY valid JSON: { "humanizedText": "...", "changes": ["change 1", "change 2", "change 3"] }
-The changes array must describe what you changed and why it reduces AI detection probability.`;
-}
-
-function buildPaidPrompt(
-  text: string,
-  tone: Tone,
-  language: SupportedLanguage,
-): string {
-  const languageLabel = getLanguagePromptLabel(language);
-  return `You are an expert writing editor and AI detection specialist. Rewrite the text below so it is completely undetectable by GPTZero, Turnitin, Originality.ai, Copyleaks, Winston AI, and ZeroGPT.
-
-TONE: ${tone}
-LANGUAGE: Write the final output in ${languageLabel}. If the requested language is the source language, keep the same language as the input. Preserve native idioms and punctuation conventions; do not force English sentence patterns onto non-English text.
-${buildUniversalBypassRules(tone)}
-Work through three mental passes before writing your output:
-PASS 1 — DIAGNOSE: Identify every AI signal: forbidden transitions, uniform sentence length, predictable word choices, missing human markers.
-PASS 2 — REWRITE: Fix every issue. Apply all bypass targets above.
-PASS 3 — POLISH: Find anything still too smooth or balanced. Roughen the SYNTAX only — sentence rhythm, word choice, punctuation — never the content. Keep every fact, number, name, and qualifier exactly as the original states it. It should feel like a specific person edited it, not a system inventing personality.
-
-Text:
-"""
-${text}
-"""
-
-Return ONLY valid JSON: { "humanizedText": "...", "changes": ["3 most impactful changes made"] }
-The changes array must describe the 3 changes that most reduce AI detection probability.`;
+The changes array must describe what was changed and why it makes the text harder to detect as AI-written.`;
 }
 
 // ── Utility functions ─────────────────────────────────────────────────────────
@@ -161,6 +148,7 @@ function errorMessage(error: unknown) {
 function isTransientError(error: unknown) {
   const message = errorMessage(error).toLowerCase();
   return (
+    message.includes("timed out") ||
     message.includes("timeout") ||
     message.includes("temporarily") ||
     message.includes("unavailable") ||
@@ -174,9 +162,8 @@ function isTransientError(error: unknown) {
 }
 
 // ── Timeout with AbortController ─────────────────────────────────────────────
-// The AbortController signal is passed to the SDK so the in-flight HTTP request
-// is actually cancelled when the timeout fires, preventing stacked concurrent
-// calls on retry.
+// The signal is passed to the SDK so the in-flight request is actually
+// cancelled when the timeout fires, preventing stacked calls on retry.
 async function withTimeout<T>(
   fn: (signal: AbortSignal) => Promise<T>,
   timeoutMs: number,
@@ -227,8 +214,8 @@ async function generateContentWithRetry(
 }
 
 // ── Response parser ───────────────────────────────────────────────────────────
-// With responseMimeType: "application/json" set, the SDK returns clean JSON
-// without code fences. This function is now a thin type-check guard.
+// With responseMimeType: "application/json" the SDK returns clean JSON, so this
+// is a thin type-check guard.
 function parseHumanizerResult(
   raw: string | undefined,
   label: string,
@@ -254,27 +241,27 @@ function parseHumanizerResult(
   }
 }
 
-// ── Meaning check ─────────────────────────────────────────────────────────────
-// Extracts numbers, quoted terms, and capitalized proper-noun sequences from the
-// input and warns if any are absent from the output. This is a warning, not a
-// hard rejection — legitimate paraphrases may express "1,000" as "a thousand".
+// ── Meaning check (log-only) ─────────────────────────────────────────────────
+// Warns when numbers, quoted passages or multi-word proper nouns from the input
+// are absent from the output. A warning, not a rejection — legitimate edits may
+// express "1,000" as "a thousand".
 function checkMeaningPreservation(
   input: string,
   output: string,
   label: string,
 ): void {
-  // Numbers: integers and decimals, with optional comma separators
   const numbers = input.match(/\b\d[\d,]*(?:\.\d+)?\b/g) ?? [];
-  // Quoted terms: text inside single or double quotes
-  const quoted = [...input.matchAll(/["']([^"']{2,})["']/g)].map((m) => m[1]);
-  // Capitalized proper-noun sequences (2+ consecutive capitalized words)
+  const missingNumbers = numbers.filter(
+    (n) => !output.includes(n) && !output.includes(n.replace(/,/g, "")),
+  );
+
+  const quoted = [...input.matchAll(/[""]([^""\n]{4,})[""]/g)].map((m) => m[1]);
+  const missingQuotes = quoted.filter((q) => !output.includes(q));
+
   const properNouns = input.match(/(?:[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/g) ?? [];
+  const missingNouns = properNouns.filter((p) => !output.includes(p));
 
-  const missing: string[] = [];
-  for (const term of [...numbers, ...quoted, ...properNouns]) {
-    if (!output.includes(term)) missing.push(term);
-  }
-
+  const missing = [...missingNumbers, ...missingQuotes, ...missingNouns];
   if (missing.length > 0) {
     console.warn(
       `[humanizer] ${label} meaning check — possibly missing from output:`,
@@ -286,76 +273,40 @@ function checkMeaningPreservation(
 // ── Main service ──────────────────────────────────────────────────────────────
 
 export class HumanizerService {
+  /**
+   * Rewrites text using the heavy-paraphrase prompt.
+   * `language` is accepted to satisfy the shared call-site interface but is
+   * not injected into the prompt — the model inherits the source language.
+   */
   static async rewrite(
     text: string,
     tone: Tone,
     tier: HumanizerTier = "free",
-    language: SupportedLanguage = "auto",
+    _language: SupportedLanguage = "auto",
   ): Promise<HumanizerResult> {
-    // basic intentionally uses the free model with the paid 3-pass prompt.
-    const model =
-      tier === "free" || tier === "basic" ? MODELS.FREE : MODELS.PRO;
+    const cfg = TIER_CONFIG[tier];
+    const label = `${tier}-tier rewrite`;
 
-    return tier === "free"
-      ? this.rewriteFree(text, tone, model, language)
-      : this.rewritePaid(text, tone, model, language);
-  }
-
-  // ── Free tier: single-pass, gemini-2.5-flash ──────────────────────────────
-
-  private static async rewriteFree(
-    text: string,
-    tone: Tone,
-    model: string,
-    language: SupportedLanguage,
-  ): Promise<HumanizerResult> {
     const response = await generateContentWithRetry(
       {
-        model,
-        contents: buildFreePrompt(text, tone, language),
+        model: cfg.model,
+        contents: buildPrompt(text, tone),
         config: {
           systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
-          temperature: REWRITE_TEMPERATURE,
+          temperature: TEMPERATURE,
           responseMimeType: "application/json",
           responseSchema: humanizerSchema,
-          // Disable dynamic thinking — not needed for rewriting, adds latency.
-          thinkingConfig: { thinkingBudget: 0 },
+          ...(cfg.disableThinking
+            ? { thinkingConfig: { thinkingBudget: 0 } }
+            : {}),
         },
       },
-      "free-tier rewrite",
-      TIMEOUT_FREE_MS,
+      label,
+      cfg.timeoutMs,
     );
-    const result = parseHumanizerResult(response.text, "free-tier rewrite");
-    checkMeaningPreservation(text, result.humanizedText, "free-tier rewrite");
-    return result;
-  }
 
-  // ── Paid tier: 3-pass prompt, gemini-2.5-pro ─────────────────────────────
-
-  private static async rewritePaid(
-    text: string,
-    tone: Tone,
-    model: string,
-    language: SupportedLanguage,
-  ): Promise<HumanizerResult> {
-    const response = await generateContentWithRetry(
-      {
-        model,
-        contents: buildPaidPrompt(text, tone, language),
-        config: {
-          systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
-          temperature: REWRITE_TEMPERATURE,
-          responseMimeType: "application/json",
-          responseSchema: humanizerSchema,
-          // gemini-2.5-pro does not support thinkingBudget: 0 — leave
-          // thinkingConfig unset so the model uses its default low budget.
-        },
-      },
-      "paid-tier rewrite",
-      TIMEOUT_PAID_MS,
-    );
-    const result = parseHumanizerResult(response.text, "paid-tier rewrite");
-    checkMeaningPreservation(text, result.humanizedText, "paid-tier rewrite");
+    const result = parseHumanizerResult(response.text, label);
+    checkMeaningPreservation(text, result.humanizedText, label);
     return result;
   }
 }
