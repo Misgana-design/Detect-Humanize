@@ -251,7 +251,8 @@ export function HumanizerWorkspace({
     if (target === "gptzero") {
       prevToneRef.current = tone;
       setTone("academic");
-    } else {
+    } else if (detectorTarget === "gptzero") {
+      // Switching away from gptzero — restore the saved tone.
       setTone(prevToneRef.current);
     }
     setDetectorTarget(target);
@@ -466,6 +467,11 @@ export function HumanizerWorkspace({
                 value: "gptzero" as DetectorTarget,
                 label: "GPTZero",
                 description: "Optimised for GPTZero's scoring model",
+              },
+              {
+                value: "test" as DetectorTarget,
+                label: "Test",
+                description: "Candidate prompt under evaluation",
               },
             ] as const
           ).map((opt) => {
