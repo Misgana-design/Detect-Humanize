@@ -94,7 +94,7 @@ function buildEmail(): string {
               </p>
 
               <p style="margin:0 0 16px;font-size:15px;line-height:1.75;color:#0f172a;">
-                I&rsquo;m the solo founder of Text Humanica, and I&rsquo;m trying to make it
+                I&rsquo;m the founder of Text Humanica, and we are trying to make it
                 actually useful.
               </p>
 
@@ -118,7 +118,7 @@ function buildEmail(): string {
 
               <p style="margin:0 0 4px;font-size:15px;color:#0f172a;">Thanks,</p>
               <!-- TODO: Replace "Your name" with your actual name before running -->
-              <p style="margin:0;font-size:15px;font-weight:600;color:#0f172a;">Your name</p>
+              <p style="margin:0;font-size:15px;font-weight:600;color:#0f172a;">Misgana Woldeselassie</p>
               <p style="margin:4px 0 0;font-size:13px;color:#94a3b8;">Founder, Text Humanica</p>
 
             </td>
