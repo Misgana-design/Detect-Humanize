@@ -43,5 +43,6 @@ next-env.d.ts
 # Google Cloud Key
 gcp-key.json
 
-# Email campaign log (contains user emails — do not commit)
+# Email campaign logs (contain user emails — do not commit)
 scripts/sent-log.json
+scripts/resend-correction-log.json
