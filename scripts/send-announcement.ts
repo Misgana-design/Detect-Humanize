@@ -20,6 +20,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const RESEND_API_KEY = process.env.RESEND_API_KEY!;
 const FROM = process.env.RESEND_FROM_EMAIL ?? "notifications@texthumanica.com";
+const REPLY_TO = process.env.RESEND_REPLY_TO_EMAIL ?? FROM;
 const SITE_URL = "https://www.texthumanica.com/";
 
 const DAILY_LIMIT = 97; // Stay safely under Resend's 100/day free limit
@@ -159,6 +160,7 @@ async function main() {
     console.log(`🧪 Test mode — sending to ${TEST_EMAIL} only...`);
     await resend.emails.send({
       from: `Text Humanica <${FROM}>`,
+      replyTo: REPLY_TO,
       to: TEST_EMAIL,
       subject: "Quick question about Text Humanica (2 min)",
       html: buildEmail("there"),
@@ -228,6 +230,7 @@ async function main() {
     try {
       await resend.emails.send({
         from: `Text Humanica <${FROM}>`,
+        replyTo: REPLY_TO,
         to: user.email,
         subject: "Quick question about Text Humanica (2 min)",
         html: buildEmail(firstName),
