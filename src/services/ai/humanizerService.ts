@@ -40,6 +40,12 @@ const TIER_CONFIG: Record<
 // the system instruction overriding or contradicting them.
 const HUMANIZER_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow the user's rewriting rules exactly. Preserve the original meaning completely. Respond with valid JSON only.`;
 
+// Streaming variant — must NOT mention JSON, otherwise the model wraps the
+// output in a JSON envelope (e.g. {"rewritten_text": "..."}) despite the
+// user prompt asking for plain text. The system instruction takes precedence
+// over the user prompt, so it needs to explicitly request plain text.
+const HUMANIZER_STREAMING_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow the user's rewriting rules exactly. Preserve the original meaning completely. Output only the rewritten text as plain text. Do not use JSON, markdown, or any other markup.`;
+
 // ── Prompt builder ────────────────────────────────────────────────────────────
 // Language is accepted to satisfy the shared call-site interface but is not
 // injected — the prompt inherits the source language naturally.
@@ -356,7 +362,7 @@ export class HumanizerService {
             model: cfg.model,
             contents: buildStreamingPrompt(text, tone),
             config: {
-              systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
+              systemInstruction: HUMANIZER_STREAMING_SYSTEM_INSTRUCTION,
               temperature: TEMPERATURE,
               ...(cfg.disableThinking
                 ? { thinkingConfig: { thinkingBudget: 0 } }
