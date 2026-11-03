@@ -43,7 +43,9 @@ const HUMANIZER_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow th
 // ── Prompt builder ────────────────────────────────────────────────────────────
 // Language is accepted to satisfy the shared call-site interface but is not
 // injected — the prompt inherits the source language naturally.
-function buildPrompt(text: string, tone: Tone): string {
+// Shared prompt body — identical for the JSON (batch/cache) and the plain-text
+// streaming variant; only the trailing output instruction differs.
+function buildPromptBody(text: string, tone: Tone): string {
   return `You are a text rewriting engine. Rewrite the input text in a specific "heavy paraphrase" style, following the rules below exactly. Output only the rewritten text.
 
 TONE: ${tone}
@@ -129,10 +131,23 @@ Rewritten:
 
 <text>
 ${text}
-</text>
+</text>`;
+}
+
+function buildPrompt(text: string, tone: Tone): string {
+  return `${buildPromptBody(text, tone)}
 
 Return ONLY valid JSON: { "humanizedText": "...", "changes": ["change 1", "change 2", "change 3"] }
 The changes array must describe what was changed and why it makes the text harder to detect as AI-written.`;
+}
+
+// Streaming variant — plain text output so tokens can be forwarded to the
+// browser as they are generated (a JSON envelope would force the client to
+// wait for the closing brace before showing anything).
+function buildStreamingPrompt(text: string, tone: Tone): string {
+  return `${buildPromptBody(text, tone)}
+
+Output ONLY the rewritten text as plain text. Do not wrap it in JSON or markdown and do not add any commentary.`;
 }
 
 // ── Utility functions ─────────────────────────────────────────────────────────
@@ -308,5 +323,81 @@ export class HumanizerService {
     const result = parseHumanizerResult(response.text, label);
     checkMeaningPreservation(text, result.humanizedText, label);
     return result;
+  }
+
+  /**
+   * Streaming variant of {@link rewrite}: yields the humanized text piece by
+   * piece as the model generates it, so the UI can render progressively.
+   *
+   * Differences from `rewrite`:
+   * - Plain-text output (no JSON envelope) → the whole stream is the result.
+   * - The per-tier timeout covers the entire stream, not just the first byte.
+   * - Retries only fire while nothing has been emitted yet; retrying after a
+   *   partial yield would duplicate text that the client already rendered.
+   */
+  static async *rewriteStream(
+    text: string,
+    tone: Tone,
+    tier: HumanizerTier = "free",
+  ): AsyncGenerator<string, void, void> {
+    const cfg = TIER_CONFIG[tier];
+    const label = `${tier}-tier stream`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), cfg.timeoutMs);
+
+    try {
+      let emitted = 0;
+      let lastError: unknown;
+
+      for (let attempt = 1; attempt <= AI_RETRY_ATTEMPTS; attempt++) {
+        try {
+          const stream = await client.models.generateContentStream({
+            model: cfg.model,
+            contents: buildStreamingPrompt(text, tone),
+            config: {
+              systemInstruction: HUMANIZER_SYSTEM_INSTRUCTION,
+              temperature: TEMPERATURE,
+              ...(cfg.disableThinking
+                ? { thinkingConfig: { thinkingBudget: 0 } }
+                : {}),
+              abortSignal: controller.signal,
+            },
+          });
+
+          for await (const chunk of stream) {
+            const piece = chunk.text;
+            if (!piece) continue;
+            emitted++;
+            yield piece;
+          }
+          return;
+        } catch (error) {
+          lastError = controller.signal.aborted
+            ? new Error(`AI request timed out after ${cfg.timeoutMs}ms.`)
+            : error;
+
+          const canRetry =
+            emitted === 0 &&
+            !controller.signal.aborted &&
+            attempt < AI_RETRY_ATTEMPTS &&
+            isTransientError(lastError);
+
+          if (!canRetry) {
+            throw lastError instanceof Error
+              ? lastError
+              : new Error("AI request failed.");
+          }
+
+          console.warn(
+            `[humanizer] ${label} attempt ${attempt}/${AI_RETRY_ATTEMPTS} failed:`,
+            errorMessage(lastError),
+          );
+          await sleep(400 * attempt);
+        }
+      }
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 }

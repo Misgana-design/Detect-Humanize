@@ -54,3 +54,68 @@ export async function readJsonResponse<T>(
   return payload as T;
 }
 
+/**
+ * Reads a newline-delimited JSON (NDJSON) stream and yields each record as it
+ * arrives. Used by streaming endpoints (e.g. /api/humanize) so callers can
+ * render progressive output instead of waiting for the whole response.
+ *
+ * Malformed lines are skipped — a partially flushed line is never yielded
+ * because records are only parsed once their terminating newline has arrived.
+ */
+export async function* readNdjsonRecords(
+  response: Response,
+): AsyncGenerator<Record<string, unknown>, void, void> {
+  if (!response.body) {
+    throw new Error("The server returned an empty response. Please try again.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  const parseCompleteLines = (flush: boolean): Record<string, unknown>[] => {
+    const records: Record<string, unknown>[] = [];
+    let newlineAt = buffer.indexOf("\n");
+
+    while (newlineAt >= 0) {
+      const line = buffer.slice(0, newlineAt).trim();
+      buffer = buffer.slice(newlineAt + 1);
+      if (line) {
+        try {
+          records.push(JSON.parse(line) as Record<string, unknown>);
+        } catch {
+          // Skip malformed lines rather than aborting the whole stream.
+        }
+      }
+      newlineAt = buffer.indexOf("\n");
+    }
+
+    if (flush && buffer.trim()) {
+      try {
+        records.push(JSON.parse(buffer) as Record<string, unknown>);
+      } catch {
+        // Trailing garbage after the last newline — ignore.
+      }
+      buffer = "";
+    }
+
+    return records;
+  };
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      for (const record of parseCompleteLines(false)) yield record;
+    }
+
+    buffer += decoder.decode();
+    for (const record of parseCompleteLines(true)) yield record;
+  } finally {
+    // No-op when the stream already ended; releases the reader if the caller
+    // stopped consuming early (e.g. after a "done" or "error" record).
+    reader.cancel().catch(() => {});
+  }
+}
+
