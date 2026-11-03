@@ -198,6 +198,51 @@ async function activatePlan(data: ReturnType<typeof normalizePolarData>): Promis
   if (!updated?.id) throw new Error(`Plan activation updated no profile rows for user ${userId}.`);
 }
 
+/**
+ * Updates subscription-state columns WITHOUT resetting usage counters
+ * (words_used, api_usage_count, credits). Used for subscription lifecycle
+ * events that are NOT first-time activations or renewal payments — i.e.
+ * subscription.updated, subscription.active, subscription.uncanceled.
+ *
+ * subscription.updated fires for ANY subscription change (metadata, status,
+ * property updates) and must NOT wipe accumulated usage. Renewal quota resets
+ * are handled by activatePlan via order.paid; initial activation via
+ * subscription.created.
+ */
+async function syncSubscriptionState(data: ReturnType<typeof normalizePolarData>): Promise<void> {
+  if (!data.productId) throw new Error("Webhook did not include a product ID.");
+  if (!data.subscriptionId) throw new Error("Webhook did not include a subscription ID.");
+
+  const mapping = PRODUCT_MAP.get(data.productId);
+  if (!mapping) {
+    throw new Error(`Unknown Polar product ID: ${data.productId}`);
+  }
+
+  const userId = await resolveUserId(data);
+  if (!userId) {
+    throw new Error(
+      `Could not resolve Supabase user for Polar customer=${data.polarCustomerId ?? "missing"} externalCustomer=${data.externalCustomerId ?? "missing"} email=${data.email ?? "missing"}`,
+    );
+  }
+
+  const supabase = createServiceSupabaseClient();
+  const { data: updated, error } = await supabase
+    .from("profiles")
+    .update({
+      subscription_tier: mapping.tier,
+      billing_cadence: mapping.cadence,
+      polar_customer_id: data.polarCustomerId,
+      polar_subscription_id: data.subscriptionId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+    .select("id, subscription_tier, billing_cadence, polar_subscription_id")
+    .single();
+
+  if (error) throw new Error(`Subscription state sync DB update failed: ${error.message}`);
+  if (!updated?.id) throw new Error(`Subscription state sync updated no profile rows for user ${userId}.`);
+}
+
 async function downgradeToFree(data: ReturnType<typeof normalizePolarData>, reason: string): Promise<void> {
   const userId = await resolveUserId(data);
   if (!userId) {
@@ -345,11 +390,22 @@ export async function POST(request: Request) {
         break;
 
       case "subscription.created":
+        // First subscription — full reset to grant fresh quota.
+        if (data.status === "active") {
+          await activatePlan(data);
+        }
+        break;
+
       case "subscription.active":
       case "subscription.updated":
       case "subscription.uncanceled":
+        // Lifecycle/status updates — sync subscription state WITHOUT resetting
+        // usage counters. subscription.updated fires for ANY subscription change
+        // (metadata, status, property updates), not just renewals, so resetting
+        // usage here causes premature wipes mid-period. Renewal resets happen via
+        // order.paid; initial activation via subscription.created.
         if (data.status === "active" || event.type === "subscription.active" || event.type === "subscription.uncanceled") {
-          await activatePlan(data);
+          await syncSubscriptionState(data);
         }
         break;
 
