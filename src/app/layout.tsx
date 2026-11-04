@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Inter, DM_Sans } from "next/font/google";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Providers from "./providers";
@@ -9,6 +10,16 @@ import SaleBanner from "@/components/layout/SaleBanner";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { buildMetadata, buildOrganizationJsonLd } from "@/lib/seo";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+
+// Premium brand font — DM Sans: balanced, modern, used by Notion/Loom-style AI startups.
+// Excellent readability at all sizes, not squeezed, feels trustworthy and clean.
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  weight: ["500", "600", "700"],
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
@@ -25,20 +36,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body>
+    <html lang="en" className={`${inter.variable} ${dmSans.variable}`}>
+      <body className={inter.className}>
         <GoogleAnalytics />
         <StructuredData data={buildOrganizationJsonLd()} />
         <Providers>

@@ -2,8 +2,6 @@
 
 :root {
   color-scheme: light;
-  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-dm-sans: "DM Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 html {
@@ -13,7 +11,6 @@ html {
 body {
   background: #f8fafc;
   color: #0f172a;
-  font-family: var(--font-inter);
 }
 
 .brand-wordmark {
@@ -39,21 +36,5 @@ body {
   }
   to {
     transform: translateX(-50%);
-  }
-}
-
-/* Gentle fade-in for the rotating status line in the humanizer spinner. */
-.status-fade {
-  animation: status-fade 0.35s ease-out;
-}
-
-@keyframes status-fade {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }

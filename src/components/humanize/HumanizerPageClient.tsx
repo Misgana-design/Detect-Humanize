@@ -27,43 +27,69 @@ const TONES: ToneOption[] = [
   { value: "storytelling", label: "Storytelling",  proOnly: true  },
 ];
 
-// Rotating status lines shown beside the spinner while the model works.
-const STATUS_MESSAGES = [
-  "Changing the vocabulary",
-  "Improving readability",
-  "Refining sentence flow",
-  "Adjusting sentence rhythm",
-  "Adding natural variation",
-  "Removing robotic phrasing",
+const FREE_STAGES = [
+  { label: "Rewriting text", detail: "Applying humanization rules..." },
+];
+const PAID_STAGES = [
+  { label: "Stage 1 — Analysis",  detail: "Identifying AI patterns and unnatural phrasing..." },
+  { label: "Stage 2 — Rewrite",   detail: "Reconstructing sentences with natural rhythm..." },
+  { label: "Stage 3 — Polish",    detail: "Destroying the AI fingerprint with burstiness & perplexity..." },
 ];
 
-function SpinnerLoader({ isFree }: { isFree: boolean }) {
-  const [messageIdx, setMessageIdx] = useState(0);
+function PipelineLoader({ isFree }: { isFree: boolean }) {
+  const stages = isFree ? FREE_STAGES : PAID_STAGES;
+  const [activeStage, setActiveStage] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setMessageIdx((prev) => (prev + 1) % STATUS_MESSAGES.length);
-    }, 2000);
-    return () => clearInterval(intervalId);
-  }, []);
+    intervalRef.current = setInterval(() => {
+      setActiveStage((prev) => (prev < stages.length - 1 ? prev + 1 : prev));
+    }, isFree ? 1200 : 2800);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [isFree, stages.length]);
 
   return (
-    <div
-      className="flex h-full flex-col items-center justify-center gap-5 p-10 text-center"
-      role="status"
-      aria-live="polite"
-    >
-      <span
-        className="h-10 w-10 animate-spin rounded-full border-[3px] border-indigo-100 border-t-indigo-600"
-        aria-hidden="true"
-      />
-      <p key={messageIdx} className="status-fade text-sm font-semibold text-slate-700">
-        {STATUS_MESSAGES[messageIdx]}
-      </p>
+    <div className="flex h-full flex-col items-center justify-center gap-8 p-10">
+      <div className="relative flex h-20 w-20 items-center justify-center">
+        <div className="absolute inset-0 animate-ping rounded-full bg-indigo-100 opacity-60" />
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-indigo-600 shadow-lg shadow-indigo-200">
+          <Sparkles className="h-8 w-8 text-white" />
+        </div>
+      </div>
+      <div className="w-full max-w-xs space-y-3">
+        {stages.map((stage, i) => {
+          const isDone   = i < activeStage;
+          const isActive = i === activeStage;
+          return (
+            <div
+              key={stage.label}
+              className={`flex items-start gap-3 rounded-xl border p-3 transition-all duration-500 ${
+                isActive ? "border-indigo-200 bg-indigo-50 shadow-sm"
+                : isDone  ? "border-emerald-100 bg-emerald-50"
+                : "border-slate-100 bg-slate-50 opacity-40"
+              }`}
+            >
+              <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                isDone   ? "bg-emerald-500 text-white"
+                : isActive ? "bg-indigo-600 text-white"
+                : "bg-slate-200 text-slate-400"
+              }`}>
+                {isDone ? <Check size={11} /> : i + 1}
+              </div>
+              <div>
+                <p className={`text-xs font-bold ${isActive ? "text-indigo-700" : isDone ? "text-emerald-700" : "text-slate-400"}`}>
+                  {stage.label}
+                </p>
+                {isActive && (
+                  <p className="mt-0.5 animate-pulse text-[11px] text-indigo-500">{stage.detail}</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
       <p className="text-xs text-slate-400">
-        {isFree
-          ? "This may take a few seconds..."
-          : "Bigger texts can take up to a minute..."}
+        {isFree ? "This may take a few seconds..." : "Pro pipeline — this may take 15–30 seconds..."}
       </p>
     </div>
   );
@@ -217,7 +243,7 @@ export function HumanizerWorkspace({
   const [documentId] = useState<string | null>(() => resolveInitialDocId());
   const [copied, setCopied] = useState(false);
 
-  const { mutate, data, isPending, error, streamedText } = useHumanizer();
+  const { mutate, data, isPending, error } = useHumanizer();
   const { data: profile } = useProfile();
 
   const isFree = !profile?.subscription_tier || profile.subscription_tier === "free";
@@ -296,13 +322,6 @@ export function HumanizerWorkspace({
   };
 
   const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
-
-  // Keeps the newest streamed text in view while it grows.
-  const streamRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = streamRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [streamedText]);
 
   // Panel height matches the input surface for a balanced side-by-side workspace.
   const PANEL_HEIGHT = isHomeVariant ? "h-[555px]" : "h-[calc(420px+56px)]";
@@ -536,40 +555,8 @@ export function HumanizerWorkspace({
               </div>
             )}
 
-            {/* Loading — spinner + rotating status, until the first chunk */}
-            {isPending && !streamedText && <SpinnerLoader isFree={isFree} />}
-
-            {/* Streaming — spinner is gone, output grows as it generates */}
-            {isPending && streamedText && (
-              <div className="flex h-full min-h-0 flex-col">
-                <div className="shrink-0 border-b border-slate-100 bg-linear-to-r from-indigo-50 to-sky-50 px-4 py-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 shadow-sm shadow-indigo-200">
-                        <Sparkles size={13} className="text-white" />
-                      </div>
-                      <span className="text-sm font-bold text-indigo-800">
-                        Humanizing...
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5 rounded-full bg-indigo-100 px-2.5 py-1 text-[11px] font-bold text-indigo-700">
-                      <Zap size={10} className="fill-current" />
-                      {isFree ? "1-pass" : "3-pass Pro"}
-                    </div>
-                  </div>
-                </div>
-
-                <div ref={streamRef} className="min-h-0 flex-1 overflow-y-auto p-4">
-                  <div className="rounded-xl border border-indigo-100 bg-linear-to-br from-white to-indigo-50/30 p-4 text-sm leading-7 text-slate-800 shadow-sm ring-1 ring-indigo-100">
-                    {streamedText}
-                    <span
-                      className="ml-0.5 inline-block h-4 w-2 animate-pulse rounded-sm bg-indigo-400 align-middle"
-                      aria-hidden="true"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Loading */}
+            {isPending && <PipelineLoader isFree={isFree} />}
 
             {/* Result */}
             {data && !isPending && (

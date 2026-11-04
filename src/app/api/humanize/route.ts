@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { getPlanDefinition } from "@/lib/billing/plans";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
-import { HumanizerService, Tone, HumanizerTier, HumanizerResult } from "@/services/ai/humanizerService";
+import { HumanizerService, Tone, HumanizerTier } from "@/services/ai/humanizerService";
 import { normalizeLanguage } from "@/lib/languages";
 import { logHumanizationFailure } from "@/lib/server/humanizationFailureLog";
 import type { DetectorTarget } from "@/hooks/useHumanizer";
@@ -60,67 +60,6 @@ function getPublicErrorMessage(error: unknown, status: number) {
   }
 
   return "We could not humanize this text right now. Please try again.";
-}
-
-// ── NDJSON streaming response ────────────────────────────────────────────────
-// The success path streams: one "chunk" record per generated piece while the
-// model works, a final "done" record once side effects are persisted, and an
-// "error" record if something fails after the response has started.
-type StreamEvent =
-  | { type: "chunk"; text: string }
-  | { type: "done"; humanizedText: string; changes: string[]; cached: boolean }
-  | { type: "error"; message: string };
-
-function createNdjsonResponse(
-  run: (
-    emit: (event: StreamEvent) => void,
-    isOpen: () => boolean,
-  ) => Promise<void>,
-): Response {
-  const encoder = new TextEncoder();
-  let closed = false;
-
-  const readable = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      const emit = (event: StreamEvent) => {
-        if (closed) return;
-        try {
-          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
-        } catch {
-          // Consumer cancelled (client disconnected) — mark closed so the
-          // producer can stop at its next isOpen() check.
-          closed = true;
-        }
-      };
-
-      try {
-        await run(emit, () => !closed);
-      } catch (error) {
-        console.error("Humanizer stream error:", error);
-        emit({
-          type: "error",
-          message: getPublicErrorMessage(error, getStatus(error)),
-        });
-      } finally {
-        closed = true;
-        try {
-          controller.close();
-        } catch {
-          // Already closed/cancelled.
-        }
-      }
-    },
-  });
-
-  return new Response(readable, {
-    headers: {
-      "Content-Type": "application/x-ndjson; charset=utf-8",
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-      // Defeat proxy buffering so chunks reach the browser as they are
-      // generated instead of being flushed all at once at the end.
-      "X-Accel-Buffering": "no",
-    },
-  });
 }
 
 export async function POST(req: Request) {
@@ -224,155 +163,96 @@ export async function POST(req: Request) {
       .eq("hash", cacheKey)
       .maybeSingle();
 
-    const humanizerTier: HumanizerTier =
-      plan.tier === "free"
-        ? "free"
-        : plan.tier === "basic"
-          ? "basic"
-          : "pro";
+    let aiResult;
+    let isCached = false;
 
-    // Persist quota, cache entry and the document row in parallel — runs
-    // after the stream has been delivered, before the final "done" record.
-    const persistHumanization = async (
-      aiResult: HumanizerResult,
-      isCached: boolean,
-    ): Promise<void> => {
-      const parallelTasks: Promise<void | null>[] = [
+    if (cachedResult) {
+      aiResult = cachedResult.result;
+      isCached = true;
+    } else {
+      const humanizerTier: HumanizerTier =
+        plan.tier === "free"
+          ? "free"
+          : plan.tier === "basic"
+            ? "basic"
+            : "pro";
+
+      aiResult = await HumanizerService.rewrite(text, tone, humanizerTier, language);
+    }
+
+    if (
+      !aiResult ||
+      typeof aiResult.humanizedText !== "string" ||
+      !Array.isArray(aiResult.changes)
+    ) {
+      throw new Error("AI returned an invalid humanization response.");
+    }
+
+    const parallelTasks: Promise<void | null>[] = [
+      (async () => {
+        // Use service client to bypass RLS on the RPC call
+        const serviceClient = createServiceSupabaseClient();
+        const { error } = await serviceClient.rpc("consume_plan_usage", {
+          user_id_input: user.id,
+          words_to_add: wordCount,
+        });
+        if (error) throw error;
+      })(),
+    ];
+
+    if (!isCached) {
+      parallelTasks.push(
         (async () => {
-          // Use service client to bypass RLS on the RPC call
-          const serviceClient = createServiceSupabaseClient();
-          const { error } = await serviceClient.rpc("consume_plan_usage", {
-            user_id_input: user.id,
-            words_to_add: wordCount,
+          const { error } = await supabase.from("humanization_cache").upsert({
+            hash: cacheKey,
+            result: aiResult,
           });
           if (error) throw error;
         })(),
-      ];
+      );
+    }
 
-      if (!isCached) {
-        parallelTasks.push(
-          (async () => {
-            const { error } = await supabase.from("humanization_cache").upsert({
-              hash: cacheKey,
-              result: aiResult,
-            });
-            if (error) throw error;
-          })(),
-        );
-      }
-
-      if (documentId) {
-        parallelTasks.push(
-          (async () => {
-            const { error } = await supabase
-              .from("documents")
-              .update({
-                humanized_content: aiResult.humanizedText,
-                tone_used: tone,
-                language,
-              })
-              .eq("id", documentId)
-              .eq("user_id", user.id);
-            if (error) throw error;
-          })(),
-        );
-      } else {
-        const generatedTitle =
-          text
-            .split(/\s+/)
-            .slice(0, 6)
-            .join(" ")
-            .replace(/[^\w\s]/gi, "") + "...";
-
-        parallelTasks.push(
-          (async () => {
-            const { error } = await supabase.from("documents").insert({
-              user_id: user.id,
-              title: generatedTitle,
-              original_content: text,
+    if (documentId) {
+      parallelTasks.push(
+        (async () => {
+          const { error } = await supabase
+            .from("documents")
+            .update({
               humanized_content: aiResult.humanizedText,
               tone_used: tone,
               language,
-            });
-            if (error) throw error;
-          })(),
-        );
-      }
+            })
+            .eq("id", documentId)
+            .eq("user_id", user.id);
+          if (error) throw error;
+        })(),
+      );
+    } else {
+      const generatedTitle =
+        text
+          .split(/\s+/)
+          .slice(0, 6)
+          .join(" ")
+          .replace(/[^\w\s]/gi, "") + "...";
 
-      await Promise.all(parallelTasks);
-    };
-
-    // ── Streaming success path ────────────────────────────────────────────
-    // Everything above returns plain JSON errors (401/402/403/400) so the
-    // client keeps its existing status-based handling. From here the body is
-    // NDJSON: "chunk" records while the model generates, then "done".
-    return createNdjsonResponse(async (emit, isOpen) => {
-      try {
-        let aiResult: HumanizerResult;
-        let isCached = false;
-
-        if (cachedResult) {
-          const cached = cachedResult.result as HumanizerResult;
-          if (
-            !cached ||
-            typeof cached.humanizedText !== "string" ||
-            !Array.isArray(cached.changes)
-          ) {
-            throw new Error("AI returned an invalid humanization response.");
-          }
-          aiResult = cached;
-          isCached = true;
-          // Cache hits resolve instantly — one chunk carries the full text.
-          emit({ type: "chunk", text: cached.humanizedText });
-        } else {
-          const pieces: string[] = [];
-          for await (const piece of HumanizerService.rewriteStream(
-            text,
-            tone,
-            humanizerTier,
-          )) {
-            pieces.push(piece);
-            emit({ type: "chunk", text: piece });
-            // Client went away mid-stream: stop generating and skip the side
-            // effects below (nothing was delivered, so nothing is charged).
-            if (!isOpen()) return;
-          }
-
-          const humanizedText = pieces.join("");
-          if (!humanizedText.trim()) {
-            throw new Error("AI returned an empty humanization response.");
-          }
-          aiResult = { humanizedText, changes: [] };
-        }
-
-        if (!isOpen()) return;
-
-        await persistHumanization(aiResult, isCached);
-
-        emit({
-          type: "done",
-          humanizedText: aiResult.humanizedText,
-          changes: aiResult.changes,
-          cached: isCached,
-        });
-      } catch (error) {
-        // Best-effort failure log, then surface the error to the client as a
-        // final "error" record (the HTTP status is already 200 by now).
-        try {
-          await logHumanizationFailure({
-            userId,
-            source: "humanize",
-            message: error instanceof Error ? error.message : String(error),
-            status: getStatus(error),
-            wordCount: wordCount > 0 ? wordCount : null,
-            detectorTarget,
+      parallelTasks.push(
+        (async () => {
+          const { error } = await supabase.from("documents").insert({
+            user_id: user.id,
+            title: generatedTitle,
+            original_content: text,
+            humanized_content: aiResult.humanizedText,
+            tone_used: tone,
+            language,
           });
-        } catch {
-          // Logging must never mask the real error.
-        }
-        throw error;
-      }
-    });
+          if (error) throw error;
+        })(),
+      );
+    }
+
+    await Promise.all(parallelTasks);
+
+    return NextResponse.json({ ...aiResult, cached: isCached });
   } catch (error: unknown) {
     const status = getStatus(error);
     const message = getPublicErrorMessage(error, status);
