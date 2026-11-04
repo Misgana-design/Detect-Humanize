@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { getPlanDefinition } from "@/lib/billing/plans";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
-import { HumanizerService, Tone, HumanizerTier } from "@/services/ai/humanizerService";
+import { HumanizerService, Tone, HumanizerTier, HumanizerResult } from "@/services/ai/humanizerService";
 import { normalizeLanguage } from "@/lib/languages";
 import { logHumanizationFailure } from "@/lib/server/humanizationFailureLog";
 import type { DetectorTarget } from "@/hooks/useHumanizer";
@@ -163,96 +163,117 @@ export async function POST(req: Request) {
       .eq("hash", cacheKey)
       .maybeSingle();
 
-    let aiResult;
-    let isCached = false;
-
-    if (cachedResult) {
-      aiResult = cachedResult.result;
-      isCached = true;
-    } else {
-      const humanizerTier: HumanizerTier =
-        plan.tier === "free"
-          ? "free"
-          : plan.tier === "basic"
-            ? "basic"
-            : "pro";
-
-      aiResult = await HumanizerService.rewrite(text, tone, humanizerTier, language);
-    }
-
-    if (
-      !aiResult ||
-      typeof aiResult.humanizedText !== "string" ||
-      !Array.isArray(aiResult.changes)
-    ) {
-      throw new Error("AI returned an invalid humanization response.");
-    }
-
-    const parallelTasks: Promise<void | null>[] = [
-      (async () => {
-        // Use service client to bypass RLS on the RPC call
-        const serviceClient = createServiceSupabaseClient();
-        const { error } = await serviceClient.rpc("consume_plan_usage", {
-          user_id_input: user.id,
-          words_to_add: wordCount,
-        });
-        if (error) throw error;
-      })(),
-    ];
-
-    if (!isCached) {
-      parallelTasks.push(
+    // Reusable persistence helper — called for both cache hits (synchronously,
+    // before the response is sent) and cache misses (in the stream's onFinish
+    // callback, after the last token has been sent to the client).
+    const persistHumanization = async (
+      aiResult: HumanizerResult,
+      isCached: boolean,
+    ): Promise<void> => {
+      const parallelTasks: Promise<void | null>[] = [
         (async () => {
-          const { error } = await supabase.from("humanization_cache").upsert({
-            hash: cacheKey,
-            result: aiResult,
+          // Use service client to bypass RLS on the RPC call
+          const serviceClient = createServiceSupabaseClient();
+          const { error } = await serviceClient.rpc("consume_plan_usage", {
+            user_id_input: user.id,
+            words_to_add: wordCount,
           });
           if (error) throw error;
         })(),
-      );
-    }
+      ];
 
-    if (documentId) {
-      parallelTasks.push(
-        (async () => {
-          const { error } = await supabase
-            .from("documents")
-            .update({
+      if (!isCached) {
+        parallelTasks.push(
+          (async () => {
+            const { error } = await supabase.from("humanization_cache").upsert({
+              hash: cacheKey,
+              result: aiResult,
+            });
+            if (error) throw error;
+          })(),
+        );
+      }
+
+      if (documentId) {
+        parallelTasks.push(
+          (async () => {
+            const { error } = await supabase
+              .from("documents")
+              .update({
+                humanized_content: aiResult.humanizedText,
+                tone_used: tone,
+                language,
+              })
+              .eq("id", documentId)
+              .eq("user_id", user.id);
+            if (error) throw error;
+          })(),
+        );
+      } else {
+        const generatedTitle =
+          text
+            .split(/\s+/)
+            .slice(0, 6)
+            .join(" ")
+            .replace(/[^\w\s]/gi, "") + "...";
+
+        parallelTasks.push(
+          (async () => {
+            const { error } = await supabase.from("documents").insert({
+              user_id: user.id,
+              title: generatedTitle,
+              original_content: text,
               humanized_content: aiResult.humanizedText,
               tone_used: tone,
               language,
-            })
-            .eq("id", documentId)
-            .eq("user_id", user.id);
-          if (error) throw error;
-        })(),
-      );
-    } else {
-      const generatedTitle =
-        text
-          .split(/\s+/)
-          .slice(0, 6)
-          .join(" ")
-          .replace(/[^\w\s]/gi, "") + "...";
+            });
+            if (error) throw error;
+          })(),
+        );
+      }
 
-      parallelTasks.push(
-        (async () => {
-          const { error } = await supabase.from("documents").insert({
-            user_id: user.id,
-            title: generatedTitle,
-            original_content: text,
-            humanized_content: aiResult.humanizedText,
-            tone_used: tone,
-            language,
-          });
-          if (error) throw error;
-        })(),
-      );
+      await Promise.all(parallelTasks);
+    };
+
+    const humanizerTier: HumanizerTier =
+      plan.tier === "free"
+        ? "free"
+        : plan.tier === "basic"
+          ? "basic"
+          : "pro";
+
+    // ── Cache hit ────────────────────────────────────────────────────────
+    // Cached results resolve instantly — return plain JSON (no streaming).
+    // The client hook checks the content type to distinguish JSON from the
+    // Vercel AI SDK data stream.
+    if (cachedResult) {
+      const aiResult = cachedResult.result as HumanizerResult;
+      if (
+        !aiResult ||
+        typeof aiResult.humanizedText !== "string" ||
+        !Array.isArray(aiResult.changes)
+      ) {
+        throw new Error("AI returned an invalid humanization response.");
+      }
+      await persistHumanization(aiResult, true);
+      return NextResponse.json({ ...aiResult, cached: true });
     }
 
-    await Promise.all(parallelTasks);
+    // ── Cache miss — stream via the Vercel AI SDK ────────────────────────
+    // The response is an AI SDK data stream (text/plain).  The onFinish
+    // callback runs server-side after the last token is sent and persists
+    // the full text (quota, cache, document row).
+    const streamResult = HumanizerService.rewriteStream(
+      text,
+      tone,
+      humanizerTier,
+      async (humanizedText) => {
+        const aiResult: HumanizerResult = { humanizedText, changes: [] };
+        await persistHumanization(aiResult, false);
+      },
+    );
 
-    return NextResponse.json({ ...aiResult, cached: isCached });
+    return streamResult.toTextStreamResponse();
   } catch (error: unknown) {
     const status = getStatus(error);
     const message = getPublicErrorMessage(error, status);

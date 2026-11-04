@@ -1,3 +1,5 @@
+import { streamText } from "ai";
+import { vertex } from "./vertexProvider";
 import { client, MODELS, humanizerSchema } from "./geminiClient";
 import type { SupportedLanguage } from "@/lib/languages";
 import type { Tone, HumanizerTier, HumanizerResult } from "./humanizerTypes";
@@ -40,10 +42,18 @@ const TIER_CONFIG: Record<
 // the system instruction overriding or contradicting them.
 const HUMANIZER_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow the user's rewriting rules exactly. Preserve the original meaning completely. Respond with valid JSON only.`;
 
+// Streaming variant — must NOT mention JSON, otherwise the model wraps the
+// output in a JSON envelope despite the user prompt asking for plain text.
+// The system instruction takes precedence, so it must explicitly request
+// plain text.
+const HUMANIZER_STREAMING_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow the user's rewriting rules exactly. Preserve the original meaning completely. Output only the rewritten text as plain text. Do not use JSON, markdown, or any other markup.`;
+
 // ── Prompt builder ────────────────────────────────────────────────────────────
 // Language is accepted to satisfy the shared call-site interface but is not
 // injected — the prompt inherits the source language naturally.
-function buildPrompt(text: string, tone: Tone): string {
+// Shared prompt body — identical for the JSON (batch/cache) and the plain-text
+// streaming variant; only the trailing output instruction differs.
+function buildPromptBody(text: string, tone: Tone): string {
   return `You are a text rewriting engine. Rewrite the input text in a specific "heavy paraphrase" style, following the rules below exactly. Output only the rewritten text.
 
 TONE: ${tone}
@@ -129,10 +139,23 @@ Rewritten:
 
 <text>
 ${text}
-</text>
+</text>`;
+}
+
+function buildPrompt(text: string, tone: Tone): string {
+  return `${buildPromptBody(text, tone)}
 
 Return ONLY valid JSON: { "humanizedText": "...", "changes": ["change 1", "change 2", "change 3"] }
 The changes array must describe what was changed and why it makes the text harder to detect as AI-written.`;
+}
+
+// Streaming variant — plain text output so tokens can be forwarded to the
+// browser as they are generated (a JSON envelope would force the client to
+// wait for the closing brace before showing anything).
+function buildStreamingPrompt(text: string, tone: Tone): string {
+  return `${buildPromptBody(text, tone)}
+
+Output ONLY the rewritten text as plain text. Do not wrap it in JSON or markdown and do not add any commentary.`;
 }
 
 // ── Utility functions ─────────────────────────────────────────────────────────
@@ -308,5 +331,39 @@ export class HumanizerService {
     const result = parseHumanizerResult(response.text, label);
     checkMeaningPreservation(text, result.humanizedText, label);
     return result;
+  }
+
+  /**
+   * Streaming variant of rewrite: uses the Vercel AI SDK's streamText() with
+   * the @ai-sdk/google-vertex provider to yield the humanized text token by
+   * token so the UI can render it progressively.
+   *
+   * Differences from rewrite:
+   * - Uses the Vercel AI SDK instead of @google/genai directly.
+   * - Plain-text output (no JSON envelope) so the browser can show text as it
+   *   arrives instead of waiting for the closing brace.
+   * - The onFinish callback runs after the stream completes, receiving the
+   *   full text for server-side persistence (cache, quota, document row).
+   */
+  static rewriteStream(
+    text: string,
+    tone: Tone,
+    tier: HumanizerTier = "free",
+    onFinish?: (humanizedText: string) => Promise<void> | void,
+  ) {
+    const cfg = TIER_CONFIG[tier];
+
+    return streamText({
+      model: vertex(cfg.model),
+      system: HUMANIZER_STREAMING_SYSTEM_INSTRUCTION,
+      prompt: buildStreamingPrompt(text, tone),
+      temperature: TEMPERATURE,
+      onFinish: async ({ text: humanizedText }) => {
+        if (!humanizedText.trim()) {
+          throw new Error("AI returned an empty humanization response.");
+        }
+        if (onFinish) await onFinish(humanizedText);
+      },
+    });
   }
 }
