@@ -208,7 +208,7 @@ export default async function BlogPostPage({ params }: Props) {
           Try Text Humanica free
         </h2>
         <p className="mt-2 text-sm text-indigo-100">
-          1,000 words/month · No credit card required
+          500 words/month · No credit card required
         </p>
         <Link
           href="/auth/signup"

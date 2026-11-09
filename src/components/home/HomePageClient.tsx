@@ -66,7 +66,7 @@ const homeFaqEntries = [
   {
     question: "Can I try it for free?",
     answer:
-      "Yes. The free plan gives you 1,000 words per month with humanization included. No credit card required.",
+      "Yes. The free plan gives you 500 words per month with humanization included. No credit card required.",
   },
 ];
 

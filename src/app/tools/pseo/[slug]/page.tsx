@@ -77,7 +77,7 @@ const STEPS = [
 const FAQ_ITEMS = [
   {
     q: "Is Text Humanica free?",
-    a: "Yes — the free plan gives you 1,000 words per month with no credit card required. Paid plans start at $5.99/month for 4,000 words.",
+    a: "Yes — the free plan gives you 500 words per month with no credit card required. Paid plans start at $5.99/month for 4,000 words.",
   },
   {
     q: "Does the humanized text pass GPTZero and Turnitin?",
@@ -225,7 +225,7 @@ export default async function PseoToolPage({ params }: Props) {
               "8 writing tones: Casual, Academic, Professional, Persuasive, Formal, Friendly, Creative, Simple",
               "File upload support: PDF, DOCX, TXT — text extracted automatically",
               "Full document history with side-by-side comparison mode",
-              "1,000 free words per month — no credit card required",
+              "500 free words per month — no credit card required",
             ].map((item) => (
               <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
                 <Check size={15} className="mt-0.5 shrink-0 text-emerald-500" />
@@ -263,7 +263,7 @@ export default async function PseoToolPage({ params }: Props) {
             Start humanizing for free
           </h2>
           <p className="mt-2 text-sm text-indigo-100">
-            1,000 words/month free · No credit card · Results in under 15 seconds
+            500 words/month free · No credit card · Results in under 15 seconds
           </p>
           <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Link

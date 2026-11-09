@@ -98,7 +98,7 @@ export async function DELETE() {
       polar_subscription_id: null,
       words_used: 0,
       api_usage_count: 0,
-      credits: 1000,
+      credits: getPlanStartingCredits("free"),
     })
     .eq("id", user.id);
 

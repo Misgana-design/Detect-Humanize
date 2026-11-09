@@ -137,7 +137,7 @@ export default async function UseCasePage({ params }: Props) {
           Start free — no credit card required
         </h2>
         <p className="mt-2 text-sm text-indigo-100">
-          1,000 words/month free · Results in under 10 seconds
+          500 words/month free · Results in under 10 seconds
         </p>
         <Link
           href="/auth/signup"

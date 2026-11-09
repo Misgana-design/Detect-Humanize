@@ -130,7 +130,7 @@ export default async function ToolComparisonPage({ params }: Props) {
           Try Text Humanica free — no credit card required
         </h2>
         <p className="mt-2 text-sm text-indigo-100">
-          1,000 words/month free · Full 3-stage humanizer on Pro
+          500 words/month free · Full 3-stage humanizer on Pro
         </p>
         <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link

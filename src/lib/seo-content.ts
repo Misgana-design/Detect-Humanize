@@ -95,12 +95,12 @@ export const blogPosts: BlogPost[] = [
           "Full document history and side-by-side comparison mode.",
           "Sentence-level AI flagging so you can target edits precisely."
         ] },
-      { heading: "Free vs paid: what is the difference?", body: "Free plans across all tools are heavily limited. Text Humanica's free plan gives you 1,000 words per month with basic detection and single-stage humanization (Casual tone only). The Pro plan at 19.99/month gives you 20,000 words, the full 3-stage pipeline, all 8 tones, PDF export, and priority processing. If you submit academic work or process content regularly, the paid plan is where the real bypass rates live. Full plan details are on the [pricing page](/pricing).",
+      { heading: "Free vs paid: what is the difference?", body: "Free plans across all tools are heavily limited. Text Humanica's free plan gives you 500 words per month with basic detection and single-stage humanization (Casual tone only). The Pro plan at 19.99/month gives you 20,000 words, the full 3-stage pipeline, all 8 tones, PDF export, and priority processing. If you submit academic work or process content regularly, the paid plan is where the real bypass rates live. Full plan details are on the [pricing page](/pricing).",
         table: {
           caption: "Free vs Pro comparison",
           headers: ["Feature", "Free plan", "Pro plan"],
           rows: [
-            ["Words per month", "1,000", "20,000"],
+            ["Words per month", "500", "20,000"],
             ["Max words per input", "500", "1,500"],
             ["Humanization stages", "Single stage", "3-stage pipeline"],
             ["Tones", "Casual only", "All 8 tones"],
@@ -110,7 +110,7 @@ export const blogPosts: BlogPost[] = [
         } }
     ],
     faq: [
-      { q: "Is there a free AI detector and humanizer?", a: "Yes. Text Humanica offers a [free plan](/pricing) with 1,000 words per month. It includes basic AI detection and single-stage humanization with no credit card required." },
+      { q: "Is there a free AI detector and humanizer?", a: "Yes. Text Humanica offers a [free plan](/pricing) with 500 words per month. It includes basic AI detection and single-stage humanization with no credit card required." },
       { q: "What is the most accurate AI detector?", a: "In our testing, Text Humanica's Pro model achieved 98.2% accuracy on unmodified AI-generated text with only a 3.1% false positive rate." },
       { q: "Can AI detectors be fooled?", a: "Yes, with the right humanizer. A 3-stage pipeline that maximizes burstiness and perplexity can consistently bring AI probability scores below detection thresholds used by [GPTZero](/tools/vs-gptzero), [Turnitin](/tools/vs-turnitin), and [Originality.ai](/tools/vs-originality-ai)." },
       { q: "Which AI humanizer has the highest bypass rate?", a: "Text Humanica's Pro plan achieves approximately 94% bypass rate across the major detectors in our internal testing, while preserving meaning and readability." }
@@ -132,12 +132,12 @@ export const blogPosts: BlogPost[] = [
           "Unlimited free humanization is not offered by any legitimate tool - the compute cost makes it impossible.",
           "The best approach is a free tier to test quality, then upgrade if you submit work regularly."
         ] },
-      { heading: "Best free AI detector and humanizer: Text Humanica", body: "Text Humanica's free plan gives you 1,000 words per month with no credit card required. The free detector uses a fast model that achieves around 90% accuracy on unmodified AI text, and the humanizer runs a single-stage rewrite (Casual tone). It is the only tool that gives you both detection and humanization in one interface on a free tier. See the full [free plan details](/pricing).",
+      { heading: "Best free AI detector and humanizer: Text Humanica", body: "Text Humanica's free plan gives you 500 words per month with no credit card required. The free detector uses a fast model that achieves around 90% accuracy on unmodified AI text, and the humanizer runs a single-stage rewrite (Casual tone). It is the only tool that gives you both detection and humanization in one interface on a free tier. See the full [free plan details](/pricing).",
         table: {
           caption: "What you get on the free plan",
           headers: ["Feature", "Free tier"],
           rows: [
-            ["Words per month", "1,000"],
+            ["Words per month", "500"],
             ["Max words per input", "500"],
             ["AI detection", "Yes (about 90% accuracy)"],
             ["Humanization", "Single stage, Casual tone"],
@@ -156,18 +156,18 @@ export const blogPosts: BlogPost[] = [
             ["QuillBot", "Basic", "Paraphrase only", "No"]
           ]
         } },
-      { heading: "Limitations of free plans", body: "Every free AI tool has limits. Text Humanica's free plan caps at 1,000 words/month and 500 words per input, with single-stage humanization only. For students with longer documents or writers processing content regularly, upgrading to a paid plan is worth it because the 3-stage pipeline delivers meaningfully higher bypass rates.",
+      { heading: "Limitations of free plans", body: "Every free AI tool has limits. Text Humanica's free plan caps at 500 words/month and 500 words per input, with single-stage humanization only. For students with longer documents or writers processing content regularly, upgrading to a paid plan is worth it because the 3-stage pipeline delivers meaningfully higher bypass rates.",
         bullets: [
           "Word quotas mean you cannot process a full thesis in one go on the free tier.",
           "Single-stage humanization scores higher on detectors than nothing, but lower than the 3-stage pipeline.",
           "500 words per input forces you to split long documents.",
           "Paid plans unlock all tones, higher per-input limits, and priority processing."
         ] },
-      { heading: "When to upgrade from free", body: "If you are submitting academic work, processing more than 1,000 words per month, or need the highest bypass rates against [Turnitin](/tools/vs-turnitin) and [Originality.ai](/tools/vs-originality-ai), the Pro plan is the right move at 19.99/month for 20,000 words. For lighter needs, the Basic plan at 5.99/month covers 4,000 words with all tones and full history. Compare all tiers on the [pricing page](/pricing)." }
+      { heading: "When to upgrade from free", body: "If you are submitting academic work, processing more than 500 words per month, or need the highest bypass rates against [Turnitin](/tools/vs-turnitin) and [Originality.ai](/tools/vs-originality-ai), the Pro plan is the right move at 19.99/month for 20,000 words. For lighter needs, the Basic plan at 5.99/month covers 4,000 words with all tones and full history. Compare all tiers on the [pricing page](/pricing)." }
     ],
     faq: [
       { q: "Is there a completely free AI detector and humanizer with no sign up?", a: "Most combined tools require sign-up. Text Humanica requires a free account but no credit card. Pure detection tools like ZeroGPT work without sign-up but do not include a humanizer." },
-      { q: "Are there free AI humanizer tools with unlimited words?", a: "No legitimate tool offers truly unlimited free humanization. Text Humanica's free plan gives 1,000 words/month. Paid plans start at 5.99/month for 4,000 words on the Basic plan." },
+      { q: "Are there free AI humanizer tools with unlimited words?", a: "No legitimate tool offers truly unlimited free humanization. Text Humanica's free plan gives 500 words/month. Paid plans start at 5.99/month for 4,000 words on the Basic plan." },
       { q: "What is the best free AI detector and humanizer for students?", a: "Text Humanica is the top choice for students. The free plan covers light use, and the Pro plan at 19.99/month is specifically designed for academic writing with all tones and full history." }
     ]
   },
@@ -532,7 +532,7 @@ export const toolPages: ToolPage[] = [
       { feature: "False positive rate", us: "3.1%", them: "8.2%" },
       { feature: "Built-in humanizer", us: "Yes (3-stage)", them: "No" },
       { feature: "File upload", us: "PDF, DOCX, TXT", them: "Text only" },
-      { feature: "Free plan", us: "1,000 words/mo", them: "5,000 chars" },
+      { feature: "Free plan", us: "500 words/mo", them: "5,000 chars" },
       { feature: "Sentence-level flags", us: "Yes", them: "Yes" },
       { feature: "Document history", us: "Yes", them: "No" },
       { feature: "API access", us: "Ultra plan", them: "Paid plan" }
@@ -554,7 +554,7 @@ export const toolPages: ToolPage[] = [
       { feature: "Plagiarism check", us: "No", them: "Yes" },
       { feature: "Sentence-level flags", us: "Yes", them: "No (overall %)" },
       { feature: "False positive rate", us: "3.1%", them: "6.1%" },
-      { feature: "Free plan", us: "1,000 words/mo", them: "No" },
+      { feature: "Free plan", us: "500 words/mo", them: "No" },
       { feature: "File upload", us: "PDF, DOCX, TXT", them: "Institutional only" },
       { feature: "API access", us: "Ultra plan", them: "Institutional only" }
     ]
@@ -575,7 +575,7 @@ export const toolPages: ToolPage[] = [
       { feature: "Built-in humanizer", us: "Yes (3-stage)", them: "No" },
       { feature: "Plagiarism check", us: "No", them: "Yes" },
       { feature: "Pricing model", us: "Flat monthly", them: "Per credit" },
-      { feature: "Free plan", us: "1,000 words/mo", them: "No" },
+      { feature: "Free plan", us: "500 words/mo", them: "No" },
       { feature: "File upload", us: "PDF, DOCX, TXT", them: "Text only" },
       { feature: "Team features", us: "Ultra plan", them: "Yes" }
     ]
@@ -595,7 +595,7 @@ export const toolPages: ToolPage[] = [
       { feature: "Built-in humanizer", us: "Yes (3-stage)", them: "No" },
       { feature: "Grammar correction", us: "No", them: "Yes" },
       { feature: "Sentence-level flags", us: "Yes", them: "Basic score only" },
-      { feature: "Free plan", us: "1,000 words/mo", them: "Limited" },
+      { feature: "Free plan", us: "500 words/mo", them: "Limited" },
       { feature: "File upload", us: "PDF, DOCX, TXT", them: "Limited" },
       { feature: "Forensic analysis", us: "Yes", them: "No" },
       { feature: "Document history", us: "Yes", them: "No" }
@@ -619,7 +619,7 @@ export const toolPages: ToolPage[] = [
       { feature: "Tones available", us: "8", them: "7 modes" },
       { feature: "File upload", us: "PDF, DOCX, TXT", them: "Limited" },
       { feature: "Document history", us: "Yes", them: "No" },
-      { feature: "Free plan", us: "1,000 words/mo", them: "125 words/day" }
+      { feature: "Free plan", us: "500 words/mo", them: "125 words/day" }
     ]
   },
   {
@@ -639,7 +639,7 @@ export const toolPages: ToolPage[] = [
       { feature: "File upload", us: "PDF, DOCX, TXT", them: "Limited" },
       { feature: "Document history", us: "Yes", them: "No" },
       { feature: "Tones available", us: "8", them: "8" },
-      { feature: "Free plan", us: "1,000 words/mo", them: "250 words" },
+      { feature: "Free plan", us: "500 words/mo", them: "250 words" },
       { feature: "Forensic analysis", us: "Yes", them: "No" }
     ]
   }

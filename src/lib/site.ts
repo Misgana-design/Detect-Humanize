@@ -65,7 +65,7 @@ export const faqEntries = [
   {
     question: "What is the difference between the Free and Pro plans?",
     answer:
-      "The Free plan gives you 1,000 words per month with single-pass humanization (Casual tone only). The Pro plan gives you 20,000 words per month, the full 3-pass Pro model pipeline, all tones, re-humanization, PDF export, Copy for Google Docs, and full document history with comparison mode.",
+      "The Free plan gives you 500 words per month with single-pass humanization (Casual tone only). The Pro plan gives you 20,000 words per month, the full 3-pass Pro model pipeline, all tones, re-humanization, PDF export, Copy for Google Docs, and full document history with comparison mode.",
   },
   {
     question: "Can I cancel my subscription at any time?",
