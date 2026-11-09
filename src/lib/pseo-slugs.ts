@@ -1216,13 +1216,83 @@ export const pseoSlugs: string[] = [
 ];
 
 /**
+ * Normalizes known misspellings and shorthand variants into clean display text.
+ * This keeps page content readable even for typo-targeting slugs.
+ */
+const SLUG_DISPLAY_MAP: Record<string, string> = {
+  "cht-gpt": "ChatGPT",
+  "chap-gpt": "ChatGPT",
+  "chat-gbt": "ChatGPT",
+  "chatgbt": "ChatGPT",
+  "chat-gpt": "ChatGPT",
+  "fast-gpt": "Fast GPT AI Humanizer",
+  "tracegpt": "TraceGPT",
+  "gpthuman-ai": "GPTHuman AI",
+  "hyper-natural-ai": "Hyper Natural AI",
+  "natural-write-ai": "NaturalWrite AI",
+  "naturalwrite": "NaturalWrite",
+  "humanizador-de-ia-gratis": "Humanizador de IA Gratis",
+  "myessaywriterai": "MyEssayWriter AI",
+  "ai-humanize-io": "AI Humanize IO",
+  "sprunki-humanized": "Sprunki Humanized",
+  "clever-ai": "Clever AI",
+  "clever-ai-humanizer": "Clever AI Humanizer",
+  "rephrasy-ai": "Rephrasy AI",
+  "hix-ai-bypass": "HIX AI Bypass",
+  "bypassgpt": "BypassGPT",
+  "stealthwriter": "StealthWriter",
+  "writehuman-ai-humanizer": "WriteHuman AI Humanizer",
+  "justdone-ai": "JustDone AI",
+  "justdone-ai-humanizer": "JustDone AI Humanizer",
+  "gptzero": "GPTZero",
+  "zerogpt": "ZeroGPT",
+  "zero-gpt": "ZeroGPT",
+  "quillbot": "QuillBot",
+  "copyleaks": "Copyleaks",
+  "crossplag": "Crossplag",
+  "sapling": "Sapling AI",
+  "scribbr": "Scribbr",
+  "originalityai": "Originality.ai",
+  "originality-ai": "Originality.ai",
+  "turnitin": "Turnitin",
+  "brandwell-ai": "Brandwell AI",
+  "writercom": "Writer.com",
+  "tenorshare-ai-bypass": "Tenorshare AI Bypass",
+  "undetectableai": "Undetectable AI",
+  "undetectable-ai": "Undetectable AI",
+  "winston-ai": "Winston AI",
+  "grammarly": "Grammarly",
+  "wordtune": "Wordtune",
+  "phara": "Phara",
+  "ahrefs": "Ahrefs",
+};
+
+/**
+ * Replaces known slug segments with their correct display equivalents.
+ */
+function normalizeSlugDisplay(slug: string): string {
+  // Try full slug match first
+  if (SLUG_DISPLAY_MAP[slug]) return SLUG_DISPLAY_MAP[slug];
+
+  // Replace known segments within the slug
+  let result = slug;
+  for (const [pattern, replacement] of Object.entries(SLUG_DISPLAY_MAP)) {
+    const regex = new RegExp(`(?<![a-z])${pattern}(?![a-z])`, "gi");
+    result = result.replace(regex, replacement.toLowerCase());
+  }
+
+  // Title-case the result
+  return result
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
  * Derives human-readable page content from a slug.
  * Used to render titles, meta descriptions, and headings dynamically.
  */
 export function slugToKeyword(slug: string): string {
-  return slug
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return normalizeSlugDisplay(slug);
 }
 
 export function slugToTitle(slug: string): string {
@@ -1235,7 +1305,7 @@ export function slugToTitle(slug: string): string {
 }
 
 export function slugToDescription(slug: string): string {
-  const kw = slug.replace(/-/g, " ");
+  const kw = slugToKeyword(slug);
   return `Looking for the best ${kw}? Text Humanica humanizes AI-generated text in seconds — free tier available, no credit card required. Bypass GPTZero, Turnitin, and Originality.ai with one click.`;
 }
 
@@ -1245,6 +1315,6 @@ export function slugToH1(slug: string): string {
 }
 
 export function slugToBodyIntro(slug: string): string {
-  const kw = slug.replace(/-/g, " ");
+  const kw = slugToKeyword(slug);
   return `Whether you need a ${kw} for academic writing, SEO content, or personal projects, Text Humanica delivers natural, undetectable results powered by a 3-stage humanization pipeline. Paste your AI-generated text, choose your tone, and get human-quality output in under 15 seconds — completely free to start.`;
 }
