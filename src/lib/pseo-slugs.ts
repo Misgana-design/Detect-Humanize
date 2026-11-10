@@ -1213,6 +1213,87 @@ export const pseoSlugs: string[] = [
 
   // ── 28-december (date-based page)
   "28-december",
+
+  // ── British English spelling variants (real volume from UK/Australia/India)
+  "humanise-ai-text",
+  "humanise-ai",
+  "humanise-chatgpt",
+  "humanise-ai-text-free",
+  "humanise-ai-text-online",
+  "humanise-ai-text-for-students",
+  "humanise-ai-text-no-sign-up",
+  "humanise-ai-writing",
+  "humanise-ai-content",
+  "humanise-ai-essay",
+  "best-way-to-humanise-ai-text",
+  "free-tool-to-humanise-ai-text",
+  "ai-text-humaniser",
+  "ai-text-humaniser-free",
+  "ai-text-humaniser-online",
+  "ai-text-humaniser-for-students",
+  "ai-humaniser",
+  "ai-humaniser-free",
+  "ai-humaniser-online",
+  "ai-humaniser-for-students",
+  "ai-humaniser-for-essays",
+  "ai-humaniser-tool",
+  "ai-writing-humaniser",
+  "ai-writing-humaniser-free",
+  "ai-content-humaniser",
+  "free-ai-humaniser",
+  "best-ai-humaniser",
+  "best-free-ai-humaniser",
+
+  // ── Common misspellings — Grammarly
+  "grammerly",
+  "grammerly-ai-detector",
+  "grammerly-alternative",
+  "grammerly-free",
+  "grammerly-humanizer",
+
+  // ── Common misspellings — Turnitin
+  "turinting-ai-detector",
+  "turinting-bypass",
+  "turinting-ai-detection",
+  "turiting-ai-detector",
+  "turnitin-bypass-free",
+
+  // ── Common misspellings — ChatGPT
+  "chatgbt",
+  "chatgbt-humanizer",
+  "chatgbt-humanizer-free",
+  "chatgbt-ai-humanizer",
+  "chatgbt-text-humanizer",
+  "chat-gbt-humanizer",
+  "chat-gbt-text-undetectable",
+
+  // ── Space/hyphen variants — GPTZero
+  "gpt-zero-bypass",
+  "gpt-zero-humanizer",
+  "gpt-zero-ai-detector",
+  "gpt-zero-free",
+  "gpt-zero-detector",
+  "gpt-zero-checker",
+
+  // ── Common misspellings — Undetectable AI
+  "undectable-ai",
+  "undectable-ai-humanizer",
+  "undectable-ai-free",
+  "undetactable-ai",
+  "undetactable-ai-humanizer",
+  "undetactable-ai-free",
+  "undetactable-ai-writer",
+
+  // ── Space variant — bypass
+  "by-pass-ai-detection",
+  "by-pass-ai-detection-free",
+  "by-pass-gptzero",
+  "by-pass-turnitin",
+
+  // ── Common misspellings — humanize (general)
+  "humanzize-ai-text",
+  "humanise-and-bypass-ai-detection",
+  "humanise-ai-text-bypass-gptzero",
 ];
 
 /**
@@ -1264,6 +1345,60 @@ const SLUG_DISPLAY_MAP: Record<string, string> = {
   "grammarly": "Grammarly",
   "wordtune": "Wordtune",
   "phara": "Phara",
+  // British English
+  "humanise": "Humanize",
+  "humanise-ai-text": "Humanise AI Text",
+  "humanise-ai": "Humanise AI",
+  "humanise-chatgpt": "Humanise ChatGPT",
+  "humanise-ai-writing": "Humanise AI Writing",
+  "humanise-ai-content": "Humanise AI Content",
+  "humanise-ai-essay": "Humanise AI Essay",
+  "humaniser": "AI Humaniser",
+  "ai-text-humaniser": "AI Text Humaniser",
+  "ai-humaniser": "AI Humaniser",
+  "ai-writing-humaniser": "AI Writing Humaniser",
+  "ai-content-humaniser": "AI Content Humaniser",
+
+  // Grammarly misspellings
+  "grammerly": "Grammarly",
+  "grammerly-ai-detector": "Grammarly AI Detector",
+  "grammerly-alternative": "Grammarly Alternative",
+  "grammerly-free": "Grammarly Free",
+  "grammerly-humanizer": "Grammarly Humanizer",
+
+  // Turnitin misspellings
+  "turinting": "Turnitin",
+  "turiting": "Turnitin",
+  "turinting-ai-detector": "Turnitin AI Detector",
+  "turinting-bypass": "Turnitin Bypass",
+  "turining": "Turnitin",
+
+  // ChatGPT misspellings
+  "chatgbt-humanizer": "ChatGPT Humanizer",
+  "chatgbt-ai-humanizer": "ChatGPT AI Humanizer",
+  "chatgbt-text-humanizer": "ChatGPT Text Humanizer",
+
+  // GPTZero space variants
+  "gpt-zero": "GPTZero",
+  "gpt-zero-bypass": "GPTZero Bypass",
+  "gpt-zero-humanizer": "GPTZero Humanizer",
+  "gpt-zero-ai-detector": "GPTZero AI Detector",
+  "gpt-zero-checker": "GPTZero Checker",
+
+  // Undetectable AI misspellings
+  "undectable-ai": "Undetectable AI",
+  "undetactable-ai": "Undetectable AI",
+  "undectable": "Undetectable",
+  "undetactable": "Undetectable",
+
+  // Bypass space variants
+  "by-pass": "Bypass",
+  "by-pass-ai-detection": "Bypass AI Detection",
+  "by-pass-gptzero": "Bypass GPTZero",
+  "by-pass-turnitin": "Bypass Turnitin",
+
+  // Humanzize typo
+  "humanzize": "Humanize",
   "ahrefs": "Ahrefs",
 };
 
