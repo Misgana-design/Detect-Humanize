@@ -609,11 +609,11 @@ export function HumanizerWorkspace({
                 </div>
 
                 <div ref={streamRef} className="min-h-0 flex-1 overflow-y-auto p-4">
-                  <div className="rounded-xl border border-indigo-100 bg-linear-to-br from-white to-indigo-50/30 p-4 text-base leading-7 text-slate-800 shadow-sm ring-1 ring-indigo-100">
-                    {streamedText.split(/\n\n+/).map((para, i) => (
-                      <p key={i} className={i > 0 ? "mt-4" : ""}>
+                  <div className="space-y-4 rounded-xl border border-indigo-100 bg-linear-to-br from-white to-indigo-50/30 p-4 shadow-sm ring-1 ring-indigo-100">
+                    {streamedText.split(/\n+/).filter(Boolean).map((para, i, arr) => (
+                      <p key={i} style={{ fontSize: "1rem", lineHeight: "1.75rem", color: "#1e293b", margin: 0 }}>
                         {para}
-                        {i === streamedText.split(/\n\n+/).length - 1 && (
+                        {i === arr.length - 1 && (
                           <span
                             className="ml-0.5 inline-block h-4 w-2 animate-pulse rounded-sm bg-indigo-400 align-middle"
                             aria-hidden="true"
@@ -650,9 +650,9 @@ export function HumanizerWorkspace({
                 {/* Scrollable content */}
                 <div className="min-h-0 flex-1 overflow-y-auto p-4">
                   {/* Humanized text */}
-                  <div className="rounded-xl border border-emerald-100 bg-linear-to-br from-white to-emerald-50/30 p-4 text-base leading-7 text-slate-800 shadow-sm ring-1 ring-emerald-100">
-                    {data.humanizedText.split(/\n\n+/).map((para, i) => (
-                      <p key={i} className={i > 0 ? "mt-4" : ""}>
+                  <div className="space-y-4 rounded-xl border border-emerald-100 bg-linear-to-br from-white to-emerald-50/30 p-4 shadow-sm ring-1 ring-emerald-100">
+                    {data.humanizedText.split(/\n+/).filter(Boolean).map((para, i) => (
+                      <p key={i} style={{ fontSize: "1rem", lineHeight: "1.75rem", color: "#1e293b", margin: 0 }}>
                         {para}
                       </p>
                     ))}
