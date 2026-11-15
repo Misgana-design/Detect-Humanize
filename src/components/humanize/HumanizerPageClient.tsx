@@ -422,7 +422,7 @@ export function HumanizerWorkspace({
               <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
               <circle cx="8" cy="8" r="3" fill="currentColor" />
             </svg>
-            All Detectors
+            ZeroGPT
           </button>
 
           {/* ── QuillBot + Grammarly ── */}
@@ -609,12 +609,18 @@ export function HumanizerWorkspace({
                 </div>
 
                 <div ref={streamRef} className="min-h-0 flex-1 overflow-y-auto p-4">
-                  <div className="rounded-xl border border-indigo-100 bg-linear-to-br from-white to-indigo-50/30 p-4 text-sm leading-7 text-slate-800 shadow-sm ring-1 ring-indigo-100">
-                    {streamedText}
-                    <span
-                      className="ml-0.5 inline-block h-4 w-2 animate-pulse rounded-sm bg-indigo-400 align-middle"
-                      aria-hidden="true"
-                    />
+                  <div className="rounded-xl border border-indigo-100 bg-linear-to-br from-white to-indigo-50/30 p-4 text-base leading-7 text-slate-800 shadow-sm ring-1 ring-indigo-100">
+                    {streamedText.split(/\n\n+/).map((para, i) => (
+                      <p key={i} className={i > 0 ? "mt-4" : ""}>
+                        {para}
+                        {i === streamedText.split(/\n\n+/).length - 1 && (
+                          <span
+                            className="ml-0.5 inline-block h-4 w-2 animate-pulse rounded-sm bg-indigo-400 align-middle"
+                            aria-hidden="true"
+                          />
+                        )}
+                      </p>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -643,9 +649,13 @@ export function HumanizerWorkspace({
 
                 {/* Scrollable content */}
                 <div className="min-h-0 flex-1 overflow-y-auto p-4">
-                  {/* Humanized text — eye-catching */}
-                  <div className="rounded-xl border border-emerald-100 bg-linear-to-br from-white to-emerald-50/30 p-4 text-sm leading-7 text-slate-800 shadow-sm ring-1 ring-emerald-100">
-                    {data.humanizedText}
+                  {/* Humanized text */}
+                  <div className="rounded-xl border border-emerald-100 bg-linear-to-br from-white to-emerald-50/30 p-4 text-base leading-7 text-slate-800 shadow-sm ring-1 ring-emerald-100">
+                    {data.humanizedText.split(/\n\n+/).map((para, i) => (
+                      <p key={i} className={i > 0 ? "mt-4" : ""}>
+                        {para}
+                      </p>
+                    ))}
                   </div>
 
                   {/* Humanized badge */}
