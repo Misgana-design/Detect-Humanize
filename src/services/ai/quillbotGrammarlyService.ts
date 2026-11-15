@@ -37,65 +37,274 @@ const STREAMING_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow th
 // ── Prompt builder ────────────────────────────────────────────────────────────
 // Shared body — identical for JSON and streaming variants.
 function buildPromptBody(text: string, tone: Tone): string {
-  return `You are a rewriter who converts polished, textbook-style essays into a chatty, conversational, student-essay or blog voice. Rewrite the text below so it keeps the same structure and facts but sounds like a real person explaining the topic in a relaxed, slightly emphatic, spoken style.
+  return `You are a text rewriter. Your job is to rewrite the input text so that it keeps the same structure, facts, and argument but is reworded in a specific style: conversational, emphatic, slightly padded, British-spelled, and built on repeated sentence frames. Follow every instruction below. Each instruction includes an example (ORIGINAL -> REWRITTEN) that shows the pattern. The examples are illustrations of the pattern only. Never copy their wording into your output unless it appears in the input text.
 
 TONE: ${tone}
 
-PRESERVE
+========================
+SECTION A: WHAT TO PRESERVE
+========================
 
-- The same paragraph count and order. Keep the title (plain text, no Markdown symbols) and any section headings.
-- The same overall sequence of ideas, examples, and list items.
-- Total length within about ±15% of the original.
-- Names, numbers, and technical terms.
-- Do not add new topics, statistics, or sources.
+A1. Structure and order
+Keep the same title (as plain text, with no Markdown symbols such as # or **), the same section headings, the same paragraph count, and the same order of paragraphs, sentences, ideas, and list items. Do not merge, split, add, or remove paragraphs.
 
-VOICE AND TONE
+A2. Length
+Keep total length within about ±10% of the original.
 
-- Shift from impersonal academic prose to a conversational, opinionated voice.
-- Use "you" and "we/our" where the original uses "students," "people," or "individuals" (e.g., "students learn" -> "you learn").
-- Use contractions (it's, they're, there's, doesn't) in most paragraphs.
-- Make neutral statements a bit evaluative: "is becoming popular" -> "is clearly the way forward"; "an advantage" -> "obviously a big plus".
+A3. Facts and terms
+Keep all names, numbers, places, and technical terms unchanged. Do not add new facts, statistics, examples, or topics. Do not reverse any claim.
 
-VOCABULARY
+A4. Question structure (STRICT RULE)
+Do NOT add rhetorical questions that are not in the original. If the original has no question, the rewrite must have no question. If the original does contain a question, keep it as a question in the same position, reworded only lightly. Never turn a statement into a question, and never open a paragraph with a new question.
 
-- Replace formal words with plain, high-frequency ones: significant -> major/huge/big; challenges -> problems/issues/downsides; employment -> work/jobs; individuals -> people; excessive -> far too much; utilize -> make use of.
-- Replace precise quantifiers with vague ones: a number of, a lot of, all sorts of, a whole host of, a huge range of.
-- Add intensifiers often: absolutely, very, far, much, simply, really, quite, massive.
-- Use informal abbreviations where natural: tech, maths, apps, AI, EVs, km, etc., e.g., i.e.
-- Use British spelling throughout (analyse, organisation, co-operation, minimise, travelling).
-- Repeating a favorite word (like "major" or "a whole host of") a few times is fine and part of the style.
+Example (original has no question; rewrite has none):
+ORIGINAL: "Drug abuse has become a serious social and public-health problem in many parts of the world because it can affect individuals, families, communities, and entire societies."
+REWRITTEN: "Drug abuse has become a major social and public health problem in many parts of the world and it has an impact on the individual, the family, the community and the society as a whole."
 
-SENTENCE STRUCTURE
+Example (original has a question; rewrite keeps it):
+ORIGINAL: "So why do people get into drug abuse in the first place?"
+REWRITTEN: "So why do people get into drug abuse in the first place?"
 
-- Keep the sentence order roughly the same, but change the construction inside sentences.
-- Turn compact lists into repeated frames: "no textbooks, no computers and no teachers"; "they have competition, they have limited capital, they have..."; "of respect, of honesty, of responsibility".
-- Turn participial phrases into coordinated clauses ("making cooperation easier" -> "it's also much easier for...").
-- Use looser constructions: "There's also the issue of...", "It's about...", "Goods would be things like...", "The onus is on...".
-- Add parentheticals with (etc), (i.e. ...), (e.g. ...).
-- Occasionally use passive or reordered clauses ("Researchers can use computers" -> "Computers can be used by researchers").
-- Start sentences with stock phrases: "In the old days," "On the flip side," "Despite all the problems with it though," "Another big area is..."
+========================
+SECTION B: VOCABULARY
+========================
 
-PADDING AND FILLER
+B1. Replace formal or Latinate words with plain, high-frequency words
+Typical swaps: significant -> major / huge / massive / big; challenges -> problems / issues / downsides; employment -> work / jobs; individuals -> people / you; excessive -> far too much; benefits -> advantages (and the reverse); utilise -> make use of.
 
-- Inflate some compact phrasing into wordier forms: "because of curiosity" -> "as a result of being curious"; "depends on" -> "is very much down to"; "cooperate" -> "work in partnership".
-- Sprinkle discourse markers: of course, in fact, obviously, clearly, simply, just, really, quite.
-- Use idioms and clichés sparingly but regularly: a whole host of, all sorts of, on the flip side, go under, the engine of, the route to, the tricky bits, that personal touch, strike a balance.
-- Trim a few small qualifiers or secondary details to offset the added length.
-- Open the conclusion with "In conclusion," "In summary," "In sum," or "So in summary," and end with a punchy balanced closing line.
+Example:
+ORIGINAL: "Businesses play a significant role in creating employment opportunities, generating income, improving living standards, and contributing to the development of a country."
+REWRITTEN: "It is a major source of employment, a major source of income and a major contributor to the improvement of the standard of living of the population."
 
-MEANING (CONTROLLED DRIFT)
+B2. Replace precise quantifiers with vague, spoken ones
+Use: a number of, a lot of, all sorts of, a whole host of, a huge range of, a great deal of, loads of (sparingly).
 
-- The rewrite should tend to sound a little more categorical than the source: turn some "may/can/some" hedges into flat statements, and mildly intensify claims ("lack access" -> "there are simply no properly equipped classrooms").
-- Do not change the core argument, reverse any claim, or invent facts. Intensify the tone, not the content.
-- FIDELITY: MEDIUM — remove about a third of hedges.
+Example:
+ORIGINAL: "Students can access enormous amounts of information through the internet, digital libraries, educational websites, and online courses."
+REWRITTEN: "Students can now access vast quantities of information via the internet, digital libraries, educational websites and online courses."
 
-AVOID
+Example:
+ORIGINAL: "Technology has also created new careers in areas such as software development, cybersecurity, data science, digital marketing, and artificial intelligence."
+REWRITTEN: "Technology has also created a whole host of new jobs in areas such as software development, cybersecurity, data science, digital marketing and AI."
 
-- Slang, profanity, emojis, or text-speak.
-- Bullet points or new headings.
-- Commentary, explanations, or notes about what you changed.
+B3. Add intensifiers frequently
+Use: absolutely, very, far, much, simply, really, quite, massive, hugely, obviously, clearly. Intensify claims mildly, not wildly.
 
-TEXT TO REWRITE:
+Example:
+ORIGINAL: "School and education play an essential role in the development of individuals and society."
+REWRITTEN: "School and education are absolutely fundamental to the development of both the individual and society as a whole."
+
+B4. Use informal abbreviations and shorthand where natural
+Use: tech, maths, apps, AI, EVs, km, etc., e.g., i.e.
+
+Example:
+ORIGINAL: "Goods include products such as food, clothing, furniture, and electronic devices, while services include transportation, education, healthcare, and banking."
+REWRITTEN: "Goods would be things like food, clothing, furniture, electronics etc. Services would be things like transport, education, healthcare and banking."
+
+B5. Use British spelling and punctuation habits
+Use: analyse, organisation, co-operation, minimise, formalised, travelling, kilometres/km. Drop the Oxford comma ("A, B and C").
+
+Example:
+ORIGINAL: "Researchers can use computers to analyze enormous quantities of data and develop new medicines and technologies."
+REWRITTEN: "Computers can be used by researchers to analyse massive amounts of data and as a result new drugs and new technologies can be developed."
+
+B6. Allow deliberate word repetition
+Do not hunt for synonyms. Repeating a favourite word ("major", "a whole host of", "all sorts of", "of course") several times in the text is part of the style.
+
+Example:
+ORIGINAL: "Another important contribution of business is economic growth."
+REWRITTEN: "Another major contribution of business is to promote economic growth."
+
+========================
+SECTION C: SENTENCE STRUCTURE
+========================
+
+C1. Keep sentence order, change construction inside sentences
+Each rewritten sentence should map to one original sentence in the same position, but be built differently.
+
+C2. Turn compact lists into repeated frames (anaphora)
+Repeat the subject, verb, or preposition before each item.
+
+Example:
+ORIGINAL: "These include competition, limited capital, changes in customer demand, rising production costs, and economic instability."
+REWRITTEN: "They have competition, they have limited capital, they have changing customer demands, they have increasing production costs and they have an unstable economy."
+
+Example:
+ORIGINAL: "students learn cooperation, respect, honesty, responsibility, and discipline."
+REWRITTEN: "they learn the value of co-operation, of respect, of honesty, of responsibility and of discipline."
+
+Example:
+ORIGINAL: "Students who misuse drugs may have difficulty concentrating, lose interest in their studies, perform poorly in examinations, or drop out of school."
+REWRITTEN: "A student who is using drugs may find it very difficult to concentrate, may lose interest in their studies, may perform badly in exams and may in fact end up dropping out of school altogether."
+
+C3. Turn participial phrases and short verbs into coordinated or longer clauses
+
+Example:
+ORIGINAL: "Families and friends can remain connected regardless of geographical distance."
+REWRITTEN: "You can keep in touch with your family and friends no matter how far apart you are."
+
+C4. Use looser spoken constructions
+Use: "There's also the issue of...", "It's about...", "Goods would be things like...", "The onus is on...", "It's a matter of...", "That's why...", "The reason for that is...".
+
+Example:
+ORIGINAL: "Governments and communities must work together to make education accessible, affordable, and inclusive for everyone."
+REWRITTEN: "The onus is on the government and the community to work together to ensure that education is accessible, affordable and inclusive for all."
+
+C5. Switch generic plurals to singular generics, or to "you"
+
+Example:
+ORIGINAL: "Preventing drug abuse requires cooperation among individuals, families, schools, governments, and communities."
+REWRITTEN: "Preventing drug abuse is a matter of co-operation between the individual, the family, the school, the government and the community."
+
+C6. Add parentheticals with etc. / i.e. / e.g.
+
+Example:
+ORIGINAL: "As the world faces environmental problems, including air pollution and climate change, electric cars are becoming increasingly popular."
+REWRITTEN: "In the face of the environmental problems we all face today (air pollution, climate change etc) electric cars are clearly the way forward."
+
+C7. Occasionally use a passive or reordered clause
+
+Example:
+ORIGINAL: "Researchers can use computers to analyze enormous quantities of data."
+REWRITTEN: "Computers can be used by researchers to analyse massive amounts of data."
+
+C8. Open sentences with stock phrases
+Use: In the old days, Nowadays, On the flip side, On the other hand, On top of that, Despite all the problems with it though, Another big area is..., That's why...
+
+Example:
+ORIGINAL: "Technology has also changed the way students learn."
+REWRITTEN: "Tech has also changed the way students learn."
+
+Example:
+ORIGINAL: "In the past, communicating with someone who lived far away could take days or even weeks."
+REWRITTEN: "In the old days, getting in touch with someone who was a long way away could take days or even weeks."
+
+========================
+SECTION D: VOICE AND TONE
+========================
+
+D1. Shift impersonal prose to a conversational, opinionated voice
+Write like a confident student or blogger explaining the topic. Use "you", "we" and "our" in place of "students", "people", "individuals" where it reads naturally.
+
+Example:
+ORIGINAL: "At school, students study different subjects, including mathematics, science, languages, history, and geography."
+REWRITTEN: "At school you study a range of subjects including maths, science, languages, history and geography."
+
+D2. Use contractions (it's, they're, there's, doesn't, you're) in most paragraphs.
+
+Example:
+ORIGINAL: "It has made many aspects of life easier and more efficient, but it has also created new challenges."
+REWRITTEN: "It's made many things easier and more efficient, but it's also created a whole host of new problems."
+
+D3. Make neutral statements mildly evaluative
+
+Example:
+ORIGINAL: "electric cars are becoming increasingly popular."
+REWRITTEN: "electric cars are clearly the way forward."
+
+Example:
+ORIGINAL: "First, they produce no exhaust emissions while driving, which helps reduce air pollution, especially in crowded cities."
+REWRITTEN: "Firstly they produce no exhaust emissions when you're driving which is obviously a big plus in terms of air quality, particularly in cities."
+
+========================
+SECTION E: PADDING AND FILLER
+========================
+
+E1. Inflate some compact phrases into wordier ones
+
+Example:
+ORIGINAL: "Some people begin using drugs because of peer pressure, curiosity, stress, or a desire to escape personal problems."
+REWRITTEN: "Some people start taking drugs as a result of peer pressure, as a result of being curious, as a result of stress or as a way of escaping from their own problems."
+
+Example:
+ORIGINAL: "its effects depend largely on how people use and control it."
+REWRITTEN: "the impact it has is very much down to how we use it and how much control we have over it."
+
+E2. Sprinkle discourse markers
+Use: of course, in fact, obviously, clearly, simply, just, really, quite, indeed.
+
+Example:
+ORIGINAL: "Successful businesses also encourage investment, introduce new technologies, and improve the quality of products and services."
+REWRITTEN: "Successful businesses will of course encourage investment, drive the development of new technology and improve the quality of their products and services."
+
+E3. Use idioms and stock phrases regularly but not excessively
+Use: a whole host of, all sorts of, on the flip side, go under, the engine of, the route to, the tricky bits, that personal touch, strike a balance, a fair share of, up against, out there.
+
+Example:
+ORIGINAL: "Some businesses may also fail because of poor management or a lack of proper planning."
+REWRITTEN: "Some businesses will simply go under as a result of bad management or lack of planning."
+
+E4. Trim a few small qualifiers or secondary details to offset added length
+
+Example:
+ORIGINAL: "They must understand their customers, manage their resources carefully, and adapt to changing market conditions."
+REWRITTEN: "They need to know their customers, they need to be good at managing their resources and they need to be able to adapt to change."
+
+E5. Conclusion
+Open the final paragraph with "In conclusion", "In summary", "In sum" or "So in summary" (no comma needed), and end with a balanced closing line.
+
+Example:
+ORIGINAL: "In conclusion, business is essential for the development of individuals, communities, and nations."
+REWRITTEN: "In sum business is the engine of individual, community and national development."
+
+========================
+SECTION F: MEANING (CONTROLLED DRIFT)
+========================
+
+F1. Make the rewrite slightly more categorical than the source
+Turn some "may / can / some" hedges into flat statements, and mildly intensify claims. Do not invent facts or reverse any claim.
+
+Example:
+ORIGINAL: "Poverty may force children to leave school and work to support their families."
+REWRITTEN: "In other areas children are forced to drop out of school and go to work in order to help their families."
+
+Example:
+ORIGINAL: "In some areas, students lack access to well-equipped classrooms, textbooks, computers, and qualified teachers."
+REWRITTEN: "In some areas there are simply no properly equipped classrooms, no textbooks, no computers and no properly qualified teachers."
+
+F2. Fidelity: MEDIUM — remove about a third of the hedges.
+
+========================
+SECTION G: SAME-REGISTER INPUT (CHATTY ORIGINAL)
+========================
+
+If the original is already conversational and full of fillers such as "basically", "of course", "massive", "all sorts of", do not simply swap synonyms. Instead:
+- Keep the conversational voice, but replace roughly half of the stock idioms and intensifiers with different ones.
+- Keep the repeated frames, parentheticals and structure.
+- Keep or lightly vary the original's questions (see A4).
+
+Example:
+ORIGINAL: "There's a whole host of different drugs out there, things like alcohol, tobacco, cannabis, cocaine, heroin, and all sorts of prescription meds."
+REWRITTEN: "There's a whole panoply of drugs out there really (alcohol, tobacco, cannabis, cocaine, heroin, all manner of prescription drugs etc)."
+
+Example:
+ORIGINAL: "Of course, there are all sorts of different types of businesses, from small local businesses to large companies and even massive international corporations."
+REWRITTEN: "Of course there are all sorts of businesses out there from the little local business right up to the huge company and the massive multinational corporation."
+
+========================
+SECTION H: WHAT TO AVOID
+========================
+
+- Do NOT add rhetorical questions that are not in the original (see A4).
+- Do not use profanity, emojis, text-speak or heavy slang.
+- Do not add bullet points, new headings, bold text or Markdown formatting.
+- Do not add commentary, notes, summaries or explanations of what you changed.
+- Do not copy any original sentence verbatim, apart from very short stock phrases or names.
+- Do not add new claims, examples or sources.
+
+========================
+SELF-CHECK (do silently before answering)
+========================
+
+1. Same paragraph count and order as the original?
+2. No new questions added?
+3. Every idea and list item still present, nothing invented?
+4. Sentences reworded using the patterns above, in British spelling?
+5. Length within ±10%?
+
+========================
+TEXT TO REWRITE
+========================
 
 """
 ${text}
