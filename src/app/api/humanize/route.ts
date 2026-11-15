@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getPlanDefinition } from "@/lib/billing/plans";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { HumanizerService, Tone, HumanizerTier, HumanizerResult } from "@/services/ai/humanizerService";
+import { QuillbotGrammarlyService } from "@/services/ai/quillbotGrammarlyService";
 import { normalizeLanguage } from "@/lib/languages";
 import { logHumanizationFailure } from "@/lib/server/humanizationFailureLog";
 import type { DetectorTarget } from "@/hooks/useHumanizer";
@@ -18,7 +19,7 @@ type HumanizeRequestBody = {
   detectorTarget?: unknown;
 };
 
-const VALID_DETECTOR_TARGETS = new Set<DetectorTarget>(["other"]);
+const VALID_DETECTOR_TARGETS = new Set<DetectorTarget>(["other", "quillbot-grammarly"]);
 
 const VALID_TONES = new Set<Tone>([
   "standard",
@@ -260,18 +261,26 @@ export async function POST(req: Request) {
     }
 
     // ── Cache miss — stream via the Vercel AI SDK ────────────────────────
-    // The response is an AI SDK data stream (text/plain).  The onFinish
-    // callback runs server-side after the last token is sent and persists
-    // the full text (quota, cache, document row).
-    const streamResult = HumanizerService.rewriteStream(
-      text,
-      tone,
-      humanizerTier,
-      async (humanizedText) => {
-        const aiResult: HumanizerResult = { humanizedText, changes: [] };
-        await persistHumanization(aiResult, false);
-      },
-    );
+    const streamResult =
+      detectorTarget === "quillbot-grammarly"
+        ? QuillbotGrammarlyService.rewriteStream(
+            text,
+            tone,
+            humanizerTier,
+            async (humanizedText) => {
+              const aiResult: HumanizerResult = { humanizedText, changes: [] };
+              await persistHumanization(aiResult, false);
+            },
+          )
+        : HumanizerService.rewriteStream(
+            text,
+            tone,
+            humanizerTier,
+            async (humanizedText) => {
+              const aiResult: HumanizerResult = { humanizedText, changes: [] };
+              await persistHumanization(aiResult, false);
+            },
+          );
 
     return streamResult.toTextStreamResponse();
   } catch (error: unknown) {

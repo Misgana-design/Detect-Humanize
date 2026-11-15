@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, ArrowRight, Check, Coins, Copy, Download, FileText, Lock, Sparkles, X, Zap } from "lucide-react";
 import { TextUploadField } from "@/components/forms/TextUploadField";
-import { useHumanizer } from "@/hooks/useHumanizer";
+import { useHumanizer, type DetectorTarget } from "@/hooks/useHumanizer";
 import { useProfile } from "@/hooks/userProfile";
 import { type Tone } from "@/services/ai/humanizerService";
 import { exportHtmlDoc, exportMarkdown, exportPlainText } from "@/lib/clientExports";
@@ -216,6 +216,7 @@ export function HumanizerWorkspace({
   });
   const [documentId] = useState<string | null>(() => resolveInitialDocId());
   const [copied, setCopied] = useState(false);
+  const [detectorTarget, setDetectorTarget] = useState<DetectorTarget>("other");
 
   const { mutate, data, isPending, error, streamedText } = useHumanizer();
   const { data: profile } = useProfile();
@@ -277,7 +278,7 @@ export function HumanizerWorkspace({
       setShowQuotaModal(true);
       return;
     }
-    mutate({ text, tone, language, documentId });
+    mutate({ text, tone, language, documentId, detectorTarget });
   };
 
   const handleExport = (format: "txt" | "md" | "doc") => {
@@ -397,6 +398,54 @@ export function HumanizerWorkspace({
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* ── Detector target selector ── */}
+      <div className={`mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${isHomeVariant ? "shadow-indigo-100/60" : ""}`}>
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-sm font-semibold text-slate-700">Bypass Target</span>
+          <span className="text-xs text-slate-400">Which tool to write past</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {/* ── Standard humanizer ── */}
+          <button
+            onClick={() => setDetectorTarget("other")}
+            className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all hover:cursor-pointer ${
+              detectorTarget === "other"
+                ? "border-indigo-300 bg-indigo-600 text-white shadow-md shadow-indigo-100"
+                : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+            }`}
+          >
+            {/* Generic detector icon */}
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="8" cy="8" r="3" fill="currentColor" />
+            </svg>
+            All Detectors
+          </button>
+
+          {/* ── QuillBot + Grammarly ── */}
+          <button
+            onClick={() => setDetectorTarget("quillbot-grammarly")}
+            className={`inline-flex items-center gap-2.5 rounded-xl border px-4 py-2 text-sm font-semibold transition-all hover:cursor-pointer ${
+              detectorTarget === "quillbot-grammarly"
+                ? "border-emerald-400 bg-emerald-600 text-white shadow-md shadow-emerald-100"
+                : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+            }`}
+          >
+            {/* QuillBot Q mark */}
+            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${detectorTarget === "quillbot-grammarly" ? "bg-white text-emerald-600" : "bg-emerald-100 text-emerald-700"}`}>
+              Q
+            </span>
+            QuillBot
+            <span className={`mx-0.5 text-xs ${detectorTarget === "quillbot-grammarly" ? "text-emerald-200" : "text-slate-300"}`}>+</span>
+            {/* Grammarly G mark */}
+            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${detectorTarget === "quillbot-grammarly" ? "bg-white text-emerald-600" : "bg-green-100 text-green-700"}`}>
+              G
+            </span>
+            Grammarly
+          </button>
         </div>
       </div>
 
