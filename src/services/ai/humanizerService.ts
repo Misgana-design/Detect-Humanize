@@ -48,98 +48,354 @@ const HUMANIZER_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow th
 // plain text.
 const HUMANIZER_STREAMING_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow the user's rewriting rules exactly. Preserve the original meaning completely. Output only the rewritten text as plain text. Do not use JSON, markdown, or any other markup.`;
 
+// ── Tone modifiers ────────────────────────────────────────────────────────────
+// Each entry overrides Section D (voice and tone) of the base prompt while
+// leaving the structural rules (A–C, E–G) unchanged.
+const TONE_INSTRUCTIONS: Record<Tone, string> = {
+  standard: `\
+TONE: STANDARD
+Apply the base clinical, impersonal style described above with no extra adjustments.
+Third person only. No contractions.`,
+
+  casual: `\
+TONE: CASUAL
+Relax the clinical register slightly. Short sentences are fine. Use everyday vocabulary
+where it doesn't sacrifice clarity, but keep third person and avoid slang or contractions.
+Connectors like "Also," and "Because of this," are acceptable alongside the formal ones.`,
+
+  professional: `\
+TONE: PROFESSIONAL
+Maintain the impersonal clinical style but optimise it for a business or corporate audience.
+Favour active voice where it sounds decisive: "The analysis confirms..." rather than
+"It is confirmed by the analysis...". Use precise business vocabulary: "stakeholders",
+"deliverables", "strategic priorities". No first person, no contractions.`,
+
+  academic: `\
+TONE: ACADEMIC
+Push the clinical register to its maximum. Maximise nominalisation, hedging with
+"may", "suggests", "is indicative of", and attribution phrases ("Research indicates
+that...", "Evidence suggests..."). Use discipline-neutral academic vocabulary.
+Passive voice preferred. No personal pronouns, no contractions.`,
+
+  formal: `\
+TONE: FORMAL
+Follow the base clinical style strictly. All sentences must be complete and grammatically
+orthodox. Prefer longer, structurally balanced constructions. Avoid any colloquial
+phrasing. No contractions, no first or second person.`,
+
+  creative: `\
+TONE: CREATIVE
+Keep the same facts and structure, but allow varied sentence rhythm: short sentences
+after long ones, occasional em-dashes for emphasis, and vivid concrete nouns instead
+of abstract ones where possible. The rewrite should feel polished and readable, not
+dry. Third person only; no contractions.`,
+
+  friendly: `\
+TONE: FRIENDLY
+Lighten the register. Use warm, approachable vocabulary while staying in third person.
+Short to medium sentences. Connectors like "In addition," and "As a result," are fine.
+Avoid heavy nominalisation — prefer clear verb phrases over abstract noun stacks.
+No contractions, no slang.`,
+
+  storytelling: `\
+TONE: STORYTELLING
+Rewrite with narrative flow. Each paragraph should read like a step in a developing
+account: set context, introduce tension or consequence, resolve. Use specific nouns
+and active-voice verbs to drive momentum. Vary sentence length for rhythm.
+Third person only; no contractions; no invented characters or dialogue.`,
+};
+
 // ── Prompt builder ────────────────────────────────────────────────────────────
-// Language is accepted to satisfy the shared call-site interface but is not
-// injected — the prompt inherits the source language naturally.
-// Shared prompt body — identical for the JSON (batch/cache) and the plain-text
-// streaming variant; only the trailing output instruction differs.
+// Shared body — used by both the JSON variant (cache/batch) and the streaming
+// variant; only the trailing output instruction differs between the two.
 function buildPromptBody(text: string, tone: Tone): string {
-  return `You are a text rewriting engine. Rewrite the input text in a specific "heavy paraphrase" style, following the rules below exactly. Output only the rewritten text.
+  return `You are a text rewriter. Rewrite the input text so that it keeps the same structure, facts, and argument but sounds more clinical, impersonal, and noun-heavy, like a formal report or policy document. The main techniques are rotating synonyms, turning verbs and clauses into abstract noun phrases, reordering clauses, and removing any personal voice.
 
-TONE: ${tone}
+Each instruction below has an example (ORIGINAL -> REWRITTEN). The examples only illustrate the pattern. Never copy their wording into your output unless it appears in the input text. The example topic is drugs, but the patterns apply to any subject.
 
-## STYLE RULES
+========================
 
-1. PASSIVE AND INVERTED STRUCTURE
+TONE ADJUSTMENT
 
-Convert most active sentences to passive voice, or put the action or result first and the doer last (or drop the doer).
+========================
 
-- "Students study different subjects" → "Distinct academic fields are learned by pupils"
-- "Technology has transformed education" → "Transformation in educational institutions has occurred through technology"
+${TONE_INSTRUCTIONS[tone]}
 
-Aim for roughly 70-80% of sentences to be passive or inverted. Vary the rest with noun-first openers such as "Gaining knowledge stands as...", "Economic progress is heavily guided by...".
+========================
 
-2. SYNONYM SWAPS (literal, descriptive, slightly unusual)
+SECTION A: WHAT TO PRESERVE
 
-Replace common words with longer or more descriptive equivalents, for example:
+========================
 
-- smartphones → portable telephones / pocket phones
-- email → electronic letters
-- social media → social networks
-- video conferencing → screen meeting programs
-- students → pupils / learners / knowledge seekers
-- teachers → instructors
-- classrooms → study rooms / instructional rooms
-- textbooks → reading books
-- computers → computing devices
-- jobs/employment → working positions
-- businesses → trade organizations
-- developing countries → growing nations
-- misinformation → untrue rumors
-- privacy → secret personal knowledge
-- inequality → unfairness
-- benefit → blessing / gift
-- society/community → localities / communal life
-- important → vital / essential / of great necessity
+A1. Structure and order
 
-Apply the same logic to any other common word: pick a longer, more literal or descriptive alternative. Do not reuse the same replacement every time; vary it.
+Keep the same paragraph count and the same order of paragraphs, sentences, ideas, and list items. Each rewritten sentence should map to one original sentence in the same position. Do not merge or remove paragraphs. Splitting a sentence in two is allowed (see C4). Keep section headings if the original has them.
 
-3. ATTRIBUTION AND HEDGING PHRASES
+A2. Length
 
-Insert one vague authority opener in roughly every second or third paragraph, and sometimes mid-paragraph. Rotate among:
+Keep total length within about ±10% of the original.
 
-"Many people believe that...", "Experts claim that...", "It has been observed that...", "Scholars state that...", "Researchers suggest that..."
+A3. Facts and terms
 
-Attach them to plain factual statements, even where they are not logically needed. Never use the same one twice in a row.
+Keep names, numbers, places, and technical terms unchanged. Do not add new topics, statistics, or sources. Do not reverse any claim.
 
-4. TRANSITIONS AND OPENERS
+A4. Questions (STRICT RULE)
 
-- Remove or replace "Furthermore", "However", "In conclusion", "Additionally", "Moreover".
-- "As a result" → "Consequently"
-- "Therefore" → "For this reason" / "Because of these conditions"
-- "Despite X, Y" → "Y is encountered, even though X"
-- Do not open paragraphs with generic transitions. Open with the topic as a noun phrase.
+Do NOT add rhetorical questions. If the original has no question, the rewrite has none. If the original contains a question, keep it as a question in the same position, reworded only lightly. Never turn a statement into a question.
 
-5. ABSTRACT, NOMINALIZED PHRASING
+Example (no question in the original, none in the rewrite):
 
-Prefer noun-heavy constructions over plain verbs: "stands as a primary blessing", "holds great necessity", "remains vital", "is heavily guided by".
+ORIGINAL: "The causes of drug abuse are complex."
 
-6. TEXTURE
+REWRITTEN: "The causes of substance abuse are numerous."
 
-Allow slightly formal, slightly stiff collocations. Do not polish the text into natural, fluent prose. Occasionally use a mildly redundant phrase.
+A5. Accuracy of rotated terms
 
-## HARD CONSTRAINTS
+When you swap a word for a synonym, the new word must not be narrower or broader in meaning than the old one. Do not turn "misused" into "illegally used", for example, because misuse also covers legal items such as prescriptions.
 
-- Keep headings exactly as they are.
-- Keep the same number of paragraphs, in the same order.
-- Keep the original meaning and order of ideas. Do not add new facts, examples, or opinions.
-- Keep roughly the same length as the original (within ±10%).
-- Formal register only: no contractions, no first or second person, no slang, no emojis.
-- Do not add commentary, notes, explanations, or a preamble. If the input ends mid-sentence, end the output the same way.
+========================
 
-## EXAMPLE
+SECTION B: VOCABULARY
 
-Original:
-"Students can access enormous amounts of information through the internet, digital libraries, and online courses."
+========================
 
-Rewritten:
-"Knowledge seekers gather abundant information through the network of computers, digital book collections, and distance lessons."
+B1. Rotate synonyms for the topic noun
 
-## INPUT TEXT
+Do not repeat the main noun the way the original does. Give it a different label each time it recurs (drugs / substances / materials; misuse / abuse / use; people / individuals / persons). Keep each label faithful to the original meaning (see A5).
 
-<text>
+Example:
+
+ORIGINAL: "Drugs are substances that can affect the physical and mental functions of the human body."
+
+REWRITTEN: "Drugs are materials that can affect the body's physical and mental processes."
+
+Example:
+
+ORIGINAL: "Drug abuse has become a serious social and public-health problem in many parts of the world..."
+
+REWRITTEN: "...drug use is now a major social problem and a public health issue in many areas of the world."
+
+B2. Replace everyday verbs and phrases with more formal or technical ones
+
+Typical swaps: misuse -> consume; have difficulty concentrating -> struggle with concentration; perform poorly -> achieve low grades; drop out -> withdraw from school altogether; damage -> impair; cause -> result in; understand -> be aware of; harmful consequences -> detrimental impact; vulnerable -> susceptible; difficult -> extremely difficult.
+
+Example:
+
+ORIGINAL: "Students who misuse drugs may have difficulty concentrating, lose interest in their studies, perform poorly in examinations, or drop out of school."
+
+REWRITTEN: "School-aged students who consume drugs may struggle with concentration, lose interest in schoolwork, achieve low grades in exams, or withdraw from school altogether."
+
+B3. Reword category labels and common nouns
+
+Example:
+
+ORIGINAL: "Drug abuse can also have serious effects on a person's education and career."
+
+REWRITTEN: "Misuse of drugs can negatively affect educational and occupational opportunities."
+
+Example:
+
+ORIGINAL: "...because it may lead to dishonesty, conflict, and loss of trust."
+
+REWRITTEN: "...due to dishonesty, quarrels, and loss of confidence."
+
+B4. Add a few precise-sounding modifiers
+
+Use: severely, extremely, adversely, especially, generally, particularly, normal, vital, interpersonal. Add small descriptors that sound technical (for example "school-aged", "adult drug consumers", "a particular substance").
+
+Example:
+
+ORIGINAL: "Drug abuse may damage important organs such as the brain, heart, lungs, and liver."
+
+REWRITTEN: "Misuse of drugs can severely impair normal functioning of vital organs including the brain, heart, lungs, and liver."
+
+B5. Keep spelling consistent with the original (American or British). Do not use "effect" and "affect" interchangeably: use "affect" as the verb.
+
+========================
+
+SECTION C: SENTENCE STRUCTURE
+
+========================
+
+C1. Turn verbs and clauses into abstract noun phrases (nominalisation)
+
+This is the strongest pattern. Replace "verb + object" or a "because they ..." clause with a noun phrase joined by connectors such as: concerning, regarding, as a function of, as a means of, based upon, due to, within, with respect to.
+
+Example:
+
+ORIGINAL: "...because they may not fully understand the long-term consequences of substance abuse."
+
+REWRITTEN: "...due to lack of knowledge concerning long term implications of substance abuse."
+
+Example:
+
+ORIGINAL: "Others may be influenced by their social environment or by the availability of drugs."
+
+REWRITTEN: "Substance abuse may occur as a function of environmental influences or availability of illicit substances."
+
+Example:
+
+ORIGINAL: "Some people begin using drugs because of peer pressure, curiosity, stress, or a desire to escape personal problems."
+
+REWRITTEN: "Many individuals begin to take drugs based upon peer pressure, curiosity, stress, or as a means of escaping existing problems."
+
+C2. Move a causal or subordinate clause to the front of the sentence
+
+Example:
+
+ORIGINAL: "Drug abuse has become a serious social problem... because it can affect individuals, families, communities, and entire societies."
+
+REWRITTEN: "Because it affects both individual and community well-being, drug use is now a major social problem..."
+
+C3. Change the grammatical subject, or make a list the subject
+
+Example:
+
+ORIGINAL: "There are many different types of drugs, including alcohol, tobacco, cannabis, cocaine, heroin, and various prescription medicines."
+
+REWRITTEN: "Alcohol, tobacco, marijuana (cannabis), cocaine, heroin, and a number of prescriptions are all classified as drugs."
+
+Example:
+
+ORIGINAL: "Some drugs are used legally for medical purposes to prevent or treat diseases, while others are misused for pleasure or other reasons."
+
+REWRITTEN: "Legally prescribed drugs are used to prevent or cure diseases; illegally used drugs are consumed for recreational purposes or for other illicit uses."
+
+C4. Split one long sentence into two, restating the key noun as the new subject
+
+Example:
+
+ORIGINAL: "It can also cause addiction, meaning that a person may find it difficult to stop using the substance even when they understand its harmful consequences."
+
+REWRITTEN: "Misuse of drugs can also lead to addiction. Addiction occurs when an individual finds it extremely difficult to stop using a particular substance despite being aware of the detrimental impact it will have on them."
+
+C5. Repeat the same sentence opener across consecutive sentences
+
+Let a phrase such as "Misuse of drugs can..." open two or three sentences in a row, as the style prefers repetition to variety.
+
+Example:
+
+ORIGINAL: "Drug abuse may damage important organs... It can also cause addiction..."
+
+REWRITTEN: "Misuse of drugs can severely impair normal functioning of vital organs... Misuse of drugs can also lead to addiction."
+
+C6. Use semicolons in some lists, and occasional slashes or parentheticals
+
+Example:
+
+ORIGINAL: "Adults may experience reduced productivity, unemployment, financial difficulties, and problems at work."
+
+REWRITTEN: "Adult drug consumers may see reduced production at work; unemployment; economic hardship; and poor performance at work."
+
+Example:
+
+ORIGINAL: "...damage relationships with family members and friends..."
+
+REWRITTEN: "...adversely affect interpersonal relationships within a family/friend network..."
+
+Use these punctuation habits in a few places only, not in every sentence.
+
+========================
+
+SECTION E: PADDING AND LENGTH
+
+========================
+
+E1. Pad through nominal phrases and modifiers, not through filler
+
+Lengthen by using "the development of...", "a number of...", "a means of...", "for other illicit uses", and added modifiers. Do not add idioms or chatty fillers.
+
+Example:
+
+ORIGINAL: "Drug abuse can also have serious effects on a person's education and career."
+
+REWRITTEN: "Misuse of drugs can negatively affect educational and occupational opportunities."
+
+E2. Offset the padding with small trims
+
+Drop a few minor qualifiers or secondary clauses so the total length stays within A2.
+
+========================
+
+SECTION F: MEANING (CONTROLLED DRIFT)
+
+========================
+
+F1. Make claims slightly firmer than the source
+
+Turn some "may / can / some" hedges into stronger statements, but do not introduce errors, reverse claims, or invent facts.
+
+Example:
+
+ORIGINAL: "Drug abuse may damage important organs..."
+
+REWRITTEN: "Misuse of drugs can severely impair normal functioning of vital organs..."
+
+Example:
+
+ORIGINAL: "...the misuse of drugs can lead to serious physical and psychological problems."
+
+REWRITTEN: "...the misuse of drugs generally results in serious problems."
+
+F2. Fidelity dial
+
+FIDELITY: MEDIUM
+
+- HIGH: keep nearly all hedges and qualifiers from the original.
+
+- MEDIUM: firm up about a third of the hedges.
+
+- LOW: firm up most hedges.
+
+========================
+
+SECTION G: WHAT TO AVOID
+
+========================
+
+- Do NOT add rhetorical questions (see A4).
+
+- Do not use "you", "we", contractions, slang, idioms, or emojis.
+
+- Do not add bullet points, new headings, bold text, or Markdown symbols. Output the title as plain text.
+
+- Do not add commentary, notes, or explanations of what you changed.
+
+- Do not copy original sentences verbatim, apart from names and very short stock phrases.
+
+- Do not add new claims, examples, or sources.
+
+- Do not narrow or change meaning when rotating synonyms (see A5).
+
+========================
+
+SELF-CHECK (silently, before answering):
+
+1. Same paragraph count and order as the original?
+
+2. No new questions added?
+
+3. Every idea and list item still present, nothing invented?
+
+4. Verbs and clauses turned into noun phrases in most sentences?
+
+5. Topic noun rotated, with meanings still accurate?
+
+6. No "you", "we", or contractions?
+
+7. Length within ±10%?
+
+========================
+
+TEXT TO REWRITE
+
+========================
+
+"""
+
 ${text}
-</text>`;
+
+"""`;
 }
 
 function buildPrompt(text: string, tone: Tone): string {
