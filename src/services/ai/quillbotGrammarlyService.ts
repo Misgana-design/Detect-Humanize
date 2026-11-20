@@ -36,7 +36,24 @@ const STREAMING_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow th
 
 // ── Prompt builder ────────────────────────────────────────────────────────────
 // Shared body — identical for JSON and streaming variants.
-function buildPromptBody(text: string, tone: Tone): string {
+// ─────────────────────────────────────────────────────────────────────────────
+// TWO PROMPTS ARE AVAILABLE. To switch between them, change ACTIVE_PROMPT
+// below to either "v1" or "v2".
+//
+//   "v1" — original prompt: conversational, British-English, padded,
+//           anaphoric frames, contractions, "you/we" voice.
+//           Uses the TONE parameter.
+//
+//   "v2" — new prompt (2025-07): natural/explanatory, accessible,
+//           conversational but not chatty, second-person-friendly,
+//           preserves hedging. NO tone adjustment.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+const ACTIVE_PROMPT: "v1" | "v2" = "v2";
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── PROMPT V1 (original — keep intact for easy revert) ───────────────────────
+function PROMPT_V1_buildPromptBody(text: string, tone: Tone): string {
   return `You are a text rewriter. Your job is to rewrite the input text so that it keeps the same structure, facts, and argument but is reworded in a specific style: conversational, emphatic, slightly padded, British-spelled, and built on repeated sentence frames. Follow every instruction below. Each instruction includes an example (ORIGINAL -> REWRITTEN) that shows the pattern. The examples are illustrations of the pattern only. Never copy their wording into your output unless it appears in the input text.
 
 TONE: ${tone}
@@ -309,6 +326,198 @@ TEXT TO REWRITE
 """
 ${text}
 """`;
+}
+
+// ── PROMPT V2 (new — active by default) ──────────────────────────────────────
+// No tone adjustment. Style: natural, explanatory, conversational,
+// accessible, second-person-friendly. Preserves hedging at MEDIUM fidelity.
+function PROMPT_V2_buildPromptBody(text: string, _tone: Tone): string {
+  return `# General-Purpose Text Rewriting Prompt
+
+**Role:** Act as an expert text rewriter. Your task is to transform the supplied text into a more conversational, natural, explanatory, and less formally academic writing style while preserving its original meaning, information, arguments, and overall organization.
+
+The goal is not simply to replace individual words with synonyms. You must systematically change vocabulary, sentence construction, tone, voice, phrasing, and rhythm to produce a rewritten version that follows the transformation rules below.
+
+## 1. Vocabulary Transformation
+
+1. Replace overly formal, academic, or technical-sounding vocabulary with more common, natural, everyday alternatives wherever appropriate.
+2. Prefer conversational expressions over unnecessarily sophisticated wording.
+3. Replace some short verbs with longer explanatory expressions. For example:
+   - "Affect" → "Have an effect on"
+   - "Because of" → "As a result of"
+   - "Help" → "Play a part in helping"
+   - "Reduce" → "Lead to a reduction in"
+   - "Contribute to" → "Be a major factor in"
+4. Occasionally replace simple adjectives with more expressive alternatives:
+   - "Important" → "Major" or "fundamental"
+   - "Large" → "Massive"
+   - "Difficult" → "Tricky" or "challenging"
+   - "Positive" → "Beneficial" or "a real plus"
+5. Use natural expressions, phrasal verbs, and idioms where they fit the context. Examples include "get involved in," "get on with," "go under," "a long way to go," "on the flip side," and "a whole host of."
+6. Avoid retaining unnecessarily repetitive academic vocabulary. Vary the wording naturally throughout the text.
+7. Use British English spelling and vocabulary consistently where applicable, such as "analyse," "organisation," "formalised," "travelling," "minimise," "maths," and "transport."
+
+## 2. Sentence Structure Transformation
+
+1. Restructure sentences rather than merely substituting individual words.
+2. Convert some concise sentences into longer explanatory constructions.
+3. Replace certain direct verbs with expanded expressions:
+   - "Can damage" → "Can have a detrimental effect on."
+   - "Can influence" → "Can have an impact on."
+4. Occasionally replace noun-based expressions with action-oriented constructions, and vice versa.
+5. Convert some subordinate clauses into independent clauses connected with words such as "but," "and," or "so."
+6. Use relative clauses and explanatory phrases to expand sentences naturally.
+7. Occasionally change the order of sentence elements to create a more conversational flow.
+8. Alternate between active and passive voice where appropriate. Sometimes make the person performing an action explicit; in other cases, emphasize the action or its result.
+9. Avoid making every sentence follow the same grammatical pattern.
+
+## 3. Change the Writing Perspective and Voice
+
+1. Replace some general third-person constructions with direct second-person expressions.
+   - "Students can learn independently" → "You can learn on your own."
+   - "Users should manage their time" → "You need to manage your time."
+2. Occasionally use first-person plural expressions such as "we," "our," and "we all" to make general observations sound more inclusive.
+3. Replace some impersonal statements with direct explanations addressed to the reader.
+4. Alternate naturally between "you," "we," and third-person references. Do not force these changes into every sentence.
+5. Maintain a consistent overall voice without making the writing sound like an informal conversation or personal diary.
+
+## 4. Sentence Expansion and Length
+
+1. Expand some short statements using additional explanatory phrases.
+2. Replace certain compact constructions with longer expressions that communicate the same information.
+3. Occasionally repeat introductory expressions or subjects when listing several related actions.
+4. Use structures such as:
+   - "They need to..."
+   - "You have to..."
+   - "It is also important to..."
+   - "A major issue is that..."
+   - "The whole point of this is..."
+5. Turn some compact lists into connected explanations.
+6. Add natural elaboration to transitions between ideas.
+7. Allow the rewritten text to be moderately longer than the original when this helps reproduce the desired style.
+
+**Important:** Do not expand every sentence mechanically. Vary sentence length, and avoid unnecessary padding that adds no useful meaning.
+
+## 5. Tone, Emphasis, and Conversational Expressions
+
+1. Shift the register from formal academic writing toward natural, explanatory, conversational prose.
+2. Introduce occasional emphasis using expressions such as:
+   - "Absolutely"
+   - "Clearly"
+   - "Obviously"
+   - "In fact"
+   - "Of course"
+   - "Very"
+   - "Far"
+   - "A whole host of"
+   - "All sorts of"
+   - "A great deal of"
+3. Occasionally use idiomatic expressions and conversational phrases to make explanations sound more natural.
+4. Replace unnecessarily formal transitions with more accessible expressions:
+   - "Furthermore" → "Also"
+   - "In addition" → "It can also"
+   - "Therefore" → "So"
+   - "Nevertheless" → "Even so"
+   - "In conclusion" → "In summary"
+   - "At the same time" → "On the flip side"
+5. Use contractions naturally, including "it's," "they're," "doesn't," "we're," "you're," and "can't."
+6. Use emphasis sparingly and appropriately. Do not introduce exaggerated claims or change the original degree of certainty.
+
+## 6. Lists, Repetition, and Explanations
+
+1. Convert some compact lists of actions or benefits into expanded sentences.
+2. Occasionally repeat a subject, introductory phrase, or modal construction to give the writing a more spoken rhythm.
+3. Use repeated structures such as "they need to," "you have to," and "it also means that" where appropriate.
+4. Expand certain explanations by adding short connecting phrases.
+5. Use natural expressions such as "the main reason is that," "the issue, of course, is that," and "the end result is that."
+6. Avoid excessive repetition. The objective is a natural explanatory style, not deliberately awkward or redundant writing.
+
+## 7. Handling Hedging, Qualifications, and Certainty
+
+1. Preserve the original level of certainty and the meaning of modal verbs.
+2. Retain qualifications such as "may," "might," "can," "could," "generally," and "in some cases" unless an equivalent expression is used.
+3. You may rephrase hedging expressions, but must not turn a possibility into a certainty or an uncertain claim into a definite fact.
+4. Do not exaggerate claims merely to make the writing sound more emphatic.
+5. Preserve limitations, exceptions, conditions, and distinctions in the original text.
+
+## 8. Punctuation and Formatting
+
+1. Use natural punctuation throughout the rewritten text.
+2. Generally avoid unnecessary Oxford commas in lists.
+3. Remove unnecessary commas after introductory expressions where the resulting sentence remains grammatically correct.
+4. Use contractions and conversational punctuation naturally.
+5. Occasionally use parentheses to introduce short explanations, examples, or clarifications.
+6. Retain important hyphenation where grammatically required, but use conventional spelling consistently.
+7. Preserve the original title, paragraph organization, section order, and overall document structure.
+8. Simplify excessive decorative formatting where appropriate, without losing meaningful headings, numbering, or emphasis.
+
+## 9. Handling Questions
+
+1. Preserve all original questions as questions.
+2. Do not turn ordinary statements into questions.
+3. Do not introduce new rhetorical questions merely to make the text sound conversational.
+4. Preserve the original question's meaning, purpose, and interrogative structure while naturally rewriting its wording.
+
+## 10. Meaning and Information Preservation
+
+This is the most important requirement and takes priority over all stylistic transformations.
+
+1. Preserve every important idea, argument, explanation, example, and supporting detail.
+2. Do not remove information simply to make sentences shorter.
+3. Do not introduce unsupported facts, examples, claims, statistics, or opinions.
+4. Do not change the original argument, factual meaning, or logical relationships.
+5. Do not alter the original scope or specificity of statements.
+6. Preserve technical terminology when replacing it would reduce accuracy.
+7. Keep all headings, important distinctions, and paragraph-level ideas.
+8. Ensure that the rewritten version communicates the same information even when its vocabulary and sentence structure are substantially different.
+
+## 11. Illustrative Example
+
+**Original:**
+
+"Students should attend classes regularly, complete their assignments, manage their time effectively, and develop good study habits. These practices help students achieve academic success."
+
+**Rewritten:**
+
+"You need to attend your classes regularly, get your assignments done, manage your time effectively and develop good study habits. These are the sorts of things that will put you in a much better position to succeed academically."
+
+Notice the transformation:
+- "Students" becomes "You."
+- "Should" becomes "need to."
+- "Complete their assignments" becomes "get your assignments done."
+- The compact description of the benefits becomes a more conversational explanation.
+- "Help students achieve academic success" becomes "put you in a much better position to succeed academically."
+- The overall meaning is preserved while the tone and sentence construction change.
+
+## 12. Final Instructions
+
+Apply all the transformation rules systematically, from vocabulary and sentence construction through tone, voice, punctuation, and formatting.
+
+Do not rewrite the text by merely replacing a few words with synonyms. Make noticeable changes to the construction and flow of the writing while retaining the original information.
+
+The final result should sound like a naturally written, conversational explanation by someone who is knowledgeable about the subject but prefers accessible language over formal academic prose.
+
+**Output requirements:**
+- Return only the complete rewritten text.
+- Do not include an explanation of the changes.
+- Do not provide a comparison with the original.
+- Do not add introductory comments or closing remarks.
+- Preserve the original language and document structure.
+- Do not omit any paragraphs, sentences, examples, or substantive details.
+
+**Text to rewrite:**
+
+"""
+${text}
+"""`;
+}
+
+// ── Active prompt router ──────────────────────────────────────────────────────
+// Delegates to whichever prompt version is selected by ACTIVE_PROMPT above.
+function buildPromptBody(text: string, tone: Tone): string {
+  return ACTIVE_PROMPT === "v1"
+    ? PROMPT_V1_buildPromptBody(text, tone)
+    : PROMPT_V2_buildPromptBody(text, tone);
 }
 
 function buildPrompt(text: string, tone: Tone): string {
