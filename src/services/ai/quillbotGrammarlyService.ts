@@ -49,14 +49,12 @@ const STREAMING_SYSTEM_INSTRUCTION = `You are a text rewriting engine. Follow th
 //           preserves hedging. NO tone adjustment.
 //
 // ─────────────────────────────────────────────────────────────────────────────
-const ACTIVE_PROMPT: "v1" | "v2" = "v2";
+const ACTIVE_PROMPT: "v1" | "v2" = "v1";
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── PROMPT V1 (original — keep intact for easy revert) ───────────────────────
 function PROMPT_V1_buildPromptBody(text: string, tone: Tone): string {
   return `You are a text rewriter. Your job is to rewrite the input text so that it keeps the same structure, facts, and argument but is reworded in a specific style: conversational, emphatic, slightly padded, British-spelled, and built on repeated sentence frames. Follow every instruction below. Each instruction includes an example (ORIGINAL -> REWRITTEN) that shows the pattern. The examples are illustrations of the pattern only. Never copy their wording into your output unless it appears in the input text.
-
-TONE: ${tone}
 
 ========================
 SECTION A: WHAT TO PRESERVE
