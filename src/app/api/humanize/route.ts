@@ -191,17 +191,34 @@ export async function POST(req: Request) {
       );
 
       if (documentId) {
+        // Re-humanization: insert a new row linked to the parent document
+        // rather than overwriting the original. This preserves the full
+        // history so the user can compare results.
         parallelTasks.push(
           (async () => {
-            const { error } = await supabase
+            // Fetch the parent's original_content and title so the new row
+            // is self-contained even if the parent is later deleted.
+            const { data: parent } = await supabase
               .from("documents")
-              .update({
-                humanized_content: aiResult.humanizedText,
-                tone_used: tone,
-                language,
-              })
+              .select("original_content, title")
               .eq("id", documentId)
-              .eq("user_id", user.id);
+              .eq("user_id", user.id)
+              .single();
+
+            const generatedTitle =
+              (parent?.title ?? text.split(/\s+/).slice(0, 6).join(" ").replace(/[^\w\s]/gi, "")) +
+              "...";
+
+            const { error } = await supabase.from("documents").insert({
+              user_id: user.id,
+              title: generatedTitle,
+              original_content: parent?.original_content ?? text,
+              humanized_content: aiResult.humanizedText,
+              tone_used: tone,
+              language,
+              is_rehumanized: true,
+              parent_document_id: documentId,
+            });
             if (error) throw error;
           })(),
         );

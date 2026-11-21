@@ -33,6 +33,8 @@ type HistoryDocument = {
   tone_used: string | null;
   language?: string | null;
   created_at: string;
+  is_rehumanized?: boolean | null;
+  parent_document_id?: string | null;
 };
 
 type ToneCounts = Record<string, number>;
@@ -154,6 +156,12 @@ function HistoryCard({
           {doc.tone_used && (
             <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold capitalize text-indigo-700">
               {doc.tone_used}
+            </span>
+          )}
+          {doc.is_rehumanized && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
+              <Sparkles size={10} className="text-violet-500" />
+              Re-humanized
             </span>
           )}
         </div>
@@ -372,7 +380,7 @@ export default function HistoryPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("id, title, original_content, humanized_content, tone_used, language, created_at")
+        .select("id, title, original_content, humanized_content, tone_used, language, created_at, is_rehumanized, parent_document_id")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as HistoryDocument[];
