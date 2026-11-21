@@ -270,7 +270,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // HumanizerService.rewriteStream returns a StreamTextResult.
+    // HumanizerService.rewriteStream returns a Response directly
+    // (paragraph chunking is handled internally).
     return HumanizerService.rewriteStream(
       text,
       tone,
@@ -279,7 +280,7 @@ export async function POST(req: Request) {
         const aiResult: HumanizerResult = { humanizedText, changes: [] };
         await persistHumanization(aiResult);
       },
-    ).toTextStreamResponse();
+    );
   } catch (error: unknown) {
     const status = getStatus(error);
     const message = getPublicErrorMessage(error, status);
