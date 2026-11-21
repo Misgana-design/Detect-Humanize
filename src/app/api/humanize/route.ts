@@ -254,7 +254,7 @@ export async function POST(req: Request) {
     }
 
     // HumanizerService.rewriteStream returns a StreamTextResult.
-    const streamResult = HumanizerService.rewriteStream(
+    return HumanizerService.rewriteStream(
       text,
       tone,
       humanizerTier,
@@ -262,9 +262,7 @@ export async function POST(req: Request) {
         const aiResult: HumanizerResult = { humanizedText, changes: [] };
         await persistHumanization(aiResult);
       },
-    );
-
-    return streamResult.toTextStreamResponse();
+    ).toTextStreamResponse();
   } catch (error: unknown) {
     const status = getStatus(error);
     const message = getPublicErrorMessage(error, status);
