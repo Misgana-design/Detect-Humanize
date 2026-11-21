@@ -531,7 +531,38 @@ function buildStreamingPrompt(text: string, tone: Tone): string {
 Output ONLY the rewritten text as plain text. Do not wrap it in JSON or markdown and do not add any commentary.`;
 }
 
-// ── Utility functions ─────────────────────────────────────────────────────────
+// ── Paragraph chunking ───────────────────────────────────────────────────────
+// Paragraphs per chunk by tier. Each chunk is a group of whole paragraphs
+// processed as one AI call, so sentence boundaries are never cut mid-paragraph.
+const PARAGRAPH_CHUNK_SIZES: Record<HumanizerTier, number> = {
+  free:  2,
+  basic: 3,
+  pro:   4,
+};
+
+/**
+ * Splits text into chunks of whole paragraphs.
+ *
+ * - Normalises both \n\n and single \n paragraph separators.
+ * - Filters out empty strings produced by extra blank lines.
+ * - Falls back to [text] when no paragraph breaks are found.
+ * - Groups consecutive paragraphs into chunks of `size` paragraphs each.
+ */
+function splitIntoParagraphChunks(text: string, size: number): string[] {
+  const paragraphs = text
+    .split(/\n{2,}/)          // split on one or more blank lines
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  // No paragraph structure — treat as a single chunk.
+  if (paragraphs.length <= 1) return [text];
+
+  const chunks: string[] = [];
+  for (let i = 0; i < paragraphs.length; i += size) {
+    chunks.push(paragraphs.slice(i, i + size).join("\n\n"));
+  }
+  return chunks;
+}
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -674,25 +705,99 @@ export class QuillbotGrammarlyService {
   /**
    * Streaming variant — tokens are forwarded to the browser as they arrive.
    * onFinish runs server-side after the last token for persistence.
+   *
+   * Paragraph chunking is applied automatically: the text is split into groups
+   * of whole paragraphs (size defined by PARAGRAPH_CHUNK_SIZES per tier) and
+   * each group is processed as a separate streamText() call. The results are
+   * concatenated into one continuous ReadableStream so the client sees no
+   * difference from a single call.
+   *
+   * Falls back to a single call when the text has no paragraph breaks or
+   * contains only one chunk.
    */
   static rewriteStream(
     text: string,
     tone: Tone,
     tier: HumanizerTier = "free",
     onFinish?: (humanizedText: string) => Promise<void> | void,
-  ) {
+  ): Response {
     const cfg = TIER_CONFIG[tier];
+    const chunkSize = PARAGRAPH_CHUNK_SIZES[tier];
+    const chunks = splitIntoParagraphChunks(text, chunkSize);
 
-    return streamText({
-      model: vertex(cfg.model),
-      system: STREAMING_SYSTEM_INSTRUCTION,
-      prompt: buildStreamingPrompt(text, tone),
-      temperature: TEMPERATURE,
-      onFinish: async ({ text: humanizedText }) => {
-        if (!humanizedText.trim()) {
-          throw new Error("AI returned an empty humanization response.");
+    // Single chunk — use the simple path (one streamText call, no overhead).
+    if (chunks.length === 1) {
+      const result = streamText({
+        model: vertex(cfg.model),
+        system: STREAMING_SYSTEM_INSTRUCTION,
+        prompt: buildStreamingPrompt(text, tone),
+        temperature: TEMPERATURE,
+        onFinish: async ({ text: humanizedText }) => {
+          if (!humanizedText.trim()) {
+            throw new Error("AI returned an empty humanization response.");
+          }
+          if (onFinish) await onFinish(humanizedText);
+        },
+      });
+      return result.toTextStreamResponse();
+    }
+
+    // Multiple chunks — sequence them into one ReadableStream.
+    console.log(
+      `[qb-grammarly] Chunking into ${chunks.length} paragraph groups (tier=${tier})`,
+    );
+
+    const encoder = new TextEncoder();
+
+    const readable = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const parts: string[] = [];
+
+        try {
+          for (let i = 0; i < chunks.length; i++) {
+            // Add a blank-line separator between chunks in the stream so the
+            // client's paragraph splitter sees the boundary correctly.
+            if (i > 0) {
+              controller.enqueue(encoder.encode("\n\n"));
+            }
+
+            const result = streamText({
+              model: vertex(cfg.model),
+              system: STREAMING_SYSTEM_INSTRUCTION,
+              prompt: buildStreamingPrompt(chunks[i], tone),
+              temperature: TEMPERATURE,
+            });
+
+            let chunkText = "";
+            for await (const delta of result.textStream) {
+              chunkText += delta;
+              controller.enqueue(encoder.encode(delta));
+            }
+            parts.push(chunkText);
+          }
+
+          // All chunks done — run persistence callback with the full text.
+          const fullText = parts.join("\n\n");
+          if (!fullText.trim()) {
+            throw new Error("AI returned an empty humanization response.");
+          }
+          if (onFinish) await onFinish(fullText);
+        } catch (err) {
+          console.error("[qb-grammarly] Chunked stream error:", err);
+          // Surface the error to the client by closing with an error.
+          controller.error(err);
+          return;
         }
-        if (onFinish) await onFinish(humanizedText);
+
+        controller.close();
+      },
+    });
+
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "X-Accel-Buffering": "no",
       },
     });
   }
