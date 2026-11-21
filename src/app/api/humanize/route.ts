@@ -158,18 +158,15 @@ export async function POST(req: Request) {
       .update(`${text.trim()}_${tone}_${language}`)
       .digest("hex");
 
-    const { data: cachedResult } = await supabase
-      .from("humanization_cache")
-      .select("result")
-      .eq("hash", cacheKey)
-      .maybeSingle();
+    // Cache reads are intentionally skipped — every humanization request
+    // goes through the AI so the user always gets a fresh rewrite. The cache
+    // is still written after each run so the data is available for other
+    // purposes (analytics, debugging, future use).
 
-    // Reusable persistence helper — called for both cache hits (synchronously,
-    // before the response is sent) and cache misses (in the stream's onFinish
-    // callback, after the last token has been sent to the client).
+    // Reusable persistence helper — called in the stream's onFinish callback
+    // after the last token has been sent to the client.
     const persistHumanization = async (
       aiResult: HumanizerResult,
-      isCached: boolean,
     ): Promise<void> => {
       const parallelTasks: Promise<void | null>[] = [
         (async () => {
@@ -183,17 +180,15 @@ export async function POST(req: Request) {
         })(),
       ];
 
-      if (!isCached) {
-        parallelTasks.push(
-          (async () => {
-            const { error } = await supabase.from("humanization_cache").upsert({
-              hash: cacheKey,
-              result: aiResult,
-            });
-            if (error) throw error;
-          })(),
-        );
-      }
+      parallelTasks.push(
+        (async () => {
+          const { error } = await supabase.from("humanization_cache").upsert({
+            hash: cacheKey,
+            result: aiResult,
+          });
+          if (error) throw error;
+        })(),
+      );
 
       if (documentId) {
         parallelTasks.push(
@@ -243,44 +238,31 @@ export async function POST(req: Request) {
           ? "basic"
           : "pro";
 
-    // ── Cache hit ────────────────────────────────────────────────────────
-    // Cached results resolve instantly — return plain JSON (no streaming).
-    // The client hook checks the content type to distinguish JSON from the
-    // Vercel AI SDK data stream.
-    if (cachedResult) {
-      const aiResult = cachedResult.result as HumanizerResult;
-      if (
-        !aiResult ||
-        typeof aiResult.humanizedText !== "string" ||
-        !Array.isArray(aiResult.changes)
-      ) {
-        throw new Error("AI returned an invalid humanization response.");
-      }
-      await persistHumanization(aiResult, true);
-      return NextResponse.json({ ...aiResult, cached: true });
+    // ── Stream via the Vercel AI SDK ─────────────────────────────────────
+    if (detectorTarget === "quillbot-grammarly") {
+      // QuillbotGrammarlyService.rewriteStream returns a Response directly
+      // (it handles paragraph chunking internally and builds its own stream).
+      return QuillbotGrammarlyService.rewriteStream(
+        text,
+        tone,
+        humanizerTier,
+        async (humanizedText) => {
+          const aiResult: HumanizerResult = { humanizedText, changes: [] };
+          await persistHumanization(aiResult);
+        },
+      );
     }
 
-    // ── Cache miss — stream via the Vercel AI SDK ────────────────────────
-    const streamResult =
-      detectorTarget === "quillbot-grammarly"
-        ? QuillbotGrammarlyService.rewriteStream(
-            text,
-            tone,
-            humanizerTier,
-            async (humanizedText) => {
-              const aiResult: HumanizerResult = { humanizedText, changes: [] };
-              await persistHumanization(aiResult, false);
-            },
-          )
-        : HumanizerService.rewriteStream(
-            text,
-            tone,
-            humanizerTier,
-            async (humanizedText) => {
-              const aiResult: HumanizerResult = { humanizedText, changes: [] };
-              await persistHumanization(aiResult, false);
-            },
-          );
+    // HumanizerService.rewriteStream returns a StreamTextResult.
+    const streamResult = HumanizerService.rewriteStream(
+      text,
+      tone,
+      humanizerTier,
+      async (humanizedText) => {
+        const aiResult: HumanizerResult = { humanizedText, changes: [] };
+        await persistHumanization(aiResult);
+      },
+    );
 
     return streamResult.toTextStreamResponse();
   } catch (error: unknown) {
