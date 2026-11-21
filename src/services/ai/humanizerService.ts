@@ -106,9 +106,22 @@ Third person only; no contractions; no invented characters or dialogue.`,
 };
 
 // ── Prompt builder ────────────────────────────────────────────────────────────
-// Shared body — used by both the JSON variant (cache/batch) and the streaming
-// variant; only the trailing output instruction differs between the two.
-function buildPromptBody(text: string, tone: Tone): string {
+// ─────────────────────────────────────────────────────────────────────────────
+// TWO PROMPTS ARE AVAILABLE. To switch, change ACTIVE_PROMPT to "v1" or "v2".
+//
+//   "v1" — original prompt: clinical, noun-heavy, formal-report style.
+//           Uses tone adjustment via TONE_INSTRUCTIONS.
+//
+//   "v2" — new prompt (test): plain, clipped, school-report style.
+//           Shortens text 10-35%, removes hedging, prefers noun-phrase openers.
+//           Tone parameter is accepted but silently ignored.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+const ACTIVE_PROMPT: "v1" | "v2" = "v2";
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── PROMPT V1 (original — keep intact for easy revert) ───────────────────────
+function PROMPT_V1_buildPromptBody(text: string, tone: Tone): string {
   return `You are a text rewriter. Rewrite the input text so that it keeps the same structure, facts, and argument but sounds more clinical, impersonal, and noun-heavy, like a formal report or policy document. The main techniques are rotating synonyms, turning verbs and clauses into abstract noun phrases, reordering clauses, and removing any personal voice.
 
 Each instruction below has an example (ORIGINAL -> REWRITTEN). The examples only illustrate the pattern. Never copy their wording into your output unless it appears in the input text. The example topic is drugs, but the patterns apply to any subject.
@@ -396,6 +409,99 @@ TEXT TO REWRITE
 ${text}
 
 """`;
+}
+
+// ── PROMPT V2 (new test — active by default) ──────────────────────────────────
+// Plain, clipped, school-report style. Shortens text 10-35%, prefers
+// noun-phrase openers, removes hedging, flattens claims.
+// Tone is accepted to satisfy the shared signature but is silently ignored.
+function PROMPT_V2_buildPromptBody(text: string, _tone: Tone): string {
+  return `You are a text rewriter. Rewrite the text I give you so it follows the style rules below. Preserve the topic, the title, and the paragraph order. Output only the rewritten text, with no commentary.
+
+## 1. Length and content
+
+- Shorten the text by about 10-35%. Shorter source texts lose more, and every paragraph gets thinner.
+
+- Delete whole sentences that are evaluative, advisory, or aspirational: "should" advice, ethical recommendations, extra examples, and the final upbeat closing sentence.
+
+- Shorten lists: 3-5 items become 2-3. Replace specific items with generic ones ("offices, factories, shops" -> "businesses").
+
+- Drop most intensifiers and superlatives ("one of the greatest benefits" -> "one benefit"; "profoundly transformed" -> "greatly affected").
+
+- Do not add new facts. A few slightly vague or loosely logical phrases are acceptable.
+
+## 2. Sentence structure
+
+- Prefer noun-phrase openers: "Benefits of X include...", "Types of Y include...", "Advantages of X include...", "Examples of Z include...", "Negative effects of X include...", "An example of ... is ...".
+
+- Convert active verb clauses into nominal or passive forms ("businesses produce goods" -> "products sold by businesses"; "many people work in" -> "many people are employed by").
+
+- Split long compound or contrastive sentences ("Some X..., while others Y...") into two short, separate sentences and drop the contrast.
+
+- Remove concession structures ("Although...", "..., but it has also...") and result transitions ("Therefore," "Furthermore,"). Where a transition is needed, use "However," "But," or "In short," only.
+
+- Use expletive openers where natural ("It once took days to...", "There are drawbacks to...").
+
+- Replace subordinate relative clauses ("which can be used to build") with reduced ones ("used to support").
+
+- Occasionally change the sentence subject (people -> technologies, "it" -> the repeated noun).
+
+## 3. Vocabulary
+
+- Swap words for near-synonyms: clothes->clothing, education->schooling, healthcare->health care, satisfy->meet, needs and wants->wants and needs, mobile phones/smartphones->cell phones, world->globe, country->nation, customer needs->consumer tastes, honesty->ethical behavior, capital->resources, facilities->services, such as->like, including->such as, individuals<->people, challenges->drawbacks, concern->example, essential->contributes to, "In conclusion"->"In short".
+
+- Mix registers. Make some phrases plainer ("regardless of geographical distance" -> "even if they live far away") and some more abstract ("honesty" -> "ethical behavior").
+
+- Repeat key nouns (business, technology, society) instead of using pronouns or synonyms. Avoid "it" as a subject when a noun can be repeated.
+
+- Insert the filler word "other" often ("other skills," "other technologies," "other relationships"), even when nothing precedes it to be "other" than.
+
+- Use some singular/plural flips ("markets" -> "a market"; "families" -> "family").
+
+- Small terminology inconsistencies are fine.
+
+## 4. Hedging and tone
+
+- Remove hedging modals and softeners ("can," "may," "could," "also," "even," "largely") so claims sound flatter and more categorical, but keep one or two "can" where natural.
+
+- Weaken strong verbs ("transformed" -> "affected"; "dependence" -> "use"; "can make it difficult to succeed" -> "hinder").
+
+- The overall tone should be plain, clipped, and impersonal, like a simple school report. Remove emotional language and rhetorical flourishes.
+
+- Add no questions, contractions, em dashes, exclamation marks, or first-person voice.
+
+## 5. Punctuation and formatting
+
+- Keep apostrophes and hyphens, and keep capitalization as in standard English.
+
+- Remove colons by turning them into commas ("complex: technology can..." -> "complex..., with technology providing...").
+
+- Strip Markdown markup from headings (no "#"), but keep the title text.
+
+- Separate paragraphs with a blank line.
+
+- Keep the opening title as the first line.
+
+## Mini example
+
+Original: "Business refers to the activities of producing, buying, and selling goods and services to satisfy people's needs and wants while earning a profit."
+
+Rewritten: "Business activities involve producing, buying, and selling goods and services to meet people's wants and needs for profit."
+
+Original: "However, business activities also face several challenges."
+
+Rewritten: "But business activities have disadvantages."
+
+Now rewrite the following text:
+
+${text}`;
+}
+
+// ── Active prompt router ──────────────────────────────────────────────────────
+function buildPromptBody(text: string, tone: Tone): string {
+  return ACTIVE_PROMPT === "v1"
+    ? PROMPT_V1_buildPromptBody(text, tone)
+    : PROMPT_V2_buildPromptBody(text, tone);
 }
 
 function buildPrompt(text: string, tone: Tone): string {
