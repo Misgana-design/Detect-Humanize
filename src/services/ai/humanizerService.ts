@@ -412,87 +412,155 @@ ${text}
 }
 
 // ── PROMPT V2 (new test — active by default) ──────────────────────────────────
-// Plain, clipped, school-report style. Shortens text 10-35%, prefers
-// noun-phrase openers, removes hedging, flattens claims.
+// Example-driven, sentence-by-sentence rewrite style. Targets 75-90% of
+// original length. Noun-phrase openers, passives, filler "other", no hedges.
 // Tone is accepted to satisfy the shared signature but is silently ignored.
 function PROMPT_V2_buildPromptBody(text: string, _tone: Tone): string {
-  return `You are a text rewriter. Rewrite the text I give you so it follows the style rules below. Preserve the topic, the title, and the paragraph order. Output only the rewritten text, with no commentary.
+  return `You are a text rewriter. Rewrite the text I give you in the style shown in the examples at the bottom. Keep the title as the first line and keep the same number of paragraphs in the same order. Output only the rewritten text, with no commentary. Do not polish or improve the prose. Flat, slightly repetitive, loosely phrased output is the goal.
 
-## 1. Length and content
+The examples are about business and technology, but the new text may be on any topic. Replace those subjects in the sentence frames with the new text's subject. The word swaps below are examples. Apply the same kind of swap (formal -> plain, specific -> generic, near-synonym) to whatever vocabulary appears in the new text, and do not force a swap if the word is absent.
 
-- Shorten the text by about 10-35%. Shorter source texts lose more, and every paragraph gets thinner.
+## Core method: restructure, do not summarize
 
-- Delete whole sentences that are evaluative, advisory, or aspirational: "should" advice, ethical recommendations, extra examples, and the final upbeat closing sentence.
+Go through the original sentence by sentence. Every original idea must still appear in the rewrite. Shorten INSIDE sentences by trimming modifiers, extra details, and some list items. Do not delete whole sentences. Target roughly 75-90% of the original length.
 
-- Shorten lists: 3-5 items become 2-3. Replace specific items with generic ones ("offices, factories, shops" -> "businesses").
+- A long compound sentence may become TWO short sentences.
 
-- Drop most intensifiers and superlatives ("one of the greatest benefits" -> "one benefit"; "profoundly transformed" -> "greatly affected").
+- Split contrastive pairs ("Some X..., while others Y...") into two parallel sentences and drop the contrast.
 
-- Do not add new facts. A few slightly vague or loosely logical phrases are acceptable.
+- Turn "For example, A does X, B does Y, C does Z" into one noun-phrase list: "Examples of other [things] include A doing X, B-noun-phrase, and C-noun-phrase."
 
-## 2. Sentence structure
+- Keep the final paragraph's ideas (restated thesis, benefits, challenges plus solutions) and keep its sentence count close to the original's.
 
-- Prefer noun-phrase openers: "Benefits of X include...", "Types of Y include...", "Advantages of X include...", "Examples of Z include...", "Negative effects of X include...", "An example of ... is ...".
+## Sentence structure
 
-- Convert active verb clauses into nominal or passive forms ("businesses produce goods" -> "products sold by businesses"; "many people work in" -> "many people are employed by").
+- Prefer noun-phrase frames: "Types of X sold by Y include...", "Services offered by Y include...", "Benefits of X include...", "Other benefits of X include...", "Advantages of X include...", "Negative effects of X include...", "An example of ... is ...", "There are different types of...", "There are drawbacks to...".
 
-- Split long compound or contrastive sentences ("Some X..., while others Y...") into two short, separate sentences and drop the contrast.
+- Nominalize verb clauses: "it creates job opportunities" -> "One benefit of business is job creation."
 
-- Remove concession structures ("Although...", "..., but it has also...") and result transitions ("Therefore," "Furthermore,"). Where a transition is needed, use "However," "But," or "In short," only.
+- Use passives where natural: "people work in..." -> "people are employed by...".
 
-- Use expletive openers where natural ("It once took days to...", "There are drawbacks to...").
+- Change the subject when natural (people -> technologies, a verb phrase -> "Work in X and other fields").
 
-- Replace subordinate relative clauses ("which can be used to build") with reduced ones ("used to support").
+- Use expletive openers: "It once took days or weeks to..."
 
-- Occasionally change the sentence subject (people -> technologies, "it" -> the repeated noun).
+- Turn "which can be used to build X" into a reduced "used to support X" INSIDE a noun phrase ("tax revenue used to support public services like..."). Never attach a reduced clause after a full sentence with a comma.
 
-## 3. Vocabulary
+- Remove concessions and result transitions ("Although...", "Therefore,", "Furthermore,", "For example,", "but it has also..."). Allowed transitions: "But" or "However," for contrast, and "In short," for the conclusion.
 
-- Swap words for near-synonyms: clothes->clothing, education->schooling, healthcare->health care, satisfy->meet, needs and wants->wants and needs, mobile phones/smartphones->cell phones, world->globe, country->nation, customer needs->consumer tastes, honesty->ethical behavior, capital->resources, facilities->services, such as->like, including->such as, individuals<->people, challenges->drawbacks, concern->example, essential->contributes to, "In conclusion"->"In short".
+- Put all challenge or problem items in ONE sentence with a blunt verb ("hinder business success"). Do not split them or repeat a noun like "drawback".
 
-- Mix registers. Make some phrases plainer ("regardless of geographical distance" -> "even if they live far away") and some more abstract ("honesty" -> "ethical behavior").
+## Vocabulary
 
-- Repeat key nouns (business, technology, society) instead of using pronouns or synonyms. Avoid "it" as a subject when a noun can be repeated.
+- Swaps: important part -> fundamental aspect; plays a major role in development -> has value; refers to -> involve; satisfy -> meet; needs and wants -> wants and needs; clothes -> clothing; education -> schooling; healthcare -> health care; country -> nation; customer -> consumer; people -> individuals/consumers; capital -> resources; challenges -> disadvantages/drawbacks; honesty -> ethical behavior; essential -> contributes to; In conclusion -> In short; smartphone/mobile -> cell phone; world -> globe; concern -> example; improved -> quick/better.
 
-- Insert the filler word "other" often ("other skills," "other technologies," "other relationships"), even when nothing precedes it to be "other" than.
+- Drop "modern," "major," "greatest," "significant," "several," "also," "even," "daily lives," and similar intensifiers.
 
-- Use some singular/plural flips ("markets" -> "a market"; "families" -> "family").
+- Generalize specifics: "offices, factories, shops" -> "businesses"; "international corporations" -> "large global businesses".
 
-- Small terminology inconsistencies are fine.
+- Repeat key nouns instead of using "it" or synonyms. Avoid "it" as a subject.
 
-## 4. Hedging and tone
+- Insert the filler word "other" often, even when nothing precedes it ("other businesses," "other skills," "other difficulties," "other technologies").
 
-- Remove hedging modals and softeners ("can," "may," "could," "also," "even," "largely") so claims sound flatter and more categorical, but keep one or two "can" where natural.
+- Use some singular/plural flips (markets -> a market; families -> family).
 
-- Weaken strong verbs ("transformed" -> "affected"; "dependence" -> "use"; "can make it difficult to succeed" -> "hinder").
+- Weaken strong verbs ("profoundly transformed" -> "greatly affected"; "dependence" -> "use").
 
-- The overall tone should be plain, clipped, and impersonal, like a simple school report. Remove emotional language and rhetorical flourishes.
+- Slightly illogical wording is acceptable ("Benefits to business activity include advantages to producers and consumers").
 
-- Add no questions, contractions, em dashes, exclamation marks, or first-person voice.
+## Hedging and tone
 
-## 5. Punctuation and formatting
+- Remove most hedges ("may," "could," "also," "largely," "even"). Use "can" only a few times where natural.
 
-- Keep apostrophes and hyphens, and keep capitalization as in standard English.
+- Plain, impersonal school-report tone. No emotion, no advice ("should"), no rhetorical flourishes.
 
-- Remove colons by turning them into commas ("complex: technology can..." -> "complex..., with technology providing...").
+- No questions, contractions, em dashes, exclamation marks, or first-person voice.
 
-- Strip Markdown markup from headings (no "#"), but keep the title text.
+## Punctuation and formatting
 
-- Separate paragraphs with a blank line.
+- Standard English capitalization. Keep apostrophes and hyphens.
 
-- Keep the opening title as the first line.
+- Replace colons with commas or a "with..." phrase.
 
-## Mini example
+- Remove Markdown "#" from headings but keep the title text.
 
-Original: "Business refers to the activities of producing, buying, and selling goods and services to satisfy people's needs and wants while earning a profit."
+- Separate paragraphs with ONE BLANK LINE.
 
-Rewritten: "Business activities involve producing, buying, and selling goods and services to meet people's wants and needs for profit."
+## Common mistakes to avoid
 
-Original: "However, business activities also face several challenges."
+- Deleting whole sentences or ideas instead of compressing them.
 
-Rewritten: "But business activities have disadvantages."
+- Keeping the original's verbs and nouns when a plainer swap exists.
 
-Now rewrite the following text:
+- Keeping concrete lists that can be generalized.
+
+- Dropping cheap list items (keep all services, all challenges).
+
+- Producing fragments or comma-spliced reduced clauses.
+
+- Shrinking the conclusion to a single sentence.
+
+- Keeping the "Some... others..." contrast.
+
+- Making the prose smoother or more elegant than the examples.
+
+## Examples (key sentence transformations)
+
+EXAMPLE 1 (Business)
+
+Original: Business is an important part of modern society. It plays a major role in the economic and social development of a country.
+
+Rewritten: Business is a fundamental aspect of society. Business has economic and social value to a nation.
+
+Original: Some businesses produce goods such as clothes, food, and furniture, while others provide services such as transportation, education, banking, and healthcare.
+
+Rewritten: Types of products sold by businesses include clothing, food, and furniture. Services offered by businesses include transportation, schooling, banking, and health care.
+
+Original: For example, farmers supply food to markets, factories manufacture products, and shops sell those products to consumers.
+
+Rewritten: Examples of other businesses include farmers selling produce at a market, product manufacturers, and retail businesses that sell products to consumers.
+
+Original: Business also encourages people to develop their skills, creativity, and problem-solving abilities. Furthermore, successful businesses pay taxes to the government, which can be used to build schools, hospitals, roads, and other public facilities.
+
+Rewritten: Work in business and other fields allows individuals to develop other skills and use their creative and analytic abilities. Other benefits of business include tax revenue used to support public services like schools, hospitals, and roads.
+
+Original: However, business activities also face several challenges. Competition, lack of capital, poor management, and changing customer needs can make it difficult for businesses to succeed.
+
+Rewritten: But business activities have disadvantages. Competition, lack of resources, poor management, and changing consumer tastes hinder business success.
+
+Original: In conclusion, business is essential for economic growth and social progress. It connects producers and consumers, creates employment, and improves people's lives. Although businesses face many challenges, responsible management, hard work, innovation, and honesty can help them achieve success.
+
+Rewritten: In short, business activity contributes to economic and social welfare. Benefits to business activity include advantages to producers and consumers as well as other societal benefits, such as jobs. Business challenges and other difficulties can be addressed by hard work, ethical behavior, and innovation to create successful businesses.
+
+EXAMPLE 2 (Technology)
+
+Original: Technology has become an essential part of modern society. From smartphones and computers to artificial intelligence and the internet, technological developments have changed the way people communicate, work, learn, travel, and entertain themselves.
+
+Rewritten: Technology is widely used in today's society. Other technologies used in society include cell phones and other communication technologies, computers, the internet, and artificial intelligence.
+
+Original: Technology has made many aspects of life easier and more efficient, but it has also created new challenges.
+
+Rewritten: Benefits of technology to society include better educational and business opportunities and improvements to leisure and travel activities. There are drawbacks to technology use in society.
+
+Original: One of the most significant contributions of technology is improved communication. In the past, communicating with someone who lived far away could take days or even weeks.
+
+Rewritten: One advantage of technology is quick communication. It once took days or weeks to communicate with individuals in other regions of the country or world.
+
+Original: However, technological development also has negative effects on society. One major concern is excessive dependence on technology.
+
+Rewritten: However, advances in technology have some negative effects on society. An example of a negative effect of technology is excessive technology use.
+
+Original: Excessive use can reduce face-to-face communication and may negatively affect concentration, productivity, and relationships.
+
+Rewritten: Negative effects of excessive technology use include decreased face-to-face contact and difficulties in other relationships and areas of work.
+
+Original: In conclusion, technology has profoundly transformed society. It has improved communication, education, healthcare, scientific research, and economic productivity while creating new opportunities for individuals and communities.
+
+Rewritten: In short, technology has greatly affected society. Advantages of technology include improved communication and learning, advances in medical care and research, and more employment and business opportunities for people around the world.
+
+---
+
+Now rewrite the following text in the same style, going sentence by sentence:
 
 ${text}`;
 }
